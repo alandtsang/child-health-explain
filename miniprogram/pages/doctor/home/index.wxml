@@ -1,0 +1,76 @@
+<!-- miniprogram/pages/doctor/home/index.wxml -->
+<view class="doctor-home">
+  <!-- 医生信息头 -->
+  <view class="doctor-header">
+    <view class="doctor-avatar"><text class="avatar-text">{{doctorInfo.name ? doctorInfo.name[0] : '医'}}</text></view>
+    <view class="doctor-meta">
+      <text class="doctor-name">{{doctorInfo.name || '医生'}}</text>
+      <text class="doctor-hospital">{{doctorInfo.hospital}} · {{doctorInfo.department}}</text>
+    </view>
+    <view class="profile-btn" bindtap="onProfile"><text class="profile-text">我的</text></view>
+  </view>
+
+  <!-- 统计卡片 -->
+  <view class="stats-row">
+    <view class="stat-card" bindtap="onReportList">
+      <text class="stat-num text-warning">{{stats.pendingReview}}</text>
+      <text class="stat-label">待审核</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-num text-primary">{{stats.pushed}}</text>
+      <text class="stat-label">已推送</text>
+    </view>
+    <view class="stat-card" bindtap="onFollowupList">
+      <text class="stat-num text-danger">{{stats.pendingFollowup}}</text>
+      <text class="stat-label">待随访</text>
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="quick-actions">
+    <view class="action-btn primary-btn" bindtap="onExamInput">
+      <text class="action-icon">📝</text><text class="action-text">新建体检录入</text>
+    </view>
+    <view class="action-row">
+      <view class="action-btn-small" bindtap="onScanUpload">
+        <text class="action-icon-sm">📸</text><text class="action-text-sm">扫码上传</text>
+      </view>
+      <view class="action-btn-small" bindtap="onReportList">
+        <text class="action-icon-sm">📋</text><text class="action-text-sm">报告管理</text>
+      </view>
+      <view class="action-btn-small" bindtap="onFollowupList">
+        <text class="action-icon-sm">📅</text><text class="action-text-sm">随访管理</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近体检记录 -->
+  <view class="section-header"><text class="section-title">最近体检记录</text></view>
+
+  <view wx:if="{{recentExams.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">📋</text>
+    <text>暂无体检记录</text>
+    <text class="empty-hint">点击上方"新建体检录入"开始</text>
+  </view>
+
+  <view wx:for="{{recentExams}}" wx:key="_id" class="exam-card card" bindtap="onExamTap" data-id="{{item._id}}">
+    <view class="exam-card-header">
+      <text class="child-name">{{item.child_name}}</text>
+      <text class="exam-date">{{item.exam_date}}</text>
+    </view>
+    <view class="exam-card-body">
+      <text class="age-text">{{item.age_text}}</text>
+      <view class="abnormal-info">
+        <text wx:if="{{item.abnormal_count > 0}}" class="abnormal-count">{{item.abnormal_count}}项异常</text>
+        <abnormal-tag wx:if="{{item.abnormal_count > 0}}" level="{{item.max_level}}" />
+        <text wx:else class="text-success">各项正常</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view wx:if="{{loadingMore}}" class="loading-more">加载中...</view>
+  <view wx:if="{{!hasMore && recentExams.length > 0}}" class="no-more">没有更多了</view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="加载中..." />

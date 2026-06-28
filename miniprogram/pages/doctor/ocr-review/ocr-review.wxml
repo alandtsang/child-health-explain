@@ -1,0 +1,84 @@
+<!--miniprogram/pages/doctor/ocr-review/ocr-review.wxml-->
+<view class="container">
+  <!-- 原图缩略图 -->
+  <view class="card image-section" bindtap="previewImage">
+    <view class="card-title">体检单原图</view>
+    <image
+      wx:if="{{imageFileId}}"
+      class="ocr-image"
+      src="{{imageFileId}}"
+      mode="aspectFit"
+    />
+    <view wx:else class="empty-state">无图片</view>
+    <view class="image-hint">点击查看大图</view>
+  </view>
+
+  <!-- 置信度提示 -->
+  <view class="card confidence-section">
+    <view class="confidence-row">
+      <text class="confidence-label">OCR识别置信度</text>
+      <text class="confidence-value {{ocrConfidence < 0.6 ? 'text-danger' : 'text-success'}}">
+        {{ocrConfidenceText}}
+      </text>
+    </view>
+    <view class="confidence-row">
+      <text class="confidence-label">数据提取置信度</text>
+      <text class="confidence-value {{parseConfidence < 0.6 ? 'text-danger' : 'text-success'}}">
+        {{parseConfidenceText}}
+      </text>
+    </view>
+    <view wx:if="{{needManual}}" class="manual-warning">
+      <text>识别置信度较低，标红字段请重点核对，必要时直接手动修改</text>
+    </view>
+  </view>
+
+  <!-- 儿童选择与日期 -->
+  <view class="card info-section">
+    <view class="info-row">
+      <text class="info-label">儿童档案</text>
+      <picker
+        mode="selector"
+        range="{{children}}"
+        range-key="name"
+        value="{{selectedChildIndex}}"
+        bindchange="onChildChange"
+      >
+        <view class="picker-value {{selectedChildId ? '' : 'placeholder'}}">
+          {{selectedChildIndex >= 0 ? children[selectedChildIndex].name : '请选择儿童'}}
+        </view>
+      </picker>
+    </view>
+    <view class="info-row">
+      <text class="info-label">体检日期</text>
+      <picker
+        mode="date"
+        value="{{examDate}}"
+        bindchange="onDateChange"
+      >
+        <view class="picker-value">{{examDate}}</view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 指标校对表单 -->
+  <view class="card form-section">
+    <view class="card-title">体检指标（请核对标红项）</view>
+    <metrics-form
+      id="metricsForm"
+      metrics="{{ocrData.metrics}}"
+      uncertainFields="{{uncertainFields}}"
+      editable="{{true}}"
+    />
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar safe-bottom">
+    <button
+      class="btn-primary"
+      bindtap="onSubmit"
+      disabled="{{submitting}}"
+    >
+      {{submitting ? '保存中...' : '确认并生成报告'}}
+    </button>
+  </view>
+</view>

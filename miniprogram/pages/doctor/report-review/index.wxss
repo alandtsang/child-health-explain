@@ -1,0 +1,35 @@
+.review-page { padding: 24rpx; padding-bottom: 160rpx; }
+.card { background: #FFF; border-radius: 16rpx; padding: 32rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+.card-title { font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 20rpx; display: flex; align-items: center; }
+.info-card .info-header { display: flex; align-items: baseline; gap: 16rpx; margin-bottom: 16rpx; }
+.child-name { font-size: 36rpx; font-weight: 700; color: #333; }
+.child-meta { font-size: 26rpx; color: #999; }
+.info-row { display: flex; justify-content: space-between; padding: 12rpx 0; }
+.info-label { font-size: 28rpx; color: #999; }
+.info-value { font-size: 28rpx; color: #333; }
+.abnormal-row { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.abnormal-row:last-child { border-bottom: none; }
+.abnormal-left { flex: 1; }
+.abnormal-item { font-size: 30rpx; color: #333; display: block; }
+.abnormal-value { font-size: 24rpx; color: #999; margin-top: 4rpx; display: block; }
+.abnormal-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; }
+.abnormal-ref { font-size: 22rpx; color: #BBB; }
+.edit-card { position: relative; }
+.modified-badge { font-size: 22rpx; color: #FFF; background: #FA8C16; padding: 4rpx 12rpx; border-radius: 8rpx; margin-left: 16rpx; font-weight: 400; }
+.edit-textarea { width: 100%; min-height: 120rpx; font-size: 28rpx; color: #333; line-height: 1.6; }
+.edit-textarea-sm { width: 100%; min-height: 80rpx; font-size: 26rpx; color: #333; line-height: 1.5; }
+.edit-input { flex: 1; font-size: 28rpx; color: #333; }
+.sub-card { background: #FAFAFA; border-radius: 12rpx; padding: 24rpx; margin-bottom: 16rpx; }
+.sub-card:last-child { margin-bottom: 0; }
+.sub-card-title { font-size: 28rpx; font-weight: 600; color: #333; margin-bottom: 16rpx; }
+.sub-field { margin-bottom: 16rpx; }
+.sub-field:last-child { margin-bottom: 0; }
+.sub-field-row { display: flex; align-items: center; margin-bottom: 16rpx; }
+.sub-label { font-size: 24rpx; color: #999; display: block; margin-bottom: 8rpx; }
+.sub-field-row .sub-label { width: 120rpx; margin-bottom: 0; flex-shrink: 0; }
+.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: #FFF; padding: 16rpx 24rpx; box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06); z-index: 100; gap: 16rpx; }
+.bottom-btn { flex: 1; text-align: center; padding: 24rpx 0; border-radius: 12rpx; font-size: 30rpx; font-weight: 600; }
+.btn-quick { background: #F0F5FF; color: #4A90D9; }
+.btn-save { background: #4A90D9; color: #FFF; }
+.btn-push { background: linear-gradient(135deg, #52C41A, #73D13D); color: #FFF; }
+.btn-disabled { background: #CCC !important; }

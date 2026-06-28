@@ -1,0 +1,99 @@
+<!-- miniprogram/pages/doctor/exam-input/index.wxml -->
+<view class="exam-input-page">
+  <!-- Step 1: 选择录入方式 -->
+  <view wx:if="{{step === 'select'}}" class="step-section">
+    <view class="step-title">选择录入方式</view>
+    <view class="method-card" bindtap="onSelectMethod" data-method="manual">
+      <text class="method-icon">✏️</text>
+      <view class="method-info">
+        <text class="method-name">手动录入</text>
+        <text class="method-desc">逐项填写体检指标数据</text>
+      </view>
+      <text class="method-arrow">›</text>
+    </view>
+    <view class="method-card" bindtap="onSelectMethod" data-method="ocr">
+      <text class="method-icon">📸</text>
+      <view class="method-info">
+        <text class="method-name">拍照上传OCR</text>
+        <text class="method-desc">拍照识别体检单，自动提取数据</text>
+      </view>
+      <text class="method-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- Step 2: 选择/新建儿童 -->
+  <view wx:if="{{step === 'child'}}" class="step-section">
+    <view class="step-title">选择儿童档案</view>
+    <view wx:if="{{!showChildForm}}">
+      <view wx:if="{{children.length === 0 && !loading}}" class="empty-state">
+        <text>暂无儿童档案</text>
+        <text class="empty-hint">请点击下方新建</text>
+      </view>
+      <view wx:for="{{children}}" wx:key="_id" class="child-card card" bindtap="onSelectChild" data-child="{{item}}">
+        <view class="child-card-info">
+          <text class="child-card-name">{{item.name}}</text>
+          <text class="child-card-meta">{{item.gender}} · {{item.birth_date}}</text>
+        </view>
+        <text class="child-card-arrow">›</text>
+      </view>
+      <view class="btn-secondary" bindtap="onShowChildForm">+ 新建儿童档案</view>
+    </view>
+
+    <!-- 新建儿童表单 -->
+    <view wx:if="{{showChildForm}}" class="card">
+      <view class="form-item">
+        <text class="form-label">姓名</text>
+        <input class="form-input" placeholder="请输入儿童姓名" value="{{newChild.name}}" data-field="name" bindinput="onChildInput" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">性别</text>
+        <radio-group bindchange="onGenderChange">
+          <label class="radio-label"><radio value="男" checked="{{newChild.gender === '男'}}" />男</label>
+          <label class="radio-label"><radio value="女" checked="{{newChild.gender === '女'}}" />女</label>
+        </radio-group>
+      </view>
+      <view class="form-item">
+        <text class="form-label">出生日期</text>
+        <picker mode="date" value="{{newChild.birth_date}}" end="{{examDate}}" bindchange="onBirthDateChange">
+          <view class="form-input">{{newChild.birth_date || '请选择日期'}}</view>
+        </picker>
+      </view>
+      <view class="btn-primary" bindtap="onCreateChild">创建档案</view>
+    </view>
+  </view>
+
+  <!-- Step 3: 填写表单 -->
+  <view wx:if="{{step === 'form'}}" class="step-section">
+    <view class="form-header">
+      <view class="child-info-bar">
+        <text class="child-info-name">{{selectedChild.name}}</text>
+        <text class="child-info-meta">{{selectedChild.gender}} · {{selectedChild.birth_date}}</text>
+      </view>
+      <view class="exam-date-bar">
+        <text class="form-label">体检日期</text>
+        <picker mode="date" value="{{examDate}}" bindchange="onExamDateChange">
+          <view class="date-value">{{examDate}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- OCR 入口 -->
+    <view wx:if="{{inputMethod === 'ocr'}}" class="ocr-section card">
+      <text class="ocr-title">拍照上传体检单</text>
+      <text class="ocr-desc">系统将自动识别体检单内容并提取数据，之后可在校对页修改</text>
+      <view class="btn-primary ocr-btn" bindtap="onOcrUpload">拍照/选择图片</view>
+      <view class="btn-secondary" bindtap="onGenerate" style="margin-top: 16rpx;">直接生成解读（手动数据）</view>
+    </view>
+
+    <!-- 手动录入表单 -->
+    <view wx:if="{{inputMethod === 'manual'}}">
+      <metrics-form metrics="{{metrics}}" bind:change="onMetricsChange" />
+      <view class="action-bar">
+        <view class="btn-secondary action-btn-half" bindtap="onSaveDraft">保存草稿</view>
+        <view class="btn-primary action-btn-half" bindtap="onGenerate">生成解读</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="处理中..." />

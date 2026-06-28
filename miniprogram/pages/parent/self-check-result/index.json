@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "自查结果",
+  "usingComponents": {
+    "abnormal-tag": "/components/abnormal-tag/abnormal-tag",
+    "poster-viewer": "/components/poster-viewer/index",
+    "loading-overlay": "/components/loading-overlay/loading-overlay"
+  }
+}

@@ -1,0 +1,5 @@
+.abnormal-tag { display: inline-block; padding: 4rpx 20rpx; border-radius: 8rpx; font-size: 22rpx; line-height: 1.6; white-space: nowrap; }
+.tag-normal { background: #F6FFED; color: #52C41A; border: 1rpx solid #B7EB8F; }
+.tag-mild { background: #FFFBE6; color: #FAAD14; border: 1rpx solid #FFE58F; }
+.tag-moderate { background: #FFF2E8; color: #FA8C16; border: 1rpx solid #FFBB96; }
+.tag-severe { background: #FFF1F0; color: #FF4D4F; border: 1rpx solid #FFA39E; }

@@ -1,0 +1,44 @@
+<!-- miniprogram/pages/parent/report-list/index.wxml -->
+<view class="report-list-page">
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'doctor' ? 'active' : ''}}" bindtap="onSwitchTab" data-tab="doctor">医生报告</view>
+    <view class="tab-item {{activeTab === 'self' ? 'active' : ''}}" bindtap="onSwitchTab" data-tab="self">我的自查</view>
+  </view>
+
+  <!-- 医生报告列表 -->
+  <block wx:if="{{activeTab === 'doctor'}}">
+    <view wx:if="{{reports.length === 0 && !loading}}" class="empty-state">
+      <text class="empty-icon">📋</text>
+      <text>暂无医生报告</text>
+    </view>
+    <view wx:for="{{reports}}" wx:key="_id" class="report-item card" bindtap="onReportTap" data-id="{{item._id}}">
+      <view class="item-header">
+        <text class="item-date">{{item.exam_date}}</text>
+        <view wx:if="{{item.has_new}}" class="new-badge">新</view>
+      </view>
+      <text wx:if="{{item.child_name}}" class="item-child">{{item.child_name}}</text>
+      <text class="item-summary">{{item.summary}}</text>
+    </view>
+  </block>
+
+  <!-- 自查列表 -->
+  <block wx:if="{{activeTab === 'self'}}">
+    <view wx:if="{{selfChecks.length === 0 && !loading}}" class="empty-state">
+      <text class="empty-icon">📝</text>
+      <text>暂无自查记录</text>
+      <text class="empty-hint">点击首页"拍照自查"开始</text>
+    </view>
+    <view wx:for="{{selfChecks}}" wx:key="_id" class="report-item card" bindtap="onSelfCheckTap" data-id="{{item._id}}">
+      <view class="item-header">
+        <text class="item-date">{{item.created_at}}</text>
+        <text class="item-method">{{item.input_method}}</text>
+      </view>
+      <text class="item-summary">{{item.summary}}</text>
+    </view>
+  </block>
+
+  <view wx:if="{{loadingMore}}" class="loading-more">加载中...</view>
+  <view wx:if="{{!hasMore && (reports.length > 0 || selfChecks.length > 0)}}" class="no-more">没有更多了</view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="加载中..." />

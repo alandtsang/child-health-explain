@@ -1,0 +1,39 @@
+{
+  "standard": "国家卫健委儿童眼保健规范",
+  "standard_name": "0-6岁儿童视力筛查标准",
+  "description": "按年龄裸眼视力下限值，采用5分记录法（标准对数视力表）",
+  "unit": { "vision": "decimal_5pt" },
+  "age_ranges": [
+    {
+      "label": "3岁",
+      "min_months": 36, "max_months": 47,
+      "normal_min": 4.7,
+      "rules": [
+        { "condition": "vision < 4.3", "level": "severe", "description": "裸眼视力 < 4.3，视力严重低下" },
+        { "condition": "4.3 <= vision < 4.5", "level": "moderate", "description": "裸眼视力 4.3-4.4，中度视力不良" },
+        { "condition": "4.5 <= vision < 4.7", "level": "mild", "description": "裸眼视力 4.5-4.6，轻度视力不良" }
+      ]
+    },
+    {
+      "label": "4岁",
+      "min_months": 48, "max_months": 59,
+      "normal_min": 4.8,
+      "rules": [
+        { "condition": "vision < 4.4", "level": "severe", "description": "裸眼视力 < 4.4，视力严重低下" },
+        { "condition": "4.4 <= vision < 4.6", "level": "moderate", "description": "裸眼视力 4.4-4.5，中度视力不良" },
+        { "condition": "4.6 <= vision < 4.8", "level": "mild", "description": "裸眼视力 4.6-4.7，轻度视力不良" }
+      ]
+    },
+    {
+      "label": "5岁及以上",
+      "min_months": 60, "max_months": 215,
+      "normal_min": 4.9,
+      "rules": [
+        { "condition": "vision < 4.5", "level": "severe", "description": "裸眼视力 < 4.5，视力严重低下" },
+        { "condition": "4.5 <= vision < 4.7", "level": "moderate", "description": "裸眼视力 4.5-4.6，中度视力不良" },
+        { "condition": "4.7 <= vision < 4.9", "level": "mild", "description": "裸眼视力 4.7-4.8，轻度视力不良" }
+      ]
+    }
+  ],
+  "note": "左右眼分别评估，取较差眼等级作为整体视力异常等级。3岁以下不评估裸眼视力。"
+}

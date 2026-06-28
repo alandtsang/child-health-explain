@@ -1,0 +1,15 @@
+.report-list-page { padding: 0 24rpx 120rpx; }
+.tab-bar { display: flex; background: #FFF; border-radius: 16rpx; padding: 8rpx; margin: 24rpx 0; }
+.tab-item { flex: 1; text-align: center; padding: 20rpx 0; font-size: 28rpx; color: #666; border-radius: 12rpx; }
+.tab-item.active { background: #4A90D9; color: #FFF; font-weight: 600; }
+.empty-state { text-align: center; padding: 120rpx 0; color: #999; display: flex; flex-direction: column; align-items: center; }
+.empty-icon { font-size: 80rpx; margin-bottom: 16rpx; }
+.empty-hint { font-size: 24rpx; color: #BBB; margin-top: 8rpx; }
+.report-item { padding: 28rpx 32rpx; }
+.item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
+.item-date { font-size: 28rpx; font-weight: 600; color: #333; }
+.item-method { font-size: 22rpx; color: #999; background: #F5F5F5; padding: 4rpx 12rpx; border-radius: 8rpx; }
+.new-badge { background: #FF4D4F; color: #FFF; font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; }
+.item-child { font-size: 26rpx; color: #666; display: block; margin-bottom: 8rpx; }
+.item-summary { font-size: 26rpx; color: #666; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.loading-more, .no-more { text-align: center; padding: 24rpx; font-size: 24rpx; color: #999; }

@@ -1,0 +1,82 @@
+<!-- miniprogram/pages/parent/home/index.wxml -->
+<view class="parent-home">
+  <!-- 儿童信息头 -->
+  <view class="child-header" bindtap="onShowChildPicker">
+    <view class="child-avatar"><text class="child-avatar-text">{{currentChild.name ? currentChild.name[0] : '宝'}}</text></view>
+    <view class="child-meta">
+      <text class="child-name">{{currentChild.name || '未选择'}}</text>
+      <text class="child-info">{{currentChild.gender}} · {{currentChild.birth_date}}</text>
+    </view>
+    <view wx:if="{{children.length > 1}}" class="switch-btn"><text class="switch-text">切换</text><text class="switch-arrow">›</text></view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="quick-row">
+    <view class="quick-card" bindtap="onSelfCheck"><text class="quick-icon">📸</text><text class="quick-label">拍照自查</text></view>
+    <view class="quick-card" bindtap="onReportList"><text class="quick-icon">📋</text><text class="quick-label">体检报告</text></view>
+    <view class="quick-card" bindtap="onFollowup"><text class="quick-icon">📅</text><text class="quick-label">随访提醒</text></view>
+  </view>
+
+  <!-- 待办随访 -->
+  <view wx:if="{{pendingFollowups.length > 0}}" class="section">
+    <view class="section-header"><text class="section-title">待办随访</text></view>
+    <view wx:for="{{pendingFollowups}}" wx:key="_id" class="followup-card card" bindtap="onFollowupTap" data-id="{{item._id}}">
+      <view class="followup-info">
+        <text class="followup-item">{{item.item}}</text>
+        <text class="followup-date">计划复查：{{item.plan_date}}</text>
+      </view>
+      <view class="followup-badge">
+        <text class="badge-days">{{item.days_left > 0 ? item.days_left : '已到期'}}</text>
+        <text wx:if="{{item.days_left > 0}}" class="badge-unit">天后</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近报告 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">最近报告</text>
+      <text class="section-more" bindtap="onReportList">查看全部 ›</text>
+    </view>
+    <view wx:if="{{recentReports.length === 0 && !loading}}" class="empty-state">
+      <text class="empty-icon">📋</text>
+      <text>暂无报告</text>
+      <text class="empty-hint">医生推送后将在此显示</text>
+    </view>
+    <view wx:for="{{recentReports}}" wx:key="_id" class="report-card card" bindtap="onReportTap" data-id="{{item._id}}">
+      <view class="report-card-header">
+        <text class="report-date">{{item.exam_date}}</text>
+        <view wx:if="{{item.has_new}}" class="new-badge">新</view>
+      </view>
+      <text class="report-summary">{{item.summary}}</text>
+    </view>
+  </view>
+
+  <view class="profile-entry" bindtap="onProfile">
+    <text class="profile-entry-text">我的</text>
+    <text class="profile-entry-arrow">›</text>
+  </view>
+</view>
+
+<!-- 儿童选择弹窗 -->
+<view wx:if="{{showChildPicker}}" class="modal-overlay" bindtap="onCloseChildPicker">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">选择儿童</text>
+      <text class="modal-close" bindtap="onCloseChildPicker">×</text>
+    </view>
+    <view class="modal-body">
+      <view wx:for="{{children}}" wx:key="_id" class="child-option" bindtap="onSelectChild" data-child="{{item}}">
+        <view class="child-option-avatar"><text>{{item.name[0]}}</text></view>
+        <view class="child-option-info">
+          <text class="child-option-name">{{item.name}}</text>
+          <text class="child-option-meta">{{item.gender}} · {{item.birth_date}}</text>
+        </view>
+        <text wx:if="{{currentChild._id === item._id}}" class="check-icon">✓</text>
+      </view>
+      <view class="add-child-btn" bindtap="onAddChild">+ 新建儿童档案</view>
+    </view>
+  </view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="加载中..." />

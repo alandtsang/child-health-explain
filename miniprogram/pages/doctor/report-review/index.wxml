@@ -1,0 +1,125 @@
+<!-- miniprogram/pages/doctor/report-review/index.wxml -->
+<view class="review-page" wx:if="{{!loading && report}}">
+  <!-- 体检基本信息 -->
+  <view class="card info-card">
+    <view class="info-header">
+      <text class="child-name">{{child.name}}</text>
+      <text class="child-meta">{{child.gender}} · {{exam.age_text}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">体检日期</text>
+      <text class="info-value">{{exam.exam_date_fmt}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">录入方式</text>
+      <text class="info-value">{{exam.source === 'ocr' ? '拍照上传' : '手动录入'}}</text>
+    </view>
+  </view>
+
+  <!-- 异常分级一览（只读） -->
+  <view class="card">
+    <view class="card-title">异常分级一览</view>
+    <view wx:if="{{exam.abnormal_items_fmt.length === 0}}" class="text-success">所有指标正常</view>
+    <view wx:for="{{exam.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
+      <view class="abnormal-left">
+        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-value">{{item.value}}</text>
+      </view>
+      <view class="abnormal-right">
+        <abnormal-tag level="{{item.level}}" />
+        <text class="abnormal-ref">{{item.standard_ref || ''}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- AI 解读内容 - 概况（可编辑） -->
+  <view class="card edit-card">
+    <view class="card-title">
+      总体概况
+      <text wx:if="{{hasChanges}}" class="modified-badge">已修改</text>
+    </view>
+    <textarea
+      class="edit-textarea"
+      value="{{editContent.summary}}"
+      bindinput="onSummaryInput"
+      placeholder="请输入总体概况"
+      auto-height
+      maxlength="-1"
+    />
+  </view>
+
+  <!-- 指标解读（可编辑卡片） -->
+  <view class="card edit-card">
+    <view class="card-title">指标解读</view>
+    <view wx:for="{{editContent.item_explanations}}" wx:key="index" class="sub-card">
+      <view class="sub-card-title">第{{index + 1}}项：{{item.item}}</view>
+      <view class="sub-field">
+        <text class="sub-label">指标含义</text>
+        <textarea class="edit-textarea-sm" value="{{item.meaning}}" data-index="{{index}}" data-field="meaning" bindinput="onExplanationInput" auto-height maxlength="-1" />
+      </view>
+      <view class="sub-field">
+        <text class="sub-label">异常提示</text>
+        <textarea class="edit-textarea-sm" value="{{item.abnormal_implication}}" data-index="{{index}}" data-field="abnormal_implication" bindinput="onExplanationInput" auto-height maxlength="-1" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 分诊建议（可编辑） -->
+  <view class="card edit-card">
+    <view class="card-title">分诊建议</view>
+    <view wx:for="{{editContent.triage_advice}}" wx:key="index" class="sub-card">
+      <view class="sub-card-title">{{item.item}}</view>
+      <view class="sub-field-row">
+        <text class="sub-label">科室</text>
+        <input class="edit-input" value="{{item.department}}" data-index="{{index}}" data-field="department" bindinput="onTriageInput" />
+      </view>
+      <view class="sub-field-row">
+        <text class="sub-label">紧急程度</text>
+        <input class="edit-input" value="{{item.urgency}}" data-index="{{index}}" data-field="urgency" bindinput="onTriageInput" />
+      </view>
+      <view class="sub-field">
+        <text class="sub-label">原因</text>
+        <textarea class="edit-textarea-sm" value="{{item.reason}}" data-index="{{index}}" data-field="reason" bindinput="onTriageInput" auto-height maxlength="-1" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 家庭干预（可编辑） -->
+  <view class="card edit-card">
+    <view class="card-title">家庭干预</view>
+    <view wx:for="{{editContent.home_interventions}}" wx:key="index" class="sub-card">
+      <view class="sub-card-title">{{item.item}}（{{item.type}}）</view>
+      <view class="sub-field">
+        <text class="sub-label">详细建议</text>
+        <textarea class="edit-textarea-sm" value="{{item.detail}}" data-index="{{index}}" data-field="detail" bindinput="onInterventionInput" auto-height maxlength="-1" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 医生备注 -->
+  <view class="card edit-card">
+    <view class="card-title">医生备注</view>
+    <textarea
+      class="edit-textarea"
+      value="{{doctorNote}}"
+      bindinput="onNoteInput"
+      placeholder="可添加医生补充说明（家长不可见此备注）"
+      auto-height
+      maxlength="-1"
+    />
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar safe-bottom">
+    <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
+    <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
+    <view class="bottom-btn btn-push" bindtap="onApproveAndPush">通过并推送</view>
+  </view>
+</view>
+
+<view wx:if="{{!loading && !report}}" class="empty-state">
+  <text>报告加载失败</text>
+</view>
+
+<loading-overlay visible="{{loading}}" text="加载中..." />
+<loading-overlay visible="{{submitting}}" text="提交中..." />

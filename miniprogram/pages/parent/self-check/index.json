@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "健康自查",
+  "usingComponents": {
+    "metrics-form": "/components/metrics-form/index",
+    "loading-overlay": "/components/loading-overlay/loading-overlay"
+  }
+}

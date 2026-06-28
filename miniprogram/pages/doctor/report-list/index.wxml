@@ -1,0 +1,30 @@
+<!-- miniprogram/pages/doctor/report-list/index.wxml -->
+<view class="report-list-page">
+  <!-- 状态筛选 Tab -->
+  <view class="tab-bar">
+    <view wx:for="{{tabs}}" wx:key="key"
+      class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+      bindtap="onSwitchTab" data-key="{{item.key}}">
+      <text>{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 报告列表 -->
+  <view wx:if="{{reports.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">📋</text>
+    <text>暂无报告</text>
+  </view>
+
+  <report-card
+    wx:for="{{reports}}"
+    wx:key="_id"
+    report="{{item}}"
+    showStatus="{{true}}"
+    bind:tap="onReportTap"
+  />
+
+  <view wx:if="{{loadingMore}}" class="loading-more">加载中...</view>
+  <view wx:if="{{!hasMore && reports.length > 0}}" class="no-more">没有更多了</view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="加载中..." />

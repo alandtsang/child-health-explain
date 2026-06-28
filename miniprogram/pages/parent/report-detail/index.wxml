@@ -1,0 +1,99 @@
+<!-- miniprogram/pages/parent/report-detail/index.wxml -->
+<view class="report-detail-page" wx:if="{{!loading && report}}">
+  <!-- 报告头部 -->
+  <view class="card report-header">
+    <text class="report-date">{{exam.exam_date}}</text>
+    <text class="report-child" wx:if="{{child}}">{{child.name}} · {{child.gender}}</text>
+  </view>
+
+  <!-- 总体概况 -->
+  <view class="card">
+    <view class="card-title">总体概况</view>
+    <text class="content-text">{{content.summary}}</text>
+  </view>
+
+  <!-- 异常项一览 -->
+  <view class="card" wx:if="{{exam.abnormal_items_fmt.length > 0}}">
+    <view class="card-title">异常项一览</view>
+    <view wx:for="{{exam.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
+      <view class="abnormal-left">
+        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-value">{{item.value}}</text>
+      </view>
+      <abnormal-tag level="{{item.level}}" />
+    </view>
+  </view>
+
+  <!-- 指标解读 -->
+  <view class="card" wx:if="{{content.item_explanations.length > 0}}">
+    <view class="card-title">指标解读</view>
+    <view wx:for="{{content.item_explanations}}" wx:key="item" class="explain-block">
+      <text class="explain-title">{{item.item}}</text>
+      <text class="explain-text">{{item.meaning}}</text>
+      <view class="explain-implication" wx:if="{{item.abnormal_implication}}">
+        <text class="implication-label">异常提示</text>
+        <text class="implication-text">{{item.abnormal_implication}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分诊建议 -->
+  <view class="card" wx:if="{{content.triage_advice.length > 0}}">
+    <view class="card-title">分诊建议</view>
+    <view wx:for="{{content.triage_advice}}" wx:key="item" class="triage-block">
+      <view class="triage-header">
+        <text class="triage-item">{{item.item}}</text>
+        <text class="triage-dept">{{item.department}}</text>
+      </view>
+      <text class="triage-urgency">紧急程度：{{item.urgency}}</text>
+      <text class="triage-reason">{{item.reason}}</text>
+    </view>
+  </view>
+
+  <!-- 家庭干预 -->
+  <view class="card" wx:if="{{content.home_interventions.length > 0}}">
+    <view class="card-title">家庭干预建议</view>
+    <view wx:for="{{content.home_interventions}}" wx:key="item" class="intervention-block">
+      <text class="intervention-title">{{item.item}}</text>
+      <text class="intervention-type">{{item.type}}</text>
+      <text class="intervention-detail">{{item.detail}}</text>
+    </view>
+  </view>
+
+  <!-- 海报区域 -->
+  <view class="card media-card">
+    <view class="card-title">科普海报</view>
+    <view wx:if="{{poster}}" class="poster-preview" bindtap="onViewPoster">
+      <image class="poster-thumb" src="{{poster.file_id}}" mode="aspectFit" />
+      <text class="poster-tap-hint">点击查看大图</text>
+    </view>
+    <view wx:else class="poster-empty">
+      <text class="poster-empty-text">暂无海报</text>
+      <view class="btn-primary media-btn" bindtap="onGeneratePoster">生成海报</view>
+    </view>
+  </view>
+
+  <!-- 视频区域（仅医生推送报告） -->
+  <view class="card media-card">
+    <view class="card-title">科普视频</view>
+    <view wx:if="{{video}}" class="video-preview">
+      <video src="{{video.file_id}}" class="video-player" controls></video>
+    </view>
+    <view wx:else class="poster-empty">
+      <text class="poster-empty-text">暂无视频</text>
+      <view class="btn-primary media-btn" bindtap="onGenerateVideo" loading="{{generatingVideo}}">生成视频</view>
+      <text class="media-hint">视频生成约需5分钟，完成后将通知您</text>
+    </view>
+  </view>
+
+  <!-- 免责声明 -->
+  <view class="disclaimer-card">
+    <text class="disclaimer-text">{{report.disclaimer || 'AI生成内容经医生审核，仅供参考，不能替代专业医疗诊断'}}</text>
+  </view>
+</view>
+
+<view wx:if="{{!loading && !report}}" class="empty-state"><text>报告加载失败</text></view>
+
+<poster-viewer visible="{{posterVisible}}" fileId="{{poster.file_id}}" title="科普海报" bind:close="onPosterClose" />
+<loading-overlay visible="{{loading}}" text="加载中..." />
+<loading-overlay visible="{{generatingPoster}}" text="海报生成中..." />

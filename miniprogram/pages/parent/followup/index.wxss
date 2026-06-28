@@ -1,0 +1,36 @@
+.followup-page { padding: 24rpx; padding-bottom: 120rpx; }
+.empty-state { text-align: center; padding: 120rpx 0; color: #999; display: flex; flex-direction: column; align-items: center; }
+.empty-icon { font-size: 80rpx; margin-bottom: 16rpx; }
+.empty-hint { font-size: 24rpx; color: #BBB; margin-top: 8rpx; padding: 0 60rpx; text-align: center; }
+.followup-card { padding: 28rpx 32rpx; }
+.fu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.fu-child { font-size: 32rpx; font-weight: 600; color: #333; }
+.fu-days-badge { background: #FFF2E8; padding: 8rpx 20rpx; border-radius: 20rpx; }
+.fu-days-badge.overdue { background: #FFF1F0; }
+.fu-days-badge text { font-size: 24rpx; color: #FA8C16; }
+.fu-days-badge.overdue text { color: #FF4D4F; }
+.fu-body { }
+.fu-trigger { font-size: 30rpx; color: #333; display: block; }
+.fu-date { font-size: 24rpx; color: #999; margin-top: 8rpx; display: block; }
+.fu-footer { margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #F5F5F5; }
+.fu-overdue-hint { font-size: 24rpx; color: #FF4D4F; }
+.loading-more, .no-more { text-align: center; padding: 24rpx; font-size: 24rpx; color: #999; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; }
+.modal-content { width: 100%; background: #FFF; border-radius: 24rpx 24rpx 0 0; max-height: 80vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 32rpx; border-bottom: 1rpx solid #EEE; }
+.modal-title { font-size: 32rpx; font-weight: 600; color: #333; }
+.modal-close { font-size: 48rpx; color: #999; }
+.modal-body { padding: 32rpx; }
+.detail-row { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; }
+.detail-label { font-size: 28rpx; color: #999; }
+.detail-value { font-size: 28rpx; color: #333; }
+.detail-section { margin-top: 24rpx; }
+.detail-section-title { font-size: 28rpx; font-weight: 600; color: #333; display: block; margin-bottom: 16rpx; }
+.trigger-item { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.trigger-item:last-child { border-bottom: none; }
+.trigger-left { flex: 1; }
+.trigger-name { font-size: 28rpx; color: #333; display: block; }
+.trigger-value { font-size: 24rpx; color: #999; margin-top: 4rpx; display: block; }
+.advice-content { font-size: 28rpx; color: #666; line-height: 1.6; }
+.modal-actions { padding: 24rpx 32rpx; padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #EEE; }
+.modal-btn { width: 100%; }

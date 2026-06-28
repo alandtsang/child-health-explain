@@ -1,0 +1,47 @@
+<!-- miniprogram/pages/parent/profile/index.wxml -->
+<view class="profile-page">
+  <view class="profile-header">
+    <view class="avatar"><text class="avatar-text">家</text></view>
+    <view class="profile-info">
+      <text class="profile-name">家长</text>
+      <view class="phone-row">
+        <text wx:if="{{userInfo.parent_info.phone}}" class="phone-text">{{userInfo.parent_info.phone}}</text>
+        <button wx:else class="bind-phone-btn" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber">绑定手机号</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 儿童档案管理 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">儿童档案</text>
+      <text class="section-add" bindtap="onAddChild">+ 添加</text>
+    </view>
+    <view wx:if="{{children.length === 0}}" class="empty-children" bindtap="onAddChild">
+      <text>暂无儿童档案，点击添加</text>
+    </view>
+    <view wx:for="{{children}}" wx:key="_id" class="child-item card" bindtap="onEditChild" data-id="{{item._id}}">
+      <view class="child-item-avatar"><text>{{item.name[0]}}</text></view>
+      <view class="child-item-info">
+        <text class="child-item-name">{{item.name}}</text>
+        <text class="child-item-meta">{{item.gender}} · {{item.birth_date}}</text>
+      </view>
+      <text class="child-item-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 操作 -->
+  <view class="action-card card" bindtap="onSwitchToDoctor">
+    <text class="action-label">切换到医生身份</text>
+    <text class="action-arrow">›</text>
+  </view>
+
+  <view class="action-card card" bindtap="onLogout">
+    <text class="action-label danger">退出登录</text>
+    <text class="action-arrow">›</text>
+  </view>
+
+  <view class="version-text">版本 1.0.0</view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="处理中..." />

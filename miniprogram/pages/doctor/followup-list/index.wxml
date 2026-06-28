@@ -1,0 +1,96 @@
+<!-- miniprogram/pages/doctor/followup-list/index.wxml -->
+<view class="followup-list-page">
+  <!-- 状态筛选 Tab -->
+  <scroll-view scroll-x class="tab-scroll">
+    <view class="tab-bar">
+      <view wx:for="{{tabs}}" wx:key="key"
+        class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+        bindtap="onSwitchTab" data-key="{{item.key}}">
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 随访列表 -->
+  <view wx:if="{{followups.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">📅</text>
+    <text>暂无随访记录</text>
+  </view>
+
+  <view wx:for="{{followups}}" wx:key="_id" class="followup-card card" bindtap="onFollowupTap" data-followup="{{item}}">
+    <view class="fu-header">
+      <text class="fu-child">{{item.child_name}}</text>
+      <text class="fu-status status-{{item.status}}">{{item.status_label}}</text>
+    </view>
+    <view class="fu-body">
+      <view class="fu-info">
+        <text class="fu-trigger">{{item.trigger_summary}}</text>
+        <text class="fu-plan">计划复查：{{item.plan_date_fmt}}</text>
+      </view>
+      <view class="fu-badge">
+        <text class="fu-days">{{item.days_text}}</text>
+        <abnormal-tag wx:if="{{item.max_level !== 'normal'}}" level="{{item.max_level}}" />
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loadingMore}}" class="loading-more">加载中...</view>
+  <view wx:if="{{!hasMore && followups.length > 0}}" class="no-more">没有更多了</view>
+</view>
+
+<!-- 详情弹窗 -->
+<view wx:if="{{detailVisible}}" class="modal-overlay" bindtap="onCloseDetail">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">随访详情</text>
+      <text class="modal-close" bindtap="onCloseDetail">×</text>
+    </view>
+    <view class="modal-body" wx:if="{{detailFollowup}}">
+      <view class="detail-row"><text class="detail-label">儿童</text><text class="detail-value">{{detailFollowup.child_name}}</text></view>
+      <view class="detail-row"><text class="detail-label">状态</text><text class="detail-value">{{detailFollowup.status_label}}</text></view>
+      <view class="detail-row"><text class="detail-label">计划日期</text><text class="detail-value">{{detailFollowup.plan_date_fmt}}</text></view>
+      <view class="detail-section">
+        <text class="detail-section-title">触发项</text>
+        <view wx:for="{{detailFollowup.trigger_items}}" wx:key="item" class="trigger-item">
+          <text>{{item.item}}</text>
+          <abnormal-tag level="{{item.level}}" />
+        </view>
+      </view>
+      <view class="detail-section" wx:if="{{detailFollowup.remind_records.length > 0}}">
+        <text class="detail-section-title">提醒记录</text>
+        <view wx:for="{{detailFollowup.remind_records}}" wx:key="index" class="remind-item">
+          <text class="remind-channel">{{item.channel === 'sms' ? '短信' : '小程序消息'}}</text>
+          <text class="remind-time">提前{{item.days_before}}天</text>
+        </view>
+      </view>
+    </view>
+    <view class="modal-actions" wx:if="{{detailFollowup && (detailFollowup.status === 'scheduled' || detailFollowup.status === 'reminded')}}">
+      <view class="btn-secondary modal-btn" bindtap="onAdjustDate" data-followup="{{detailFollowup}}">调整日期</view>
+      <view class="btn-primary modal-btn" bindtap="onMarkComplete" data-followup="{{detailFollowup}}">标记完成</view>
+    </view>
+  </view>
+</view>
+
+<!-- 调整日期弹窗 -->
+<view wx:if="{{adjustVisible}}" class="modal-overlay" bindtap="onCancelAdjust">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">调整随访日期</text>
+      <text class="modal-close" bindtap="onCancelAdjust">×</text>
+    </view>
+    <view class="modal-body">
+      <view class="detail-row">
+        <text class="detail-label">新日期</text>
+        <picker mode="date" value="{{newPlanDate}}" bindchange="onDateChange">
+          <view class="date-picker-value">{{newPlanDate || '请选择日期'}}</view>
+        </picker>
+      </view>
+    </view>
+    <view class="modal-actions">
+      <view class="btn-secondary modal-btn" bindtap="onCancelAdjust">取消</view>
+      <view class="btn-primary modal-btn" bindtap="onConfirmAdjust">确认</view>
+    </view>
+  </view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="处理中..." />

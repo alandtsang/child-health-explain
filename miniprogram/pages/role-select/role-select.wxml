@@ -1,0 +1,31 @@
+<view class="role-select-page">
+  <view class="logo-section">
+    <view class="logo-icon"><text class="logo-emoji">🏥</text></view>
+    <text class="app-title">儿童健康体检</text>
+    <text class="app-subtitle">AI科普与随访管理</text>
+  </view>
+  <view class="role-section">
+    <text class="section-title">请选择您的身份</text>
+    <view class="role-card" bindtap="onSelectDoctor">
+      <view class="role-icon doctor-icon"><text class="role-emoji">👨‍⚕️</text></view>
+      <view class="role-info">
+        <text class="role-name">我是医生</text>
+        <text class="role-desc">录入体检、AI解读、审核推送、随访管理</text>
+      </view>
+      <view class="role-arrow"><text class="arrow-icon">›</text></view>
+    </view>
+    <view class="role-card" bindtap="onSelectParent">
+      <view class="role-icon parent-icon"><text class="role-emoji">👨‍👩‍👧</text></view>
+      <view class="role-info">
+        <text class="role-name">我是家长</text>
+        <text class="role-desc">查看报告、拍照自查、科普海报、随访提醒</text>
+      </view>
+      <view class="role-arrow"><text class="arrow-icon">›</text></view>
+    </view>
+  </view>
+  <view class="footer-section">
+    <text class="footer-text">医生身份需白名单审核激活</text>
+    <text class="footer-text">家长身份即选即用</text>
+  </view>
+</view>
+<loading-overlay visible="{{loading}}" text="请稍候..." />

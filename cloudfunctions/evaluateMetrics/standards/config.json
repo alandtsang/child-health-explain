@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "abnormal_levels": {
+    "normal": { "label": "正常", "color": "#52c41a", "followup_days": 0 },
+    "mild": { "label": "轻度异常", "color": "#faad14", "followup_days": 90 },
+    "moderate": { "label": "中度异常", "color": "#fa8c16", "followup_days": 30 },
+    "severe": { "label": "重度异常", "color": "#f5222d", "followup_days": 14 }
+  },
+  "level_priority": {
+    "severe": 4, "moderate": 3, "mild": 2, "normal": 1
+  },
+  "followup_rules": {
+    "trigger_condition": "any_item_level != normal",
+    "plan_date_logic": "max_level_followup_days_from_exam_date",
+    "one_plan_per_exam": true,
+    "remind_days_before": [7, 1],
+    "lost_followup_days_after_plan": 7,
+    "sms_triggers": ["report_push", "severe_followup", "lost_followup"]
+  },
+  "metric_categories": {
+    "growth": {
+      "label": "生长发育",
+      "evaluator": "growthEvaluator",
+      "fields": ["height", "weight", "head_circ", "chest_circ"],
+      "standards": ["growth-wst800.json"]
+    },
+    "obesity": {
+      "label": "超重肥胖",
+      "evaluator": "obesityEvaluator",
+      "fields": ["height", "weight"],
+      "standards": ["obesity-wst586.json"],
+      "applicable_age_years": { "min": 6, "max": 17 }
+    },
+    "anemia": {
+      "label": "贫血",
+      "evaluator": "anemiaEvaluator",
+      "fields": ["hemoglobin"],
+      "standards": ["anemia-wst279.json"]
+    },
+    "vision": {
+      "label": "视力",
+      "evaluator": "visionEvaluator",
+      "fields": ["left", "right"],
+      "standards": ["vision.json"]
+    },
+    "dental": {
+      "label": "口腔（龋齿）",
+      "evaluator": "dentalEvaluator",
+      "fields": ["caries_count", "caries_teeth"],
+      "standards": []
+    },
+    "spine": {
+      "label": "脊柱",
+      "evaluator": "spineEvaluator",
+      "fields": ["adams_test", "shoulder_balance"],
+      "standards": []
+    }
+  },
+  "dental_rules": {
+    "normal_min_caries": 0,
+    "rules": [
+      { "condition": "caries_count >= 4", "level": "moderate", "description": "龋齿数 >= 4，中度龋齿风险" },
+      { "condition": "1 <= caries_count < 4", "level": "mild", "description": "龋齿数 1-3，轻度龋齿" }
+    ]
+  },
+  "spine_rules": {
+    "rules": [
+      { "condition": "adams_test == positive AND shoulder_balance == uneven", "level": "moderate", "description": "Adams试验阳性且肩不平衡，脊柱侧弯风险" },
+      { "condition": "adams_test == positive AND shoulder_balance == balanced", "level": "mild", "description": "Adams试验阳性但肩平衡，需观察" },
+      { "condition": "adams_test == negative AND shoulder_balance == uneven", "level": "mild", "description": "肩不平衡，需观察" }
+    ]
+  }
+}

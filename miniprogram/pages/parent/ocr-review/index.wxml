@@ -1,0 +1,25 @@
+<!-- miniprogram/pages/parent/ocr-review/index.wxml -->
+<view class="ocr-review-page">
+  <view class="card">
+    <view class="card-title">体检单原图</view>
+    <image class="ocr-image" src="{{fileId}}" mode="widthFix" show-menu-by-longpress="true" />
+    <view wx:if="{{ocrResult.confidence}}" class="confidence-bar">
+      <text class="confidence-label">识别置信度</text>
+      <text class="confidence-value {{ocrResult.confidence < 0.6 ? 'low' : ''}}">{{confidenceText}}</text>
+    </view>
+  </view>
+
+  <view class="review-hint">
+    <text class="hint-icon">✏️</text>
+    <text class="hint-text">请核对以下识别结果，点击字段可修改</text>
+  </view>
+
+  <metrics-form metrics="{{metrics}}" bind:change="onMetricsChange" />
+
+  <view class="action-bar">
+    <view class="btn-secondary action-btn-half" bindtap="onRetake">重新拍照</view>
+    <view class="btn-primary action-btn-half" bindtap="onConfirm">确认无误</view>
+  </view>
+</view>
+
+<loading-overlay visible="{{parsing}}" text="识别中..." />

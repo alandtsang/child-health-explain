@@ -1,0 +1,314 @@
+/**
+ * cloudfunctions/reviewReport/index.js
+ * 医生审核报告提交云函数
+ *
+ * 支持四种操作：
+ *   save         - 保存doctor_content草稿(review_status保持pending)
+ *   approve      - 一键通过(doctor_content=ai_content, review_status=approved)
+ *   approveAndPush - 审核通过并推送(保存doctor_content + 创建随访 + 触发海报 + 推送通知)
+ *   reject       - 驳回(review_status=rejected)
+ *
+ * 入参：{ action, reportId, doctorContent, doctorNote }
+ * 返回：{ success, ... }
+ */
+
+const cloud = require('wx-server-sdk')
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const db = cloud.database()
+
+const DISCLAIMER = 'AI生成内容经医生审核，仅供参考'
+
+exports.main = async (event, context) => {
+  const wxContext = cloud.getWXContext()
+  const openid = wxContext.OPENID
+  const { action, reportId, doctorContent, doctorNote } = event
+
+  if (!action || !reportId) {
+    return { success: false, error: '缺少必要参数: action, reportId' }
+  }
+
+  try {
+    switch (action) {
+      case 'save':
+        return await handleSave(reportId, doctorContent, doctorNote, openid)
+      case 'approve':
+        return await handleApprove(reportId, openid)
+      case 'approveAndPush':
+        return await handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
+      case 'reject':
+        return await handleReject(reportId, openid)
+      default:
+        return { success: false, error: '未知的 action: ' + action }
+    }
+  } catch (err) {
+    console.error('[reviewReport] error:', err)
+    return { success: false, error: err.message || '审核操作过程中发生错误' }
+  }
+}
+
+/**
+ * 保存修改（草稿）
+ */
+async function handleSave(reportId, doctorContent, doctorNote, openid) {
+  const report = await getReport(reportId)
+  if (report.review_status !== 'pending') {
+    return { success: false, error: '报告当前状态不允许保存修改' }
+  }
+
+  const updateData = {}
+  if (doctorContent) {
+    updateData.doctor_content = { ...doctorContent }
+    if (doctorNote) updateData.doctor_content.doctor_note = doctorNote
+  }
+  updateData.updated_at = db.serverDate()
+
+  await db.collection('reports').doc(reportId).update({ data: updateData })
+
+  return { success: true, message: '修改已保存' }
+}
+
+/**
+ * 一键通过（不推送）
+ */
+async function handleApprove(reportId, openid) {
+  const report = await getReport(reportId)
+  if (report.review_status !== 'pending') {
+    return { success: false, error: '报告当前状态不允许审核' }
+  }
+
+  // 一键通过：doctor_content = ai_content
+  const doctorContent = { ...report.ai_content, doctor_note: '' }
+
+  await db.collection('reports').doc(reportId).update({
+    data: {
+      doctor_content: doctorContent,
+      review_status: 'approved',
+      reviewed_by: openid,
+      reviewed_at: db.serverDate(),
+      updated_at: db.serverDate()
+    }
+  })
+
+  // 更新体检记录状态
+  await updateExamStatus(report.exam_id, 'reported')
+
+  return { success: true, message: '审核通过', review_status: 'approved' }
+}
+
+/**
+ * 审核通过并推送：保存doctor_content + 创建随访 + 触发海报 + 推送通知
+ */
+async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid) {
+  const report = await getReport(reportId)
+  if (report.review_status !== 'pending') {
+    return { success: false, error: '报告当前状态不允许审核' }
+  }
+
+  // 如果未提供doctorContent，使用ai_content
+  const finalDoctorContent = doctorContent
+    ? { ...doctorContent, doctor_note: doctorNote || '' }
+    : { ...report.ai_content, doctor_note: doctorNote || '' }
+
+  // 1. 更新报告状态
+  await db.collection('reports').doc(reportId).update({
+    data: {
+      doctor_content: finalDoctorContent,
+      review_status: 'approved',
+      reviewed_by: openid,
+      reviewed_at: db.serverDate(),
+      updated_at: db.serverDate()
+    }
+  })
+
+  // 更新体检记录状态
+  await updateExamStatus(report.exam_id, 'reported')
+
+  // 2. 读取体检记录和儿童信息
+  const examRes = await db.collection('exams').doc(report.exam_id).get()
+  const exam = examRes.data
+  const childRes = await db.collection('children').doc(exam.child_id).get()
+  const child = childRes.data
+  const parentIds = child?.bound_parent_ids || []
+
+  const results = {
+    followup: null,
+    poster: null,
+    notifications: []
+  }
+
+  // 3. 创建随访计划（有异常项时）
+  if (exam.abnormal_items && exam.abnormal_items.length > 0) {
+    const hasAbnormal = exam.abnormal_items.some(item => item.level !== 'normal')
+    if (hasAbnormal) {
+      try {
+        const followupRes = await cloud.callFunction({
+          name: 'createFollowup',
+          data: {
+            exam_id: exam._id
+          }
+        })
+        results.followup = followupRes.result
+        console.log('[reviewReport] 随访计划创建:', followupRes.result.success)
+      } catch (err) {
+        console.error('[reviewReport] 创建随访失败:', err.message)
+        results.followup = { success: false, error: err.message }
+      }
+    }
+  }
+
+  // 4. 触发海报生成（创建media_assets记录，实际生成由Phase 5 genPoster处理）
+  if (parentIds.length > 0 || true) {
+    try {
+      const posterRecord = {
+        report_id: reportId,
+        self_check_id: null,
+        source: 'doctor',
+        type: 'poster',
+        status: 'pending',
+        prompt: '', // 由genPoster云函数构建(Phase 5)
+        file_id: null,
+        thumbnail_file_id: null,
+        generation_meta: { model: '', cost: 0, duration_ms: 0, error: null },
+        created_at: db.serverDate(),
+        completed_at: null
+      }
+      const posterRes = await db.collection('media_assets').add({ data: posterRecord })
+      results.poster = { media_id: posterRes._id, status: 'pending' }
+      console.log('[reviewReport] 海报任务已创建:', posterRes._id)
+
+      // 尝试调用genPoster（Phase 5实现，不存在则忽略）
+      try {
+        await cloud.callFunction({
+          name: 'genPoster',
+          data: { media_id: posterRes._id, report_id: reportId }
+        })
+      } catch (genErr) {
+        console.log('[reviewReport] genPoster未部署或调用失败，海报记录保持pending:', genErr.message)
+      }
+    } catch (err) {
+      console.error('[reviewReport] 创建海报记录失败:', err.message)
+      results.poster = { success: false, error: err.message }
+    }
+  }
+
+  // 5. 推送通知给绑定家长
+  const pushedTo = []
+  for (const parentId of parentIds) {
+    try {
+      // 创建通知记录
+      const notifRecord = {
+        target_openid: parentId,
+        type: 'report_push',
+        title: `${child?.name || '儿童'}的体检报告已生成`,
+        content: '医生已为您生成体检解读报告，请点击查看',
+        channel: 'mp_subscribe',
+        status: 'pending',
+        related_id: reportId,
+        sent_at: null,
+        created_at: db.serverDate()
+      }
+      const notifRes = await db.collection('notifications').add({ data: notifRecord })
+      results.notifications.push({ notification_id: notifRes._id, target: parentId, status: 'pending' })
+
+      // 尝试发送订阅消息
+      await sendSubscribeMessage(parentId, child, reportId)
+      pushedTo.push(parentId)
+    } catch (err) {
+      console.error('[reviewReport] 推送通知失败:', parentId, err.message)
+      results.notifications.push({ target: parentId, status: 'failed', error: err.message })
+    }
+  }
+
+  // 6. 更新报告推送状态
+  await db.collection('reports').doc(reportId).update({
+    data: {
+      pushed_to: pushedTo,
+      pushed_at: pushedTo.length > 0 ? db.serverDate() : null
+    }
+  })
+
+  return {
+    success: true,
+    message: '审核通过并推送成功',
+    review_status: 'approved',
+    results
+  }
+}
+
+/**
+ * 驳回
+ */
+async function handleReject(reportId, openid) {
+  const report = await getReport(reportId)
+  if (report.review_status !== 'pending') {
+    return { success: false, error: '报告当前状态不允许驳回' }
+  }
+
+  await db.collection('reports').doc(reportId).update({
+    data: {
+      review_status: 'rejected',
+      reviewed_by: openid,
+      reviewed_at: db.serverDate(),
+      updated_at: db.serverDate()
+    }
+  })
+
+  return { success: true, message: '已驳回', review_status: 'rejected' }
+}
+
+/**
+ * 获取报告记录
+ */
+async function getReport(reportId) {
+  const res = await db.collection('reports').doc(reportId).get()
+  if (!res.data) {
+    throw new Error('报告不存在')
+  }
+  return res.data
+}
+
+/**
+ * 更新体检记录状态
+ */
+async function updateExamStatus(examId, status) {
+  try {
+    await db.collection('exams').doc(examId).update({
+      data: { status, updated_at: db.serverDate() }
+    })
+  } catch (err) {
+    console.error('[reviewReport] 更新体检状态失败:', err.message)
+  }
+}
+
+/**
+ * 发送微信订阅消息
+ */
+async function sendSubscribeMessage(openid, child, reportId) {
+  const templateId = process.env.SUBSCRIBE_TEMPLATE_REPORT
+  if (!templateId) {
+    console.log('[reviewReport] SUBSCRIBE_TEMPLATE_REPORT未配置，跳过订阅消息发送')
+    return
+  }
+
+  try {
+    const now = new Date()
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+    await cloud.openapi.subscribeMessage.send({
+      touser: openid,
+      templateId,
+      page: `pages/parent/report-detail/report-detail?reportId=${reportId}`,
+      data: {
+        thing1: { value: `${child?.name || '儿童'}的体检报告` },
+        time2: { value: dateStr },
+        thing3: { value: '医生已生成解读报告，请查看' }
+      },
+      miniprogramState: 'formal'
+    })
+
+    console.log('[reviewReport] 订阅消息发送成功:', openid)
+  } catch (err) {
+    console.error('[reviewReport] 订阅消息发送失败:', openid, err.message)
+    // 不抛出错误，推送失败不影响审核流程
+  }
+}

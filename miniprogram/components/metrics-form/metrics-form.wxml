@@ -1,0 +1,46 @@
+<!--miniprogram/components/metrics-form/metrics-form.wxml-->
+<view class="metrics-form">
+  <!-- 类别Tab栏 -->
+  <scroll-view scroll-x class="tabs-bar" enhanced show-scrollbar="{{false}}">
+    <view class="tabs-inner">
+      <view
+        wx:for="{{categories}}"
+        wx:key="key"
+        class="tab-item {{currentTab === item.key ? 'active' : ''}}"
+        bindtap="switchTab"
+        data-key="{{item.key}}"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 字段列表 -->
+  <view class="fields-container">
+    <view
+      wx:for="{{displayFields}}"
+      wx:key="key"
+      class="field-row {{item.uncertain ? 'uncertain' : ''}}"
+    >
+      <view class="field-label-wrap">
+        <text class="field-label">{{item.label}}</text>
+        <text wx:if="{{item.uncertain}}" class="uncertain-tag">待核对</text>
+      </view>
+      <view class="field-input-wrap">
+        <input
+          class="field-input"
+          type="{{item.type === 'number' ? 'digit' : 'text'}}"
+          value="{{item.value}}"
+          placeholder="{{item.placeholder}}"
+          placeholder-class="field-placeholder"
+          disabled="{{!editable}}"
+          data-category="{{currentTab}}"
+          data-key="{{item.key}}"
+          data-type="{{item.type}}"
+          bindinput="onInput"
+        />
+        <text wx:if="{{item.unit}}" class="field-unit">{{item.unit}}</text>
+      </view>
+    </view>
+  </view>
+</view>

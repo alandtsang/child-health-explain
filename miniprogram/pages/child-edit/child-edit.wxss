@@ -1,0 +1,13 @@
+.child-edit-page { padding: 24rpx; }
+.card { background: #FFF; border-radius: 16rpx; padding: 32rpx; margin-bottom: 24rpx; }
+.form-card { }
+.form-item { display: flex; align-items: center; padding: 24rpx 0; border-bottom: 1rpx solid #F0F0F0; }
+.form-item:last-child { border-bottom: none; }
+.form-label { width: 160rpx; font-size: 30rpx; color: #333; flex-shrink: 0; }
+.form-input { flex: 1; font-size: 30rpx; color: #333; }
+.picker-value { text-align: right; }
+.picker-value.placeholder { color: #CCC; }
+.gender-group { display: flex; gap: 40rpx; }
+.radio-label { font-size: 30rpx; color: #333; }
+.save-btn { width: 100%; box-sizing: border-box; margin-top: 48rpx; }
+.delete-btn { text-align: center; padding: 32rpx 0; font-size: 28rpx; color: #FF4D4F; }

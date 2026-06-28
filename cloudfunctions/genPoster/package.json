@@ -1,0 +1,9 @@
+{
+  "name": "genPoster",
+  "version": "1.0.0",
+  "description": "海报生成云函数 - 豆包Seedream文生图",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

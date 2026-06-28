@@ -1,0 +1,6 @@
+<view class="loading-overlay" wx:if="{{visible}}" catchtap="preventTap">
+  <view class="loading-box">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">{{text}}</text>
+  </view>
+</view>

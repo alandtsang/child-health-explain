@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "OCR校对",
+  "usingComponents": {
+    "metrics-form": "/components/metrics-form/metrics-form"
+  }
+}

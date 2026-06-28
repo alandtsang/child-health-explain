@@ -1,0 +1,50 @@
+.parent-home { padding: 24rpx; padding-bottom: 120rpx; }
+.child-header { display: flex; align-items: center; background: linear-gradient(135deg, #4A90D9, #6BB5E8); border-radius: 24rpx; padding: 32rpx; margin-bottom: 24rpx; }
+.child-avatar { width: 88rpx; height: 88rpx; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 24rpx; }
+.child-avatar-text { font-size: 36rpx; color: #FFF; font-weight: 600; }
+.child-meta { flex: 1; }
+.child-name { font-size: 34rpx; font-weight: 600; color: #FFF; }
+.child-info { font-size: 24rpx; color: rgba(255,255,255,0.85); margin-top: 4rpx; }
+.switch-btn { display: flex; align-items: center; background: rgba(255,255,255,0.2); padding: 8rpx 20rpx; border-radius: 24rpx; }
+.switch-text { font-size: 24rpx; color: #FFF; }
+.switch-arrow { font-size: 32rpx; color: #FFF; margin-left: 4rpx; }
+.quick-row { display: flex; gap: 16rpx; margin-bottom: 32rpx; }
+.quick-card { flex: 1; background: #FFF; border-radius: 16rpx; padding: 32rpx 0; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+.quick-card:active { opacity: 0.85; }
+.quick-icon { font-size: 48rpx; margin-bottom: 12rpx; }
+.quick-label { font-size: 26rpx; color: #333; }
+.section { margin-bottom: 32rpx; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.section-title { font-size: 32rpx; font-weight: 600; color: #333; }
+.section-more { font-size: 24rpx; color: #4A90D9; }
+.followup-card { display: flex; align-items: center; justify-content: space-between; padding: 28rpx 32rpx; }
+.followup-info { flex: 1; }
+.followup-item { font-size: 30rpx; font-weight: 600; color: #333; display: block; }
+.followup-date { font-size: 24rpx; color: #999; margin-top: 8rpx; display: block; }
+.followup-badge { background: #FFF2E8; border-radius: 12rpx; padding: 16rpx 24rpx; text-align: center; }
+.badge-days { font-size: 40rpx; font-weight: 700; color: #FA8C16; display: block; }
+.badge-unit { font-size: 20rpx; color: #FA8C16; }
+.empty-state { text-align: center; padding: 80rpx 0; color: #999; display: flex; flex-direction: column; align-items: center; }
+.empty-icon { font-size: 80rpx; margin-bottom: 16rpx; }
+.empty-hint { font-size: 24rpx; color: #BBB; margin-top: 8rpx; }
+.report-card { padding: 28rpx 32rpx; }
+.report-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16rpx; }
+.report-date { font-size: 28rpx; font-weight: 600; color: #333; }
+.new-badge { background: #FF4D4F; color: #FFF; font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; }
+.report-summary { font-size: 26rpx; color: #666; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.profile-entry { display: flex; justify-content: space-between; align-items: center; background: #FFF; border-radius: 16rpx; padding: 32rpx; margin-top: 24rpx; }
+.profile-entry-text { font-size: 30rpx; color: #333; }
+.profile-entry-arrow { font-size: 40rpx; color: #CCC; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; }
+.modal-content { width: 100%; background: #FFF; border-radius: 24rpx 24rpx 0 0; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 32rpx; border-bottom: 1rpx solid #EEE; }
+.modal-title { font-size: 32rpx; font-weight: 600; color: #333; }
+.modal-close { font-size: 48rpx; color: #999; }
+.modal-body { padding: 24rpx 32rpx; padding-bottom: calc(32rpx + env(safe-area-inset-bottom)); }
+.child-option { display: flex; align-items: center; padding: 24rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.child-option-avatar { width: 72rpx; height: 72rpx; background: #E8F2FD; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20rpx; font-size: 32rpx; color: #4A90D9; }
+.child-option-info { flex: 1; }
+.child-option-name { font-size: 30rpx; font-weight: 600; color: #333; display: block; }
+.child-option-meta { font-size: 24rpx; color: #999; margin-top: 4rpx; display: block; }
+.check-icon { font-size: 40rpx; color: #52C41A; }
+.add-child-btn { text-align: center; padding: 32rpx 0; font-size: 30rpx; color: #4A90D9; }

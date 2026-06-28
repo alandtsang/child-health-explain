@@ -1,0 +1,100 @@
+<!-- miniprogram/pages/parent/self-check/index.wxml -->
+<view class="self-check-page">
+  <!-- Step: 选择儿童 -->
+  <view wx:if="{{step === 'child'}}" class="step-section">
+    <view class="step-title">选择儿童档案</view>
+    <view wx:if="{{!showChildForm}}">
+      <view wx:if="{{children.length === 0}}" class="empty-state">
+        <text>暂无儿童档案</text>
+      </view>
+      <view wx:for="{{children}}" wx:key="_id" class="child-card card" bindtap="onSelectChild" data-child="{{item}}">
+        <view class="child-card-info">
+          <text class="child-card-name">{{item.name}}</text>
+          <text class="child-card-meta">{{item.gender}} · {{item.birth_date}}</text>
+        </view>
+        <text class="child-card-arrow">›</text>
+      </view>
+      <view class="btn-secondary" bindtap="onShowChildForm">+ 新建儿童档案</view>
+    </view>
+    <view wx:if="{{showChildForm}}" class="card">
+      <view class="form-item">
+        <text class="form-label">姓名</text>
+        <input class="form-input" placeholder="请输入儿童姓名" value="{{newChild.name}}" data-field="name" bindinput="onChildInput" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">性别</text>
+        <radio-group bindchange="onGenderChange">
+          <label class="radio-label"><radio value="男" checked="{{newChild.gender === '男'}}" />男</label>
+          <label class="radio-label"><radio value="女" checked="{{newChild.gender === '女'}}" />女</label>
+        </radio-group>
+      </view>
+      <view class="form-item">
+        <text class="form-label">出生日期</text>
+        <picker mode="date" value="{{newChild.birth_date}}" end="{{examDate}}" bindchange="onBirthDateChange">
+          <view class="form-input">{{newChild.birth_date || '请选择日期'}}</view>
+        </picker>
+      </view>
+      <view class="btn-primary" bindtap="onCreateChild">创建档案</view>
+    </view>
+  </view>
+
+  <!-- Step: 选择方式 -->
+  <view wx:if="{{step === 'method'}}" class="step-section">
+    <view class="step-title">选择自查方式</view>
+    <view class="method-card" bindtap="onSelectMethod" data-method="manual">
+      <text class="method-icon">✏️</text>
+      <view class="method-info">
+        <text class="method-name">手动录入</text>
+        <text class="method-desc">逐项填写体检指标数据</text>
+      </view>
+      <text class="method-arrow">›</text>
+    </view>
+    <view class="method-card" bindtap="onSelectMethod" data-method="ocr">
+      <text class="method-icon">📸</text>
+      <view class="method-info">
+        <text class="method-name">拍照上传</text>
+        <text class="method-desc">拍照识别体检单，自动提取数据</text>
+      </view>
+      <text class="method-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- Step: 手动填表 -->
+  <view wx:if="{{step === 'form'}}" class="step-section">
+    <view class="form-header">
+      <view class="child-info-bar">
+        <text class="child-info-name">{{selectedChild.name}}</text>
+        <text class="child-info-meta">{{selectedChild.gender}} · {{selectedChild.birth_date}}</text>
+      </view>
+      <view class="exam-date-bar">
+        <text class="form-label">体检日期</text>
+        <picker mode="date" value="{{examDate}}" bindchange="onExamDateChange">
+          <view class="date-value">{{examDate}}</view>
+        </picker>
+      </view>
+    </view>
+    <metrics-form metrics="{{metrics}}" bind:change="onMetricsChange" />
+    <view class="btn-primary action-full" bindtap="onToConsent">下一步：知情同意</view>
+  </view>
+
+  <!-- Step: 知情同意 -->
+  <view wx:if="{{step === 'consent'}}" class="step-section">
+    <view class="consent-card card">
+      <view class="card-title">知情同意</view>
+      <text class="consent-text">{{consentText}}</text>
+      <text class="consent-text">自查结果不会发送给医生，仅您自己可见。</text>
+      <text class="consent-text">如需专业医疗诊断，请及时就医。</text>
+      <checkbox-group bindchange="onConsentChange" class="consent-check-group">
+        <label class="consent-check-label">
+          <checkbox value="agree" checked="{{consentChecked}}" />
+          <text>我已阅读并同意上述说明</text>
+        </label>
+      </checkbox-group>
+    </view>
+    <view class="btn-primary action-full {{consentChecked ? '' : 'btn-disabled'}}" bindtap="onSubmitSelfCheck">开始AI解读</view>
+    <view class="btn-secondary action-full" style="margin-top: 16rpx;" bindtap="onBack">返回修改</view>
+  </view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="处理中..." />
+<loading-overlay visible="{{submitting}}" text="AI解读中..." />

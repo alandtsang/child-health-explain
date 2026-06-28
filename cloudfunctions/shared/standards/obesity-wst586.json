@@ -1,0 +1,47 @@
+{
+  "standard": "WS/T 586-2018",
+  "standard_name": "学龄儿童青少年超重与肥胖筛查",
+  "description": "6-17岁儿童青少年BMI超重/肥胖筛查界值点，分性别",
+  "unit": { "bmi": "kg/m2" },
+  "age_range": { "min_years": 6, "max_years": 17 },
+  "tables": {
+    "boys": [
+      { "age_years": 6,  "overweight_bmi": 17.4, "obese_bmi": 19.2 },
+      { "age_years": 7,  "overweight_bmi": 17.7, "obese_bmi": 19.5 },
+      { "age_years": 8,  "overweight_bmi": 18.1, "obese_bmi": 20.0 },
+      { "age_years": 9,  "overweight_bmi": 18.5, "obese_bmi": 20.5 },
+      { "age_years": 10, "overweight_bmi": 19.0, "obese_bmi": 21.1 },
+      { "age_years": 11, "overweight_bmi": 19.6, "obese_bmi": 21.7 },
+      { "age_years": 12, "overweight_bmi": 20.1, "obese_bmi": 22.3 },
+      { "age_years": 13, "overweight_bmi": 20.6, "obese_bmi": 22.9 },
+      { "age_years": 14, "overweight_bmi": 21.1, "obese_bmi": 23.5 },
+      { "age_years": 15, "overweight_bmi": 21.5, "obese_bmi": 24.0 },
+      { "age_years": 16, "overweight_bmi": 21.8, "obese_bmi": 24.3 },
+      { "age_years": 17, "overweight_bmi": 22.0, "obese_bmi": 24.6 }
+    ],
+    "girls": [
+      { "age_years": 6,  "overweight_bmi": 17.2, "obese_bmi": 19.0 },
+      { "age_years": 7,  "overweight_bmi": 17.4, "obese_bmi": 19.2 },
+      { "age_years": 8,  "overweight_bmi": 17.8, "obese_bmi": 19.7 },
+      { "age_years": 9,  "overweight_bmi": 18.3, "obese_bmi": 20.3 },
+      { "age_years": 10, "overweight_bmi": 19.0, "obese_bmi": 21.1 },
+      { "age_years": 11, "overweight_bmi": 19.6, "obese_bmi": 21.8 },
+      { "age_years": 12, "overweight_bmi": 20.1, "obese_bmi": 22.5 },
+      { "age_years": 13, "overweight_bmi": 20.6, "obese_bmi": 23.1 },
+      { "age_years": 14, "overweight_bmi": 21.1, "obese_bmi": 23.6 },
+      { "age_years": 15, "overweight_bmi": 21.5, "obese_bmi": 24.0 },
+      { "age_years": 16, "overweight_bmi": 21.7, "obese_bmi": 24.2 },
+      { "age_years": 17, "overweight_bmi": 21.9, "obese_bmi": 24.4 }
+    ]
+  },
+  "classification": {
+    "label": "超重肥胖（BMI）",
+    "standard_source": "WS/T 586-2018",
+    "metric": "bmi",
+    "rules": [
+      { "condition": "bmi >= obese_bmi", "level": "moderate", "description": "BMI >= 肥胖界值，肥胖" },
+      { "condition": "overweight_bmi <= bmi < obese_bmi", "level": "mild", "description": "BMI >= 超重界值且 < 肥胖界值，超重" }
+    ],
+    "note": "BMI = 体重(kg) / 身高(m)2，身高体重缺一则不评估"
+  }
+}

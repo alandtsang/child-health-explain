@@ -1,0 +1,116 @@
+/* miniprogram/components/metrics-form/metrics-form.wxss */
+.metrics-form {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+/* Tab栏 */
+.tabs-bar {
+  white-space: nowrap;
+  border-bottom: 1rpx solid #e8e8e8;
+  background: #fafafa;
+}
+
+.tabs-inner {
+  display: inline-flex;
+  padding: 0 8rpx;
+}
+
+.tab-item {
+  display: inline-block;
+  padding: 24rpx 28rpx;
+  font-size: 28rpx;
+  color: #666;
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab-item.active {
+  color: #4a90d9;
+  font-weight: 600;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 6rpx;
+  background: #4a90d9;
+  border-radius: 3rpx;
+}
+
+/* 字段列表 */
+.fields-container {
+  padding: 8rpx 32rpx;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  min-height: 96rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.field-row.uncertain {
+  background: #fff8e6;
+  margin: 0 -32rpx;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+}
+
+.field-label-wrap {
+  flex-shrink: 0;
+  width: 220rpx;
+  display: flex;
+  align-items: center;
+}
+
+.field-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.uncertain-tag {
+  font-size: 20rpx;
+  color: #fa8c16;
+  background: #fff2e8;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.field-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.field-input {
+  flex: 1;
+  font-size: 30rpx;
+  color: #333;
+  text-align: right;
+  padding: 0 16rpx;
+}
+
+.field-placeholder {
+  color: #ccc;
+  font-size: 28rpx;
+}
+
+.field-unit {
+  font-size: 24rpx;
+  color: #999;
+  flex-shrink: 0;
+  width: 100rpx;
+}

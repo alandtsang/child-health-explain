@@ -1,0 +1,21 @@
+.role-select-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 0 48rpx; background: linear-gradient(180deg, #4A90D9 0%, #6BB5E8 40%, #F5F6FA 100%); }
+.logo-section { display: flex; flex-direction: column; align-items: center; padding-top: 160rpx; padding-bottom: 80rpx; }
+.logo-icon { width: 160rpx; height: 160rpx; background: rgba(255,255,255,0.9); border-radius: 40rpx; display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.1); }
+.logo-emoji { font-size: 80rpx; }
+.app-title { font-size: 44rpx; font-weight: 700; color: #FFF; margin-top: 32rpx; }
+.app-subtitle { font-size: 28rpx; color: rgba(255,255,255,0.85); margin-top: 8rpx; }
+.role-section { width: 100%; flex: 1; }
+.section-title { display: block; font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 32rpx; text-align: center; }
+.role-card { display: flex; align-items: center; background: #FFF; border-radius: 24rpx; padding: 40rpx 32rpx; margin-bottom: 32rpx; box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.06); }
+.role-card:active { opacity: 0.85; transform: scale(0.99); }
+.role-icon { width: 96rpx; height: 96rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 24rpx; flex-shrink: 0; }
+.doctor-icon { background: #E8F2FD; }
+.parent-icon { background: #FFF0E6; }
+.role-emoji { font-size: 48rpx; }
+.role-info { flex: 1; display: flex; flex-direction: column; }
+.role-name { font-size: 34rpx; font-weight: 600; color: #333; }
+.role-desc { font-size: 24rpx; color: #999; margin-top: 8rpx; }
+.role-arrow { flex-shrink: 0; }
+.arrow-icon { font-size: 48rpx; color: #CCC; }
+.footer-section { display: flex; flex-direction: column; align-items: center; padding-bottom: 60rpx; padding-top: 40rpx; }
+.footer-text { font-size: 24rpx; color: #999; line-height: 1.8; }
