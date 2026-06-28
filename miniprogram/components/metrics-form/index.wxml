@@ -1,0 +1,24 @@
+<!-- miniprogram/components/metrics-form/index.wxml -->
+<view class="metrics-form">
+  <view wx:for="{{categories}}" wx:key="key" class="category-block">
+    <view class="category-header" bindtap="onToggleCategory" data-key="{{item.key}}">
+      <text class="category-label">{{item.label}}</text>
+      <text class="category-arrow {{expandedKeys.indexOf(item.key) > -1 ? 'expanded' : ''}}">›</text>
+    </view>
+    <view wx:if="{{expandedKeys.indexOf(item.key) > -1}}" class="category-body">
+      <view wx:for="{{item.fields}}" wx:for-item="field" wx:key="key" class="field-item">
+        <text class="field-label">{{field.label}}</text>
+        <input
+          class="field-input"
+          type="{{field.type}}"
+          placeholder="{{field.placeholder}}"
+          value="{{metrics[item.key][field.key]}}"
+          disabled="{{disabled}}"
+          data-category="{{item.key}}"
+          data-field="{{field.key}}"
+          bindinput="onInput"
+        />
+      </view>
+    </view>
+  </view>
+</view>

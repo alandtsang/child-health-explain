@@ -1,0 +1,32 @@
+<!-- miniprogram/pages/doctor/profile/index.wxml -->
+<view class="profile-page">
+  <view class="profile-header">
+    <view class="avatar"><text class="avatar-text">{{doctorInfo.name ? doctorInfo.name[0] : '医'}}</text></view>
+    <view class="profile-info">
+      <text class="profile-name">{{doctorInfo.name || '医生'}}</text>
+      <text class="profile-title">{{doctorInfo.title || ''}}</text>
+    </view>
+  </view>
+
+  <view class="info-card card">
+    <view class="info-row"><text class="info-label">医院</text><text class="info-value">{{doctorInfo.hospital || '--'}}</text></view>
+    <view class="info-row"><text class="info-label">科室</text><text class="info-value">{{doctorInfo.department || '--'}}</text></view>
+    <view class="info-row"><text class="info-label">执业证号</text><text class="info-value">{{doctorInfo.license_no || '--'}}</text></view>
+    <view class="info-row">
+      <text class="info-label">资质状态</text>
+      <text class="info-value status-{{doctorInfo.status}}">{{doctorInfo.status === 'approved' ? '已认证' : doctorInfo.status === 'pending' ? '审核中' : '未认证'}}</text>
+    </view>
+  </view>
+
+  <view class="action-card card" bindtap="onSwitchToParent">
+    <text class="action-label">切换到家长身份</text>
+    <text class="action-arrow">›</text>
+  </view>
+
+  <view class="action-card card" bindtap="onLogout">
+    <text class="action-label danger">退出登录</text>
+    <text class="action-arrow">›</text>
+  </view>
+
+  <view class="version-text">版本 1.0.0</view>
+</view>

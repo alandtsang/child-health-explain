@@ -1,0 +1,131 @@
+{
+  "standard": "WS/T 800-2022",
+  "standard_name": "学龄前儿童生长发育评价",
+  "description": "0-6岁儿童身高/身长、体重 Z-Score 参考值，分性别。基于 WHO 2006 生长标准。",
+  "unit": { "height": "cm", "weight": "kg" },
+  "age_range": { "min_months": 0, "max_months": 72 },
+  "z_columns": ["z_minus3", "z_minus2", "z_minus1", "z_median", "z_plus1", "z_plus2", "z_plus3"],
+  "tables": {
+    "height_for_age": {
+      "boys": [
+        { "age_months": 0,  "z_minus3": 43.6, "z_minus2": 46.1, "z_minus1": 47.6, "z_median": 49.1, "z_plus1": 50.7, "z_plus2": 52.2, "z_plus3": 54.0 },
+        { "age_months": 1,  "z_minus3": 47.7, "z_minus2": 50.8, "z_minus1": 52.2, "z_median": 53.7, "z_plus1": 55.2, "z_plus2": 56.7, "z_plus3": 58.6 },
+        { "age_months": 2,  "z_minus3": 51.1, "z_minus2": 54.4, "z_minus1": 56.0, "z_median": 57.6, "z_plus1": 59.2, "z_plus2": 60.8, "z_plus3": 62.7 },
+        { "age_months": 3,  "z_minus3": 53.7, "z_minus2": 57.3, "z_minus1": 58.9, "z_median": 60.6, "z_plus1": 62.3, "z_plus2": 63.9, "z_plus3": 65.9 },
+        { "age_months": 4,  "z_minus3": 55.7, "z_minus2": 59.4, "z_minus1": 61.1, "z_median": 62.8, "z_plus1": 64.5, "z_plus2": 66.2, "z_plus3": 68.0 },
+        { "age_months": 5,  "z_minus3": 57.5, "z_minus2": 61.3, "z_minus1": 63.1, "z_median": 64.9, "z_plus1": 66.7, "z_plus2": 68.5, "z_plus3": 70.3 },
+        { "age_months": 6,  "z_minus3": 59.7, "z_minus2": 63.7, "z_minus1": 65.6, "z_median": 67.6, "z_plus1": 69.6, "z_plus2": 71.6, "z_plus3": 74.0 },
+        { "age_months": 9,  "z_minus3": 63.5, "z_minus2": 67.9, "z_minus1": 70.0, "z_median": 72.0, "z_plus1": 74.0, "z_plus2": 76.1, "z_plus3": 78.5 },
+        { "age_months": 12, "z_minus3": 67.0, "z_minus2": 71.7, "z_minus1": 73.8, "z_median": 76.0, "z_plus1": 78.2, "z_plus2": 80.5, "z_plus3": 83.5 },
+        { "age_months": 15, "z_minus3": 69.8, "z_minus2": 74.4, "z_minus1": 76.5, "z_median": 78.8, "z_plus1": 81.0, "z_plus2": 83.4, "z_plus3": 86.2 },
+        { "age_months": 18, "z_minus3": 72.0, "z_minus2": 76.7, "z_minus1": 78.9, "z_median": 81.2, "z_plus1": 83.5, "z_plus2": 85.9, "z_plus3": 88.8 },
+        { "age_months": 21, "z_minus3": 74.0, "z_minus2": 78.8, "z_minus1": 81.1, "z_median": 83.4, "z_plus1": 85.8, "z_plus2": 88.3, "z_plus3": 91.2 },
+        { "age_months": 24, "z_minus3": 76.0, "z_minus2": 81.0, "z_minus1": 84.0, "z_median": 87.1, "z_plus1": 90.2, "z_plus2": 93.4, "z_plus3": 96.3 },
+        { "age_months": 30, "z_minus3": 79.6, "z_minus2": 84.6, "z_minus1": 87.6, "z_median": 90.3, "z_plus1": 93.0, "z_plus2": 95.9, "z_plus3": 99.1 },
+        { "age_months": 36, "z_minus3": 83.0, "z_minus2": 87.8, "z_minus1": 90.9, "z_median": 95.4, "z_plus1": 98.0, "z_plus2": 101.6, "z_plus3": 104.1 },
+        { "age_months": 42, "z_minus3": 86.0, "z_minus2": 90.9, "z_minus1": 94.1, "z_median": 98.5, "z_plus1": 101.2, "z_plus2": 104.8, "z_plus3": 108.5 },
+        { "age_months": 48, "z_minus3": 88.0, "z_minus2": 93.2, "z_minus1": 96.5, "z_median": 102.9, "z_plus1": 105.6, "z_plus2": 109.3, "z_plus3": 113.5 },
+        { "age_months": 54, "z_minus3": 90.0, "z_minus2": 95.4, "z_minus1": 99.0, "z_median": 106.3, "z_plus1": 109.2, "z_plus2": 113.0, "z_plus3": 117.6 },
+        { "age_months": 60, "z_minus3": 92.0, "z_minus2": 97.5, "z_minus1": 101.4, "z_median": 109.9, "z_plus1": 113.0, "z_plus2": 116.8, "z_plus3": 121.7 },
+        { "age_months": 66, "z_minus3": 94.0, "z_minus2": 99.6, "z_minus1": 103.8, "z_median": 113.3, "z_plus1": 116.5, "z_plus2": 120.5, "z_plus3": 125.6 },
+        { "age_months": 72, "z_minus3": 95.7, "z_minus2": 101.5, "z_minus1": 106.0, "z_median": 116.1, "z_plus1": 119.7, "z_plus2": 123.8, "z_plus3": 129.0 }
+      ],
+      "girls": [
+        { "age_months": 0,  "z_minus3": 43.4, "z_minus2": 45.4, "z_minus1": 46.7, "z_median": 48.0, "z_plus1": 49.4, "z_plus2": 50.7, "z_plus3": 52.4 },
+        { "age_months": 1,  "z_minus3": 47.0, "z_minus2": 49.8, "z_minus1": 51.3, "z_median": 52.9, "z_plus1": 54.5, "z_plus2": 56.1, "z_plus3": 57.8 },
+        { "age_months": 2,  "z_minus3": 50.3, "z_minus2": 53.3, "z_minus1": 54.8, "z_median": 56.4, "z_plus1": 58.0, "z_plus2": 59.6, "z_plus3": 61.5 },
+        { "age_months": 3,  "z_minus3": 52.7, "z_minus2": 55.8, "z_minus1": 57.6, "z_median": 59.5, "z_plus1": 61.3, "z_plus2": 63.1, "z_plus3": 65.0 },
+        { "age_months": 4,  "z_minus3": 54.6, "z_minus2": 57.8, "z_minus1": 59.7, "z_median": 61.5, "z_plus1": 63.3, "z_plus2": 65.1, "z_plus3": 67.0 },
+        { "age_months": 5,  "z_minus3": 56.2, "z_minus2": 59.5, "z_minus1": 61.4, "z_median": 63.3, "z_plus1": 65.2, "z_plus2": 67.0, "z_plus3": 68.9 },
+        { "age_months": 6,  "z_minus3": 57.8, "z_minus2": 61.2, "z_minus1": 63.4, "z_median": 65.7, "z_plus1": 67.8, "z_plus2": 70.0, "z_plus3": 72.0 },
+        { "age_months": 9,  "z_minus3": 61.2, "z_minus2": 64.7, "z_minus1": 67.2, "z_median": 70.1, "z_plus1": 72.5, "z_plus2": 74.8, "z_plus3": 77.1 },
+        { "age_months": 12, "z_minus3": 64.0, "z_minus2": 68.0, "z_minus1": 70.9, "z_median": 74.0, "z_plus1": 76.6, "z_plus2": 79.2, "z_plus3": 81.7 },
+        { "age_months": 15, "z_minus3": 66.4, "z_minus2": 70.6, "z_minus1": 73.6, "z_median": 76.7, "z_plus1": 79.5, "z_plus2": 82.3, "z_plus3": 85.0 },
+        { "age_months": 18, "z_minus3": 68.6, "z_minus2": 73.0, "z_minus1": 76.0, "z_median": 80.0, "z_plus1": 82.6, "z_plus2": 85.2, "z_plus3": 87.9 },
+        { "age_months": 21, "z_minus3": 70.4, "z_minus2": 75.0, "z_minus1": 78.3, "z_median": 82.2, "z_plus1": 84.8, "z_plus2": 87.5, "z_plus3": 90.2 },
+        { "age_months": 24, "z_minus3": 72.0, "z_minus2": 76.7, "z_minus1": 81.0, "z_median": 85.7, "z_plus1": 88.4, "z_plus2": 91.2, "z_plus3": 94.0 },
+        { "age_months": 30, "z_minus3": 75.0, "z_minus2": 80.0, "z_minus1": 84.4, "z_median": 89.2, "z_plus1": 92.0, "z_plus2": 94.8, "z_plus3": 97.7 },
+        { "age_months": 36, "z_minus3": 77.6, "z_minus2": 83.0, "z_minus1": 88.3, "z_median": 94.1, "z_plus1": 96.8, "z_plus2": 99.6, "z_plus3": 102.5 },
+        { "age_months": 42, "z_minus3": 80.0, "z_minus2": 85.6, "z_minus1": 91.1, "z_median": 97.3, "z_plus1": 100.0, "z_plus2": 102.8, "z_plus3": 105.7 },
+        { "age_months": 48, "z_minus3": 82.2, "z_minus2": 88.0, "z_minus1": 93.6, "z_median": 101.6, "z_plus1": 104.2, "z_plus2": 107.0, "z_plus3": 109.9 },
+        { "age_months": 54, "z_minus3": 84.2, "z_minus2": 90.2, "z_minus1": 96.2, "z_median": 104.9, "z_plus1": 107.5, "z_plus2": 110.4, "z_plus3": 113.4 },
+        { "age_months": 60, "z_minus3": 86.0, "z_minus2": 92.2, "z_minus1": 98.6, "z_median": 108.5, "z_plus1": 111.2, "z_plus2": 114.1, "z_plus3": 117.2 },
+        { "age_months": 66, "z_minus3": 87.7, "z_minus2": 94.0, "z_minus1": 100.7, "z_median": 111.6, "z_plus1": 114.4, "z_plus2": 117.4, "z_plus3": 120.6 },
+        { "age_months": 72, "z_minus3": 89.3, "z_minus2": 95.8, "z_minus1": 102.8, "z_median": 115.1, "z_plus1": 118.0, "z_plus2": 121.1, "z_plus3": 124.4 }
+      ]
+    },
+    "weight_for_age": {
+      "boys": [
+        { "age_months": 0,  "z_minus3": 2.1, "z_minus2": 2.5, "z_minus1": 2.9, "z_median": 3.3, "z_plus1": 3.9, "z_plus2": 4.4, "z_plus3": 5.0 },
+        { "age_months": 1,  "z_minus3": 2.9, "z_minus2": 3.4, "z_minus1": 3.9, "z_median": 4.5, "z_plus1": 5.2, "z_plus2": 5.8, "z_plus3": 6.6 },
+        { "age_months": 2,  "z_minus3": 3.8, "z_minus2": 4.3, "z_minus1": 4.9, "z_median": 5.6, "z_plus1": 6.3, "z_plus2": 7.1, "z_plus3": 8.0 },
+        { "age_months": 3,  "z_minus3": 4.4, "z_minus2": 5.0, "z_minus1": 5.7, "z_median": 6.4, "z_plus1": 7.2, "z_plus2": 8.0, "z_plus3": 9.0 },
+        { "age_months": 4,  "z_minus3": 4.9, "z_minus2": 5.6, "z_minus1": 6.2, "z_median": 7.0, "z_plus1": 7.7, "z_plus2": 8.5, "z_plus3": 9.5 },
+        { "age_months": 5,  "z_minus3": 5.3, "z_minus2": 6.0, "z_minus1": 6.7, "z_median": 7.5, "z_plus1": 8.2, "z_plus2": 9.0, "z_plus3": 10.1 },
+        { "age_months": 6,  "z_minus3": 5.7, "z_minus2": 6.4, "z_minus1": 7.1, "z_median": 7.9, "z_plus1": 8.8, "z_plus2": 9.8, "z_plus3": 10.9 },
+        { "age_months": 9,  "z_minus3": 6.3, "z_minus2": 7.1, "z_minus1": 8.0, "z_median": 8.9, "z_plus1": 9.9, "z_plus2": 11.0, "z_plus3": 12.3 },
+        { "age_months": 12, "z_minus3": 6.7, "z_minus2": 7.7, "z_minus1": 8.6, "z_median": 9.6, "z_plus1": 10.8, "z_plus2": 12.0, "z_plus3": 13.6 },
+        { "age_months": 15, "z_minus3": 7.1, "z_minus2": 8.3, "z_minus1": 9.2, "z_median": 10.3, "z_plus1": 11.5, "z_plus2": 12.8, "z_plus3": 14.5 },
+        { "age_months": 18, "z_minus3": 7.5, "z_minus2": 8.8, "z_minus1": 9.8, "z_median": 10.9, "z_plus1": 12.2, "z_plus2": 13.7, "z_plus3": 15.5 },
+        { "age_months": 21, "z_minus3": 7.8, "z_minus2": 9.2, "z_minus1": 10.3, "z_median": 11.5, "z_plus1": 12.9, "z_plus2": 14.5, "z_plus3": 16.4 },
+        { "age_months": 24, "z_minus3": 8.1, "z_minus2": 9.7, "z_minus1": 10.9, "z_median": 12.2, "z_plus1": 13.7, "z_plus2": 15.3, "z_plus3": 17.3 },
+        { "age_months": 30, "z_minus3": 8.7, "z_minus2": 10.5, "z_minus1": 11.8, "z_median": 13.3, "z_plus1": 15.0, "z_plus2": 16.9, "z_plus3": 19.1 },
+        { "age_months": 36, "z_minus3": 9.3, "z_minus2": 11.3, "z_minus1": 12.7, "z_median": 14.3, "z_plus1": 16.2, "z_plus2": 18.3, "z_plus3": 20.7 },
+        { "age_months": 42, "z_minus3": 9.8, "z_minus2": 12.0, "z_minus1": 13.5, "z_median": 15.3, "z_plus1": 17.4, "z_plus2": 19.8, "z_plus3": 22.5 },
+        { "age_months": 48, "z_minus3": 10.3, "z_minus2": 12.7, "z_minus1": 14.3, "z_median": 16.3, "z_plus1": 18.6, "z_plus2": 21.2, "z_plus3": 24.2 },
+        { "age_months": 54, "z_minus3": 10.8, "z_minus2": 13.4, "z_minus1": 15.2, "z_median": 17.3, "z_plus1": 19.9, "z_plus2": 22.7, "z_plus3": 26.0 },
+        { "age_months": 60, "z_minus3": 11.3, "z_minus2": 14.1, "z_minus1": 16.0, "z_median": 18.3, "z_plus1": 21.1, "z_plus2": 24.2, "z_plus3": 27.8 },
+        { "age_months": 66, "z_minus3": 11.8, "z_minus2": 14.8, "z_minus1": 16.8, "z_median": 19.3, "z_plus1": 22.3, "z_plus2": 25.6, "z_plus3": 29.6 },
+        { "age_months": 72, "z_minus3": 12.3, "z_minus2": 15.6, "z_minus1": 17.7, "z_median": 20.7, "z_plus1": 24.0, "z_plus2": 27.6, "z_plus3": 32.0 }
+      ],
+      "girls": [
+        { "age_months": 0,  "z_minus3": 2.0, "z_minus2": 2.4, "z_minus1": 2.8, "z_median": 3.2, "z_plus1": 3.7, "z_plus2": 4.2, "z_plus3": 4.7 },
+        { "age_months": 1,  "z_minus3": 2.7, "z_minus2": 3.2, "z_minus1": 3.6, "z_median": 4.2, "z_plus1": 4.8, "z_plus2": 5.5, "z_plus3": 6.2 },
+        { "age_months": 2,  "z_minus3": 3.4, "z_minus2": 3.9, "z_minus1": 4.5, "z_median": 5.1, "z_plus1": 5.8, "z_plus2": 6.6, "z_plus3": 7.4 },
+        { "age_months": 3,  "z_minus3": 3.9, "z_minus2": 4.5, "z_minus1": 5.1, "z_median": 5.8, "z_plus1": 6.6, "z_plus2": 7.5, "z_plus3": 8.4 },
+        { "age_months": 4,  "z_minus3": 4.3, "z_minus2": 5.0, "z_minus1": 5.6, "z_median": 6.4, "z_plus1": 7.3, "z_plus2": 8.2, "z_plus3": 9.2 },
+        { "age_months": 5,  "z_minus3": 4.6, "z_minus2": 5.4, "z_minus1": 6.1, "z_median": 6.9, "z_plus1": 7.8, "z_plus2": 8.8, "z_plus3": 9.9 },
+        { "age_months": 6,  "z_minus3": 4.9, "z_minus2": 5.7, "z_minus1": 6.5, "z_median": 7.3, "z_plus1": 8.2, "z_plus2": 9.3, "z_plus3": 10.5 },
+        { "age_months": 9,  "z_minus3": 5.3, "z_minus2": 6.3, "z_minus1": 7.2, "z_median": 8.2, "z_plus1": 9.3, "z_plus2": 10.5, "z_plus3": 11.9 },
+        { "age_months": 12, "z_minus3": 5.7, "z_minus2": 7.0, "z_minus1": 7.9, "z_median": 8.9, "z_plus1": 10.1, "z_plus2": 11.5, "z_plus3": 13.1 },
+        { "age_months": 15, "z_minus3": 6.0, "z_minus2": 7.4, "z_minus1": 8.4, "z_median": 9.6, "z_plus1": 10.9, "z_plus2": 12.4, "z_plus3": 14.2 },
+        { "age_months": 18, "z_minus3": 6.3, "z_minus2": 8.1, "z_minus1": 9.0, "z_median": 10.2, "z_plus1": 11.6, "z_plus2": 13.2, "z_plus3": 15.1 },
+        { "age_months": 21, "z_minus3": 6.5, "z_minus2": 8.5, "z_minus1": 9.5, "z_median": 10.9, "z_plus1": 12.3, "z_plus2": 14.0, "z_plus3": 16.0 },
+        { "age_months": 24, "z_minus3": 6.7, "z_minus2": 9.0, "z_minus1": 10.1, "z_median": 11.5, "z_plus1": 13.1, "z_plus2": 14.8, "z_plus3": 17.0 },
+        { "age_months": 30, "z_minus3": 7.2, "z_minus2": 9.8, "z_minus1": 11.1, "z_median": 12.7, "z_plus1": 14.5, "z_plus2": 16.5, "z_plus3": 19.0 },
+        { "age_months": 36, "z_minus3": 7.8, "z_minus2": 10.8, "z_minus1": 12.2, "z_median": 13.9, "z_plus1": 15.9, "z_plus2": 18.1, "z_plus3": 20.9 },
+        { "age_months": 42, "z_minus3": 8.3, "z_minus2": 11.6, "z_minus1": 13.2, "z_median": 15.0, "z_plus1": 17.2, "z_plus2": 19.7, "z_plus3": 22.8 },
+        { "age_months": 48, "z_minus3": 8.8, "z_minus2": 12.3, "z_minus1": 14.1, "z_median": 16.1, "z_plus1": 18.6, "z_plus2": 21.5, "z_plus3": 25.0 },
+        { "age_months": 54, "z_minus3": 9.2, "z_minus2": 13.0, "z_minus1": 15.0, "z_median": 17.2, "z_plus1": 20.0, "z_plus2": 23.2, "z_plus3": 27.1 },
+        { "age_months": 60, "z_minus3": 9.6, "z_minus2": 13.7, "z_minus1": 15.8, "z_median": 18.2, "z_plus1": 21.3, "z_plus2": 24.9, "z_plus3": 29.2 },
+        { "age_months": 66, "z_minus3": 10.0, "z_minus2": 14.4, "z_minus1": 16.7, "z_median": 19.2, "z_plus1": 22.6, "z_plus2": 26.5, "z_plus3": 31.3 },
+        { "age_months": 72, "z_minus3": 10.4, "z_minus2": 15.3, "z_minus1": 17.6, "z_median": 20.3, "z_plus1": 23.9, "z_plus2": 27.8, "z_plus3": 33.0 }
+      ]
+    }
+  },
+  "classification": {
+    "stunting": {
+      "label": "生长迟缓（身高别年龄）", "standard_source": "WS/T 800-2022", "metric": "height_for_age",
+      "rules": [
+        { "condition": "value < z_minus3", "level": "severe", "description": "身高 < -3SD，重度生长迟缓" },
+        { "condition": "z_minus3 <= value < z_minus2", "level": "moderate", "description": "身高 < -2SD，中度生长迟缓" },
+        { "condition": "z_minus2 <= value < z_minus1", "level": "mild", "description": "身高 <-1SD，生长迟缓风险" }
+      ]
+    },
+    "underweight": {
+      "label": "低体重（体重别年龄）", "standard_source": "WS/T 800-2022", "metric": "weight_for_age",
+      "rules": [
+        { "condition": "value < z_minus3", "level": "severe", "description": "体重 < -3SD，重度低体重" },
+        { "condition": "z_minus3 <= value < z_minus2", "level": "moderate", "description": "体重 < -2SD，中度低体重" },
+        { "condition": "z_minus2 <= value < z_minus1", "level": "mild", "description": "体重 <-1SD，低体重风险" }
+      ]
+    },
+    "overweight": {
+      "label": "超重（体重别年龄）", "standard_source": "WS/T 800-2022", "metric": "weight_for_age",
+      "rules": [
+        { "condition": "z_plus2 <= value < z_plus3", "level": "mild", "description": "体重 > +2SD，超重" },
+        { "condition": "value >= z_plus3", "level": "moderate", "description": "体重 > +3SD，肥胖风险" }
+      ]
+    }
+  }
+}

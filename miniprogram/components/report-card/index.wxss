@@ -1,0 +1,16 @@
+.report-card { padding: 28rpx 32rpx; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12rpx; }
+.card-date { font-size: 28rpx; font-weight: 600; color: #333; }
+.card-badges { display: flex; gap: 12rpx; }
+.new-badge { background: #FF4D4F; color: #FFF; font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 8rpx; }
+.status-badge { font-size: 22rpx; padding: 4rpx 16rpx; border-radius: 8rpx; }
+.status-pending { background: #FFFBE6; color: #FAAD14; }
+.status-approved { background: #F6FFED; color: #52C41A; }
+.status-rejected { background: #FFF1F0; color: #FF4D4F; }
+.card-child { display: flex; align-items: center; gap: 16rpx; margin-bottom: 12rpx; }
+.child-name { font-size: 30rpx; font-weight: 600; color: #333; }
+.child-age { font-size: 24rpx; color: #999; }
+.card-summary { font-size: 26rpx; color: #666; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.card-abnormal { display: flex; align-items: center; gap: 12rpx; margin-top: 16rpx; }
+.abnormal-count { font-size: 24rpx; color: #FA8C16; }
+.card-normal { margin-top: 16rpx; }

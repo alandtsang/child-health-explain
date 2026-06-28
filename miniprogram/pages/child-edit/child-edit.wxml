@@ -1,0 +1,27 @@
+<!-- miniprogram/pages/child-edit/child-edit.wxml -->
+<view class="child-edit-page">
+  <view class="card form-card">
+    <view class="form-item">
+      <text class="form-label">姓名</text>
+      <input class="form-input" placeholder="请输入儿童姓名" value="{{form.name}}" data-field="name" bindinput="onInput" />
+    </view>
+    <view class="form-item">
+      <text class="form-label">性别</text>
+      <radio-group bindchange="onGenderChange" class="gender-group">
+        <label class="radio-label"><radio value="男" checked="{{form.gender === '男'}}" color="#4A90D9" />男</label>
+        <label class="radio-label"><radio value="女" checked="{{form.gender === '女'}}" color="#4A90D9" />女</label>
+      </radio-group>
+    </view>
+    <view class="form-item">
+      <text class="form-label">出生日期</text>
+      <picker mode="date" value="{{form.birth_date}}" end="{{today}}" bindchange="onBirthDateChange">
+        <view class="form-input picker-value {{form.birth_date ? '' : 'placeholder'}}">{{form.birth_date || '请选择日期'}}</view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存修改' : '创建档案'}}</view>
+  <view wx:if="{{isEdit}}" class="btn-text delete-btn" bindtap="onDelete">删除此档案</view>
+</view>
+
+<loading-overlay visible="{{loading}}" text="处理中..." />

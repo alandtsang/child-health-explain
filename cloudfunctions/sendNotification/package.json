@@ -1,0 +1,10 @@
+{
+  "name": "sendNotification",
+  "version": "1.0.0",
+  "description": "统一消息发送云函数 - 订阅消息+短信兜底",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "tencentcloud-sdk-nodejs-sms": "^4.0.900"
+  }
+}

@@ -1,0 +1,3 @@
+<view class="abnormal-tag {{levelInfo[level] ? levelInfo[level].className : 'tag-normal'}}">
+  {{text || (levelInfo[level] ? levelInfo[level].label : '未知')}}
+</view>

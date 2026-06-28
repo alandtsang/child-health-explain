@@ -1,0 +1,85 @@
+<!-- miniprogram/pages/parent/self-check-result/index.wxml -->
+<view class="result-page" wx:if="{{!loading && selfCheck}}">
+  <!-- 仅供参考提醒 -->
+  <view class="disclaimer-banner">
+    <text class="disclaimer-icon">⚠️</text>
+    <text class="disclaimer-text">以下结果由AI生成，仅供参考，不能替代医生诊断</text>
+  </view>
+
+  <!-- 基本信息头 -->
+  <view class="card result-header">
+    <text class="result-date">{{selfCheck.created_at_fmt}}</text>
+    <text class="result-child" wx:if="{{child}}">{{child.name}} · {{child.gender}}</text>
+    <text class="result-method">自查方式：{{selfCheck.input_method === 'ocr' ? '拍照识别' : '手动录入'}}</text>
+  </view>
+
+  <!-- 总体概况 -->
+  <view class="card" wx:if="{{result.summary}}">
+    <view class="card-title">总体概况</view>
+    <text class="content-text">{{result.summary}}</text>
+  </view>
+
+  <!-- 异常项一览 -->
+  <view class="card" wx:if="{{result.abnormal_items_fmt.length > 0}}">
+    <view class="card-title">异常项一览</view>
+    <view wx:for="{{result.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
+      <view class="abnormal-left">
+        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-value">{{item.value}}</text>
+      </view>
+      <abnormal-tag level="{{item.level}}" />
+    </view>
+  </view>
+
+  <!-- 指标解读 -->
+  <view class="card" wx:if="{{result.item_explanations.length > 0}}">
+    <view class="card-title">指标解读</view>
+    <view wx:for="{{result.item_explanations}}" wx:key="item" class="explain-block">
+      <text class="explain-title">{{item.item}}</text>
+      <text class="explain-text">{{item.meaning}}</text>
+      <view class="explain-implication" wx:if="{{item.abnormal_implication}}">
+        <text class="implication-text">{{item.abnormal_implication}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 家庭干预建议 -->
+  <view class="card" wx:if="{{result.home_interventions.length > 0}}">
+    <view class="card-title">家庭干预建议</view>
+    <view wx:for="{{result.home_interventions}}" wx:key="item" class="intervention-block">
+      <text class="intervention-title">{{item.item}}</text>
+      <text class="intervention-detail">{{item.detail}}</text>
+    </view>
+  </view>
+
+  <!-- 就医提示 -->
+  <view class="card advice-card" wx:if="{{result.need_medical_attention}}">
+    <text class="advice-icon">🏥</text>
+    <text class="advice-text">检测到异常项，建议尽快带孩子前往医院进行专业检查</text>
+  </view>
+
+  <!-- 海报区域 -->
+  <view class="card media-card">
+    <view class="card-title">科普海报</view>
+    <view wx:if="{{poster}}" class="poster-preview" bindtap="onViewPoster">
+      <image class="poster-thumb" src="{{poster.file_id}}" mode="aspectFit" />
+      <text class="poster-tap-hint">点击查看大图，可保存或转发</text>
+    </view>
+    <view wx:else class="poster-empty">
+      <text class="poster-empty-text">生成海报分享给家人</text>
+      <view class="btn-primary media-btn" bindtap="onGeneratePoster">生成海报</view>
+    </view>
+  </view>
+
+  <!-- 底部操作 -->
+  <view class="bottom-actions">
+    <view class="btn-secondary action-half" bindtap="onBackHome">返回首页</view>
+    <button class="btn-primary action-half share-btn" open-type="share">分享结果</button>
+  </view>
+</view>
+
+<view wx:if="{{!loading && !selfCheck}}" class="empty-state"><text>加载失败</text></view>
+
+<poster-viewer visible="{{posterVisible}}" fileId="{{poster.file_id}}" title="科普海报" bind:close="onPosterClose" />
+<loading-overlay visible="{{loading}}" text="加载中..." />
+<loading-overlay visible="{{generatingPoster}}" text="海报生成中..." />

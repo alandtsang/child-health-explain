@@ -1,0 +1,57 @@
+{
+  "standard": "WS/T 279-2008",
+  "standard_name": "小儿缺铁性贫血",
+  "description": "0-18岁儿童血红蛋白(Hb)贫血筛查阈值，按年龄分段",
+  "unit": { "hemoglobin": "g/L" },
+  "age_ranges": [
+    {
+      "label": "新生儿（0-28天）",
+      "min_months": 0, "max_months": 0,
+      "normal_min": 145,
+      "rules": [
+        { "condition": "hb < 90", "level": "severe", "description": "Hb < 90 g/L，重度贫血" },
+        { "condition": "90 <= hb < 120", "level": "moderate", "description": "Hb 90-119 g/L，中度贫血" },
+        { "condition": "120 <= hb < 145", "level": "mild", "description": "Hb 120-144 g/L，轻度贫血" }
+      ]
+    },
+    {
+      "label": "婴儿（1-5月）",
+      "min_months": 1, "max_months": 5,
+      "normal_min": 90,
+      "rules": [
+        { "condition": "hb < 60", "level": "severe", "description": "Hb < 60 g/L，重度贫血" },
+        { "condition": "60 <= hb < 90", "level": "moderate", "description": "Hb 60-89 g/L，中度贫血" }
+      ]
+    },
+    {
+      "label": "幼儿（6-59月）",
+      "min_months": 6, "max_months": 59,
+      "normal_min": 110,
+      "rules": [
+        { "condition": "hb < 60", "level": "severe", "description": "Hb < 60 g/L，重度贫血" },
+        { "condition": "60 <= hb < 90", "level": "moderate", "description": "Hb 60-89 g/L，中度贫血" },
+        { "condition": "90 <= hb < 110", "level": "mild", "description": "Hb 90-109 g/L，轻度贫血" }
+      ]
+    },
+    {
+      "label": "学龄前及学龄（60-131月，5-11岁）",
+      "min_months": 60, "max_months": 131,
+      "normal_min": 115,
+      "rules": [
+        { "condition": "hb < 60", "level": "severe", "description": "Hb < 60 g/L，重度贫血" },
+        { "condition": "60 <= hb < 90", "level": "moderate", "description": "Hb 60-89 g/L，中度贫血" },
+        { "condition": "90 <= hb < 115", "level": "mild", "description": "Hb 90-114 g/L，轻度贫血" }
+      ]
+    },
+    {
+      "label": "青少年（132-215月，12-17岁）",
+      "min_months": 132, "max_months": 215,
+      "normal_min": 120,
+      "rules": [
+        { "condition": "hb < 60", "level": "severe", "description": "Hb < 60 g/L，重度贫血" },
+        { "condition": "60 <= hb < 90", "level": "moderate", "description": "Hb 60-89 g/L，中度贫血" },
+        { "condition": "90 <= hb < 120", "level": "mild", "description": "Hb 90-119 g/L，轻度贫血" }
+      ]
+    }
+  ]
+}

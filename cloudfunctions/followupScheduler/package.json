@@ -1,0 +1,9 @@
+{
+  "name": "followupScheduler",
+  "version": "1.0.0",
+  "description": "随访提醒定时触发器 - 每天9:00扫描到期随访",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

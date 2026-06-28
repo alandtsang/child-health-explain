@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "随访提醒",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "abnormal-tag": "/components/abnormal-tag/abnormal-tag",
+    "loading-overlay": "/components/loading-overlay/loading-overlay"
+  }
+}

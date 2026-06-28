@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "体检报告",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "loading-overlay": "/components/loading-overlay/loading-overlay"
+  }
+}

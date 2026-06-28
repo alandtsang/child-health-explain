@@ -1,0 +1,39 @@
+<view class="poster-overlay" wx:if="{{visible}}" catchtouchmove="true">
+  <view class="poster-container">
+    <view class="poster-header">
+      <text class="poster-title">{{title}}</text>
+      <view class="poster-close" bindtap="onClose">
+        <text class="close-icon">×</text>
+      </view>
+    </view>
+
+    <image
+      class="poster-image"
+      src="{{fileId}}"
+      mode="aspectFit"
+      bindtap="onPreview"
+      show-menu-by-longpress="true"
+    />
+
+    <view class="poster-disclaimer">AI生成内容仅供参考</view>
+
+    <view class="poster-actions">
+      <button
+        class="action-btn save-btn"
+        bindtap="onSave"
+        loading="{{saving}}"
+        disabled="{{saving}}"
+      >
+        保存到相册
+      </button>
+      <button
+        class="action-btn share-btn"
+        open-type="share"
+        plain="true"
+        data-from="poster-viewer"
+      >
+        转发给好友
+      </button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "reviewReport",
+  "version": "1.0.0",
+  "description": "医生审核报告提交云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

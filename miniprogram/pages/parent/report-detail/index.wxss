@@ -1,0 +1,44 @@
+.report-detail-page { padding: 24rpx; padding-bottom: 120rpx; }
+.card { background: #FFF; border-radius: 16rpx; padding: 32rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+.card-title { font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 20rpx; }
+.report-header { display: flex; flex-direction: column; gap: 8rpx; }
+.report-date { font-size: 36rpx; font-weight: 700; color: #333; }
+.report-child { font-size: 28rpx; color: #666; }
+.content-text { font-size: 30rpx; color: #333; line-height: 1.8; }
+.abnormal-row { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.abnormal-row:last-child { border-bottom: none; }
+.abnormal-left { flex: 1; }
+.abnormal-item { font-size: 30rpx; color: #333; display: block; }
+.abnormal-value { font-size: 24rpx; color: #999; margin-top: 4rpx; display: block; }
+.explain-block { padding: 20rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.explain-block:last-child { border-bottom: none; }
+.explain-title { font-size: 30rpx; font-weight: 600; color: #333; display: block; margin-bottom: 12rpx; }
+.explain-text { font-size: 28rpx; color: #666; line-height: 1.6; display: block; }
+.explain-implication { margin-top: 12rpx; background: #FFFBE6; border-radius: 8rpx; padding: 16rpx; }
+.implication-label { font-size: 24rpx; color: #FAAD14; display: block; margin-bottom: 4rpx; }
+.implication-text { font-size: 26rpx; color: #666; }
+.triage-block { padding: 20rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.triage-block:last-child { border-bottom: none; }
+.triage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
+.triage-item { font-size: 30rpx; font-weight: 600; color: #333; }
+.triage-dept { font-size: 26rpx; color: #4A90D9; background: #F0F5FF; padding: 4rpx 16rpx; border-radius: 8rpx; }
+.triage-urgency { font-size: 26rpx; color: #FA8C16; display: block; margin-bottom: 8rpx; }
+.triage-reason { font-size: 26rpx; color: #666; line-height: 1.5; }
+.intervention-block { padding: 20rpx 0; border-bottom: 1rpx solid #F5F5F5; }
+.intervention-block:last-child { border-bottom: none; }
+.intervention-title { font-size: 30rpx; font-weight: 600; color: #333; }
+.intervention-type { font-size: 22rpx; color: #999; background: #F5F5F5; padding: 2rpx 12rpx; border-radius: 8rpx; margin-left: 12rpx; }
+.intervention-detail { font-size: 28rpx; color: #666; line-height: 1.6; display: block; margin-top: 8rpx; }
+.media-card { text-align: center; }
+.poster-preview { display: flex; flex-direction: column; align-items: center; }
+.poster-thumb { width: 100%; max-height: 600rpx; border-radius: 12rpx; }
+.poster-tap-hint { font-size: 24rpx; color: #999; margin-top: 12rpx; }
+.poster-empty { display: flex; flex-direction: column; align-items: center; padding: 40rpx 0; }
+.poster-empty-text { font-size: 28rpx; color: #999; margin-bottom: 24rpx; }
+.media-btn { width: 60%; }
+.media-hint { font-size: 22rpx; color: #BBB; margin-top: 16rpx; }
+.video-preview { width: 100%; }
+.video-player { width: 100%; border-radius: 12rpx; }
+.disclaimer-card { padding: 32rpx; text-align: center; }
+.disclaimer-text { font-size: 24rpx; color: #999; line-height: 1.6; }
+.empty-state { text-align: center; padding: 120rpx 0; color: #999; }

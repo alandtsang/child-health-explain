@@ -1,0 +1,14 @@
+# IDE
+.idea/
+.trae/
+
+# Doc
+docs/
+
+node_modules/
+miniprogram_npm/
+coverage/
+.DS_Store
+*.log
+.env
+.env.local

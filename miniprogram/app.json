@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/role-select/role-select",
+    "pages/doctor/home/index",
+    "pages/doctor/exam-input/index",
+    "pages/doctor/ocr-review/ocr-review",
+    "pages/doctor/report-review/index",
+    "pages/doctor/report-list/index",
+    "pages/doctor/followup-list/index",
+    "pages/doctor/profile/index",
+    "pages/parent/home/index",
+    "pages/parent/report-list/index",
+    "pages/parent/report-detail/index",
+    "pages/parent/self-check/index",
+    "pages/parent/ocr-review/index",
+    "pages/parent/self-check-result/index",
+    "pages/parent/followup/index",
+    "pages/parent/profile/index",
+    "pages/child-edit/child-edit"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#4A90D9",
+    "navigationBarTitleText": "儿童健康体检",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F5F6FA"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "cloud": true,
+  "lazyCodeLoading": "requiredComponents"
+}

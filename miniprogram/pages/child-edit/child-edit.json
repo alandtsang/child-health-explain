@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "儿童档案",
+  "usingComponents": {
+    "loading-overlay": "/components/loading-overlay/loading-overlay"
+  }
+}

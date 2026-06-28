@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "报告管理",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "report-card": "/components/report-card/index",
+    "loading-overlay": "/components/loading-overlay/loading-overlay"
+  }
+}

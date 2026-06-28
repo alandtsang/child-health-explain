@@ -1,0 +1,24 @@
+<!-- miniprogram/components/report-card/index.wxml -->
+<view class="report-card card" bindtap="onTap">
+  <view class="card-header">
+    <text class="card-date">{{report.exam_date || report.created_at}}</text>
+    <view class="card-badges">
+      <view wx:if="{{showNew && report.has_new}}" class="new-badge">新</view>
+      <view wx:if="{{showStatus}}" class="status-badge status-{{report.review_status}}">
+        {{report.review_status === 'pending' ? '待审核' : report.review_status === 'approved' ? '已通过' : '已拒绝'}}
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{report.child_name}}" class="card-child">
+    <text class="child-name">{{report.child_name}}</text>
+    <text wx:if="{{report.age_text}}" class="child-age">{{report.age_text}}</text>
+  </view>
+  <text class="card-summary">{{report.summary}}</text>
+  <view wx:if="{{report.max_level && report.max_level !== 'normal'}}" class="card-abnormal">
+    <abnormal-tag level="{{report.max_level}}" />
+    <text class="abnormal-count">{{report.abnormal_count}}项异常</text>
+  </view>
+  <view wx:elif="{{report.max_level}}" class="card-normal">
+    <text class="text-success">各项指标正常</text>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "followupSchedulerTrigger",
+      "type": "timer",
+      "config": "0 0 9 * * * *"
+    }
+  ]
+}
