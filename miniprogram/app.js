@@ -4,7 +4,7 @@ App({
     userInfo: null,
     openid: null,
     currentRole: null,
-    cloudEnv: 'REPLACE_WITH_YOUR_ENV_ID'
+    cloudEnv: 'cloudbase-d0gdt7b6vcb17e82c'
   },
 
   onLaunch() {

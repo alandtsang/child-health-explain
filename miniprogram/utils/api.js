@@ -15,11 +15,29 @@ function callFunction(name, data, options) {
     return Promise.reject(new Error(errMsg))
   }).catch(err => {
     if (opts.loading !== false) wx.hideLoading()
-    if ((err.errCode || err.errMsg) && opts.showError !== false) {
-      wx.showToast({ title: '网络异常，请重试', icon: 'none' })
+    if (opts.showError !== false) {
+      const tip = resolveCallErrorTip(err)
+      if (tip) wx.showToast({ title: tip, icon: 'none', duration: 3000 })
     }
     return Promise.reject(err)
   })
+}
+
+// 区分云调用失败原因，给出可操作提示而非笼统的"网络异常"
+function resolveCallErrorTip(err) {
+  if (!err) return ''
+  const msg = (err.errMsg || err.message || '').toLowerCase()
+  // 云环境未初始化 / 配置错误
+  if (/env.*invalid|invalid.*env|env_id|环境/.test(msg)) {
+    return '云开发环境未配置，请检查 app.js 中的 cloudEnv'
+  }
+  // 云函数不存在或未部署
+  if (/function.*not.*found|not.*exist|找不到|不存在/.test(msg)) {
+    return '云函数未部署，请先上传云函数'
+  }
+  // 网络层错误
+  if (err.errCode || err.errMsg) return '网络异常，请重试'
+  return ''
 }
 
 // === 登录与角色（Phase 1 已有）===

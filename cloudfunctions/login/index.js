@@ -2,6 +2,7 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const _ = db.command
 
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
@@ -17,8 +18,18 @@ exports.main = async (event, context) => {
       default: return { code: 400, message: '未知的 action: ' + action }
     }
   } catch (err) {
-    console.error('[login] error:', err)
-    return { code: 500, message: '服务器错误', error: err.message }
+    console.error('[login] action=%s openid=%s error:', action, openid, err)
+    // 集合未初始化时给出可操作提示，而非笼统的"服务器错误"
+    if (isCollectionMissingError(err)) {
+      return {
+        code: 503,
+        message: '数据库集合未初始化，请先在云开发控制台或调用 initDatabase 初始化集合',
+        error: err.errMsg || err.message
+      }
+    }
+    // 调试阶段：message 包含具体错误原因，便于前端直接定位问题
+    const detail = err.errMsg || err.message || '未知错误'
+    return { code: 500, message: '服务器错误：' + detail, error: err.message }
   }
 }
 
@@ -82,12 +93,37 @@ async function getOrCreateUser(openid) {
 }
 
 async function updateUserRecord(userId, data) {
-  await db.collection('users').doc(userId).update({ data: { ...data, updated_at: new Date() } })
+  // 对象类型字段用 _.set() 强制替换，避免在 null 值上合并嵌套字段报错
+  // 例：doctor_info 初始为 null，直接 update 嵌套对象会触发 "Cannot create field in element {null}"
+  const updateData = { updated_at: new Date() }
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+      updateData[key] = _.set(value)
+    } else {
+      updateData[key] = value
+    }
+  }
+  await db.collection('users').doc(userId).update({ data: updateData })
 }
 
 async function checkDoctorWhitelist(openid) {
-  const result = await db.collection('doctor_whitelist').where({ openid, status: 'active' }).limit(1).get()
-  return result.data.length > 0 ? result.data[0] : null
+  try {
+    const result = await db.collection('doctor_whitelist').where({ openid, status: 'active' }).limit(1).get()
+    return result.data.length > 0 ? result.data[0] : null
+  } catch (err) {
+    // 集合不存在时降级为"不在白名单"，返回 403 而非 500，避免阻塞医生登录流程排查
+    if (isCollectionMissingError(err)) {
+      console.warn('[login] doctor_whitelist 集合未初始化，请调用 initDatabase 创建')
+      return null
+    }
+    throw err
+  }
+}
+
+// 微信云开发查询不存在的集合时，错误信息包含 collection not exists 或 errCode -502003
+function isCollectionMissingError(err) {
+  const msg = (err && (err.errMsg || err.message)) || ''
+  return /collection.*(not.*exist|不存在)|-502003/i.test(msg)
 }
 
 function sanitizeUser(user) {
