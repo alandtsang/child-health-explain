@@ -3,6 +3,7 @@ const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
+const { isCollectionMissingError } = require('../../../utils/db')
 
 const db = wx.cloud.database()
 const _ = db.command
@@ -50,7 +51,11 @@ Page({
         }
       })
     } catch (err) {
-      console.error('加载统计失败:', err)
+      if (isCollectionMissingError(err)) {
+        console.error('加载统计失败：数据库集合未初始化，请调用 initDatabase 创建 reports/followups 集合')
+      } else {
+        console.error('加载统计失败:', err)
+      }
     }
   },
 
@@ -88,7 +93,10 @@ Page({
     } catch (err) {
       console.error('加载体检列表失败:', err)
       this.setData({ loading: false, loadingMore: false })
-      wx.showToast({ title: '加载失败', icon: 'none' })
+      const tip = isCollectionMissingError(err)
+        ? '数据库未初始化，请在云开发控制台运行 initDatabase'
+        : '加载失败'
+      wx.showToast({ title: tip, icon: 'none', duration: 3000 })
     }
   },
 
