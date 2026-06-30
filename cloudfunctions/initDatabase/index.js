@@ -19,11 +19,18 @@ async function initCollections() {
   const results = []
   for (const name of COLLECTIONS) {
     try {
-      const temp = await db.collection(name).add({ data: { _init_temp: true, created_at: new Date() } })
-      await db.collection(name).doc(temp._id).remove()
-      results.push({ collection: name, status: 'created_or_exists' })
+      // 使用官方 createCollection API 创建集合（仅云函数端可用）
+      // 旧方案 add()+remove() 在新版云环境中会报 -502005，无法自动建集合
+      await db.createCollection(name)
+      results.push({ collection: name, status: 'created' })
     } catch (err) {
-      results.push({ collection: name, status: 'error', error: err.message })
+      const msg = err.errMsg || err.message || ''
+      // createCollection 在集合已存在时会报错，属正常情况
+      if (/already exist|已存在/i.test(msg)) {
+        results.push({ collection: name, status: 'already_exists' })
+      } else {
+        results.push({ collection: name, status: 'error', error: msg })
+      }
     }
   }
   return { code: 0, data: results }
@@ -36,7 +43,7 @@ async function checkCollections() {
       const res = await db.collection(name).count()
       results.push({ collection: name, exists: true, count: res.total })
     } catch (err) {
-      results.push({ collection: name, exists: false, error: err.message })
+      results.push({ collection: name, exists: false, error: err.errMsg || err.message })
     }
   }
   return { code: 0, data: results }
