@@ -4,6 +4,12 @@
 .logo-emoji { font-size: 80rpx; }
 .app-title { font-size: 44rpx; font-weight: 700; color: #FFF; margin-top: 32rpx; }
 .app-subtitle { font-size: 28rpx; color: rgba(255,255,255,0.85); margin-top: 8rpx; }
+.quick-continue { width: 100%; background: rgba(255,255,255,0.95); border-radius: 20rpx; padding: 28rpx 32rpx; margin-bottom: 40rpx; box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08); }
+.quick-continue:active { opacity: 0.85; transform: scale(0.99); }
+.quick-label { font-size: 28rpx; color: #666; }
+.quick-action { display: flex; align-items: center; justify-content: space-between; margin-top: 12rpx; }
+.quick-text { font-size: 32rpx; font-weight: 600; color: #4A90D9; }
+.quick-arrow { font-size: 40rpx; color: #4A90D9; }
 .role-section { width: 100%; flex: 1; }
 .section-title { display: block; font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 32rpx; text-align: center; }
 .role-card { display: flex; align-items: center; background: #FFF; border-radius: 24rpx; padding: 40rpx 32rpx; margin-bottom: 32rpx; box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.06); }
