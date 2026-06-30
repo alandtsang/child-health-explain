@@ -4,8 +4,18 @@
     <text class="app-title">儿童健康体检</text>
     <text class="app-subtitle">AI科普与随访管理</text>
   </view>
+
+  <!-- 返回用户：快速继续入口 -->
+  <view class="quick-continue" wx:if="{{lastRole}}" bindtap="onQuickContinue">
+    <text class="quick-label">欢迎回来{{userName ? '，' + userName : ''}}</text>
+    <view class="quick-action">
+      <text class="quick-text">直接进入{{lastRole === 'doctor' ? '医生' : '家长'}}工作台</text>
+      <text class="quick-arrow">›</text>
+    </view>
+  </view>
+
   <view class="role-section">
-    <text class="section-title">请选择您的身份</text>
+    <text class="section-title">{{lastRole ? '或切换身份' : '请选择您的身份'}}</text>
     <view class="role-card" bindtap="onSelectDoctor">
       <view class="role-icon doctor-icon"><text class="role-emoji">👨‍⚕️</text></view>
       <view class="role-info">
