@@ -124,7 +124,8 @@ Page({
         age_text: child.birth_date ? format.formatAge(child.birth_date, exam.exam_date) : '',
         exam_date: format.formatDate(exam.exam_date),
         abnormal_count: abnormals.length,
-        max_level: maxLevel
+        max_level: maxLevel,
+        is_draft: exam.status === 'draft'
       }
     })
   },

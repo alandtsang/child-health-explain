@@ -188,20 +188,20 @@ Page({
   async generateReport(examId) {
     this.setData({ generating: true })
     try {
-      wx.showLoading({ title: 'AI解读生成中...', mask: true })
-      const data = await api.generateReport(examId)
-      wx.hideLoading()
+      await api.callFunction('generateReport', { exam_id: examId }, {
+        loading: false, showError: false
+      })
       wx.showToast({ title: '解读已生成', icon: 'success' })
       // 跳转到报告审核页
       setTimeout(() => {
         wx.redirectTo({ url: `/pages/doctor/report-review/index?exam_id=${examId}` })
       }, 1000)
     } catch (err) {
-      wx.hideLoading()
       console.error('生成解读失败:', err)
+      const errMsg = (err && err.message) || 'AI解读生成失败，请稍后重试'
       wx.showModal({
         title: '生成失败',
-        content: 'AI解读生成失败，是否跳转到报告列表查看？',
+        content: errMsg + '\n是否跳转到报告列表查看？',
         confirmText: '去列表',
         success(res) {
           if (res.confirm) {

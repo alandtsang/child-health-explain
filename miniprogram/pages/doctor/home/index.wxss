@@ -27,6 +27,8 @@
 .empty-hint { font-size: 24rpx; color: #BBB; margin-top: 8rpx; }
 .exam-card { padding: 28rpx 32rpx; }
 .exam-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.name-wrap { display: flex; align-items: center; gap: 12rpx; }
+.draft-badge { font-size: 20rpx; color: #FFF; background: #FA8C16; padding: 2rpx 12rpx; border-radius: 6rpx; }
 .child-name { font-size: 32rpx; font-weight: 600; color: #333; }
 .exam-date { font-size: 24rpx; color: #999; }
 .exam-card-body { display: flex; justify-content: space-between; align-items: center; }

@@ -97,3 +97,4 @@
 </view>
 
 <loading-overlay visible="{{loading}}" text="处理中..." />
+<loading-overlay visible="{{generating}}" text="AI解读生成中..." />

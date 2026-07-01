@@ -117,9 +117,52 @@
   </view>
 </view>
 
-<view wx:if="{{!loading && !report}}" class="empty-state">
+<!-- 报告尚未生成：展示体检信息 + 生成按钮 -->
+<view wx:if="{{!loading && noReport}}" class="no-report-page">
+  <view class="card info-card">
+    <view class="info-header">
+      <text class="child-name">{{child.name}}</text>
+      <text class="child-meta">{{child.gender}} · {{exam.age_text}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">体检日期</text>
+      <text class="info-value">{{exam.exam_date_fmt}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">录入方式</text>
+      <text class="info-value">{{exam.source === 'ocr' ? '拍照上传' : '手动录入'}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">异常分级一览</view>
+    <view wx:if="{{exam.abnormal_items_fmt.length === 0}}" class="text-success">所有指标正常</view>
+    <view wx:for="{{exam.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
+      <view class="abnormal-left">
+        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-value">{{item.value}}</text>
+      </view>
+      <view class="abnormal-right">
+        <abnormal-tag level="{{item.level}}" />
+        <text class="abnormal-ref">{{item.standard_ref || ''}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="no-report-tip">
+    <text class="no-report-icon">📄</text>
+    <text class="no-report-text">AI解读报告尚未生成</text>
+    <text class="no-report-hint">点击下方按钮生成解读报告</text>
+  </view>
+  <view class="generate-btn {{generating ? 'btn-disabled' : ''}}" bindtap="onGenerateReport">
+    <text>{{generating ? '生成中...' : '生成解读报告'}}</text>
+  </view>
+</view>
+
+<view wx:if="{{!loading && !report && !noReport}}" class="empty-state">
   <text>报告加载失败</text>
 </view>
 
 <loading-overlay visible="{{loading}}" text="加载中..." />
 <loading-overlay visible="{{submitting}}" text="提交中..." />
+<loading-overlay visible="{{generating}}" text="AI解读生成中..." />

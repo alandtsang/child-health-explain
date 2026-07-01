@@ -27,8 +27,8 @@ function callFunction(name, data, options) {
 function resolveCallErrorTip(err) {
   if (!err) return ''
   const msg = (err.errMsg || err.message || '').toLowerCase()
-  // 云环境未初始化 / 配置错误
-  if (/env.*invalid|invalid.*env|env_id|环境/.test(msg)) {
+  // 云环境未初始化 / 配置错误（排除 "ARK_API_KEY 环境变量" 等非云环境错误）
+  if (/env.*invalid|invalid.*env|env_id|cloud.*env|环境.*不存在|环境.*id/.test(msg)) {
     return '云开发环境未配置，请检查 app.js 中的 cloudEnv'
   }
   // 云函数不存在或未部署
