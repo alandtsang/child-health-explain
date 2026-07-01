@@ -60,8 +60,10 @@ function generateReport(examId) {
 }
 
 // === OCR 解析（Phase 3）===
-function ocrParse(imageFileId) {
-  return callFunction('ocrParse', { image_file_id: imageFileId }, { loadingText: '识别中...' })
+function ocrParse(imageFileId, ageMonths) {
+  const data = { fileID: imageFileId }
+  if (ageMonths != null) data.age_months = ageMonths
+  return callFunction('ocrParse', data, { loadingText: '识别中...' })
 }
 
 // === 报告审核（Phase 4）===

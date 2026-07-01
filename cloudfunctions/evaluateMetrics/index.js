@@ -7,6 +7,9 @@ const anemiaEvaluator = require('./lib/anemiaEvaluator')
 const visionEvaluator = require('./lib/visionEvaluator')
 const dentalEvaluator = require('./lib/dentalEvaluator')
 const spineEvaluator = require('./lib/spineEvaluator')
+const hearingEvaluator = require('./lib/hearingEvaluator')
+const developmentEvaluator = require('./lib/developmentEvaluator')
+const ricketsEvaluator = require('./lib/ricketsEvaluator')
 const { generateFollowup } = require('./lib/followupRules')
 
 exports.main = async (event, context) => {
@@ -63,6 +66,24 @@ exports.main = async (event, context) => {
     // 6. 脊柱
     if (metrics.spine) {
       const items = spineEvaluator.evaluate(metrics.spine, childInfo)
+      allItems.push(...items)
+    }
+
+    // 7. 听力
+    if (metrics.hearing) {
+      const items = hearingEvaluator.evaluate(metrics.hearing, childInfo)
+      allItems.push(...items)
+    }
+
+    // 8. 发育评估（预警征筛查）
+    if (metrics.development) {
+      const items = developmentEvaluator.evaluate(metrics.development, childInfo)
+      allItems.push(...items)
+    }
+
+    // 9. 佝偻病筛查
+    if (metrics.rickets) {
+      const items = ricketsEvaluator.evaluate(metrics.rickets, childInfo)
       allItems.push(...items)
     }
 

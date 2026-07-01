@@ -21,14 +21,41 @@ Page({
       childId: options.child_id,
       examDate: options.exam_date
     })
-    this.parseOcr()
+    this.startParse()
+  },
+
+  /**
+   * 获取儿童出生日期 → 计算月龄 → 调用 OCR 解析
+   */
+  async startParse() {
+    let ageMonths = null
+    try {
+      const db = wx.cloud.database()
+      const res = await db.collection('children').doc(this.data.childId).get()
+      if (res.data && res.data.birth_date) {
+        ageMonths = this.calcAgeMonths(res.data.birth_date, this.data.examDate)
+      }
+    } catch (err) {
+      console.warn('[ocr-review] 获取儿童档案失败，将不传月龄:', err)
+    }
+    this.parseOcr(ageMonths)
+  },
+
+  /**
+   * 计算月龄
+   */
+  calcAgeMonths(birthDate, examDate) {
+    const birth = new Date(birthDate)
+    const exam = new Date(examDate)
+    return (exam.getFullYear() - birth.getFullYear()) * 12 +
+           (exam.getMonth() - birth.getMonth())
   },
 
   // 调用 OCR 云函数解析
-  async parseOcr() {
+  async parseOcr(ageMonths) {
     this.setData({ parsing: true })
     try {
-      const data = await api.ocrParse(this.data.fileId)
+      const data = await api.ocrParse(this.data.fileId, ageMonths)
       const confidence = data.confidence || 0
       this.setData({
         ocrResult: data,

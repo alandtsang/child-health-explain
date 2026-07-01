@@ -38,9 +38,18 @@ function buildSchema(name, schema) {
  * @throws {Error} - API调用失败或JSON解析失败时抛出
  */
 async function chatCompletion({ messages, schema, maxTokens = 4096, temperature = 0.3, timeout = 30000, retries = 1 }) {
-  const apiKey = process.env.ARK_API_KEY
+  let apiKey = process.env.ARK_API_KEY
+  // 环境变量未设置时，回退到本地密钥配置文件
   if (!apiKey) {
-    throw new Error('ARK_API_KEY 环境变量未设置')
+    try {
+      const localSecrets = require('../secrets.local')
+      apiKey = localSecrets.ARK_API_KEY
+    } catch (e) {
+      // secrets.local.js 不存在时忽略
+    }
+  }
+  if (!apiKey) {
+    throw new Error('ARK_API_KEY 未配置：请在云函数环境变量中设置 ARK_API_KEY，或在 cloudfunctions/ocrParse/secrets.local.js 中填写')
   }
 
   const body = {
