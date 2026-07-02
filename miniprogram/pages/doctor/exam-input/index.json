@@ -1,7 +1,7 @@
 {
   "navigationBarTitleText": "体检录入",
   "usingComponents": {
-    "metrics-form": "/components/metrics-form/index",
+    "metrics-form": "/components/metrics-form/metrics-form",
     "loading-overlay": "/components/loading-overlay/loading-overlay"
   }
 }

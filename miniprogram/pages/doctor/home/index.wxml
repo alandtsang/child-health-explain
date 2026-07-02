@@ -55,7 +55,10 @@
 
   <view wx:for="{{recentExams}}" wx:key="_id" class="exam-card card" bindtap="onExamTap" data-id="{{item._id}}">
     <view class="exam-card-header">
-      <text class="child-name">{{item.child_name}}</text>
+      <view class="name-wrap">
+        <text class="child-name">{{item.child_name}}</text>
+        <text wx:if="{{item.is_draft}}" class="draft-badge">草稿</text>
+      </view>
       <text class="exam-date">{{item.exam_date}}</text>
     </view>
     <view class="exam-card-body">

@@ -12,6 +12,9 @@ Page({
     exam: null,
     report: null,
     child: null,
+    // 报告尚未生成（用于展示生成按钮）
+    noReport: false,
+    generating: false,
     // 编辑态的医生内容（从 ai_content 复制，可编辑）
     editContent: {
       summary: '',
@@ -46,35 +49,12 @@ Page({
         return
       }
 
-      // 查询关联报告
-      const reportRes = await db.collection('reports')
-        .where({ exam_id: this.data.examId })
-        .limit(1)
-        .get()
-
-      if (reportRes.data.length === 0) {
-        wx.showToast({ title: '报告尚未生成', icon: 'none' })
-        return
-      }
-      const report = reportRes.data[0]
-
-      // 查询儿童信息
+      // 查询儿童信息（先查儿童，报告缺失时也需要展示体检信息）
       let child = null
       try {
         const childRes = await db.collection('children').doc(exam.child_id).get()
         child = childRes.data
       } catch (e) { /* ignore */ }
-
-      // 取 AI 内容作为编辑基线
-      const aiContent = report.ai_content || {}
-      const baseContent = report.doctor_content || aiContent
-
-      const editContent = JSON.parse(JSON.stringify({
-        summary: baseContent.summary || '',
-        item_explanations: baseContent.item_explanations || [],
-        triage_advice: baseContent.triage_advice || [],
-        home_interventions: baseContent.home_interventions || []
-      }))
 
       // 格式化体检数据展示
       exam.exam_date_fmt = format.formatDate(exam.exam_date)
@@ -85,6 +65,31 @@ Page({
       exam.abnormal_items_fmt = (exam.abnormal_items || []).map(a => ({
         ...a,
         level_info: ABNORMAL_LEVEL_INFO[a.level] || ABNORMAL_LEVEL_INFO.normal
+      }))
+
+      // 查询关联报告
+      const reportRes = await db.collection('reports')
+        .where({ exam_id: this.data.examId })
+        .orderBy('created_at', 'desc')
+        .limit(1)
+        .get()
+
+      if (reportRes.data.length === 0) {
+        // 报告尚未生成：展示体检信息 + 生成按钮，而非卡在加载界面
+        this.setData({ exam, child, loading: false, noReport: true })
+        return
+      }
+      const report = reportRes.data[0]
+
+      // 取 AI 内容作为编辑基线
+      const aiContent = report.ai_content || {}
+      const baseContent = report.doctor_content || aiContent
+
+      const editContent = JSON.parse(JSON.stringify({
+        summary: baseContent.summary || '',
+        item_explanations: baseContent.item_explanations || [],
+        triage_advice: baseContent.triage_advice || [],
+        home_interventions: baseContent.home_interventions || []
       }))
 
       this.setData({
@@ -219,6 +224,33 @@ Page({
       return editItem[key] !== aiItem[key]
     }
     return false
+  },
+
+  // 报告尚未生成时，手动触发 AI 解读生成
+  async onGenerateReport() {
+    if (this.data.generating) return
+    this.setData({ generating: true })
+    try {
+      // 直接调用 callFunction，用 generating 状态控制 WXML loading overlay
+      // 关闭 wrapper 的 loading 和 toast，避免双重提示
+      await api.callFunction('generateReport', { exam_id: this.data.examId }, {
+        loading: false, showError: false, timeout: 38000
+      })
+      wx.showToast({ title: '解读已生成', icon: 'success' })
+      // 重新加载数据，进入审核界面
+      this.setData({ noReport: false, loading: true, generating: false })
+      this.loadData()
+    } catch (err) {
+      console.error('生成解读失败:', err)
+      const errMsg = (err && err.message) || 'AI解读生成失败，请稍后重试'
+      wx.showModal({
+        title: '生成失败',
+        content: errMsg,
+        showCancel: false
+      })
+    } finally {
+      this.setData({ generating: false })
+    }
   },
 
   onPullDownRefresh() {

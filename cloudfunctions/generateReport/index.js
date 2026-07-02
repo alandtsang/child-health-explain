@@ -159,9 +159,11 @@ exports.main = async (event, context) => {
       const childRes = await db.collection('children').doc(exam.child_id).get()
       const child = childRes.data
 
-      if (!ageMonths && child?.birth_date) {
+      if ((!ageMonths || isNaN(ageMonths)) && child?.birth_date) {
         ageMonths = calcAgeMonths(child.birth_date, exam.exam_date)
       }
+      // NaN 会导致 evaluateMetrics 的 age_months 校验通过但评估器异常
+      if (isNaN(ageMonths)) ageMonths = undefined
 
       const evalResult = await cloud.callFunction({
         name: 'evaluateMetrics',
@@ -172,7 +174,12 @@ exports.main = async (event, context) => {
         }
       })
 
-      abnormalItems = evalResult.result.abnormal_items || []
+      // null-safe：evaluateMetrics 可能返回 { success: false, error } 或 result 为空
+      const evalData = evalResult && evalResult.result
+      if (evalData && evalData.success === false) {
+        console.warn('[generateReport] evaluateMetrics 返回失败:', evalData.error)
+      }
+      abnormalItems = (evalData && evalData.abnormal_items) || []
 
       // 更新exam记录
       await db.collection('exams').doc(exam_id).update({

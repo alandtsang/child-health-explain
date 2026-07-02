@@ -3,13 +3,42 @@
  * 火山引擎方舟API客户端 - 文本Chat调用封装
  * 支持 json_schema 模式的结构化输出
  *
- * 使用方式（复制到各云函数 lib/ 目录后）：
- *   const { chatCompletion, buildSchema } = require('./lib/arkClient')
+ * 这是共享源文件（canonical），各云函数使用各自 lib/ 目录下的副本。
+ * 运行 `node scripts/sync-env.js` 可自动将本文件同步到各云函数。
+ *
+ * 使用方式（在各云函数中）：
+ *   const { chatCompletion, buildSchema, getApiKey } = require('./lib/arkClient')
  *   const result = await chatCompletion({ messages, schema })
  */
 
+const https = require('https')
+const { URL } = require('url')
+
 const ARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3'
 const TEXT_MODEL = 'doubao-seed-2-0-pro-260215'
+
+/**
+ * 获取 ARK API Key
+ * 优先级：云函数环境变量 > secrets.local.js 本地配置文件
+ * @returns {string} API Key
+ * @throws {Error} 未配置时抛出
+ */
+function getApiKey() {
+  let apiKey = process.env.ARK_API_KEY
+  // 环境变量未设置时，回退到本地密钥配置文件（由 sync-env.js 从 .env 同步生成）
+  if (!apiKey) {
+    try {
+      const localSecrets = require('../secrets.local')
+      apiKey = localSecrets.ARK_API_KEY
+    } catch (e) {
+      // secrets.local.js 不存在时忽略
+    }
+  }
+  if (!apiKey) {
+    throw new Error('ARK_API_KEY 未配置：请在 .env 中设置后运行 node scripts/sync-env.js，或在云函数环境变量中设置 ARK_API_KEY')
+  }
+  return apiKey
+}
 
 /**
  * 构建 json_schema 响应格式对象
@@ -26,6 +55,47 @@ function buildSchema(name, schema) {
 }
 
 /**
+ * 基于 Node.js 原生 https 模块的 POST 请求
+ * 兼容所有 Node.js 版本（云函数运行时可能低于 Node.js 18，无全局 fetch）
+ * @param {string} url - 请求地址
+ * @param {Object} opts - { headers, body }
+ * @param {number} timeout - 超时毫秒数
+ * @returns {Promise<{ok: boolean, status: number, text: () => Promise<string>, json: () => Promise<Object>}>}
+ */
+function httpPost(url, opts, timeout) {
+  const headers = (opts && opts.headers) || {}
+  const body = (opts && opts.body) || ''
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url)
+    const req = https.request({
+      hostname: urlObj.hostname,
+      port: urlObj.port || 443,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
+      headers: Object.assign({}, headers, { 'Content-Length': Buffer.byteLength(body) })
+    }, (res) => {
+      const chunks = []
+      res.on('data', (c) => chunks.push(c))
+      res.on('end', () => {
+        const bodyStr = Buffer.concat(chunks).toString('utf8')
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          text: () => Promise.resolve(bodyStr),
+          json: () => Promise.resolve(JSON.parse(bodyStr))
+        })
+      })
+    })
+    req.on('error', reject)
+    req.setTimeout(timeout, () => {
+      req.destroy(new Error(`方舟API请求超时(${timeout}ms)`))
+    })
+    req.write(body)
+    req.end()
+  })
+}
+
+/**
  * 调用方舟文本 Chat Completions API
  * @param {Object} params
  * @param {Array<{role: string, content: string}>} params.messages - 消息数组
@@ -38,10 +108,7 @@ function buildSchema(name, schema) {
  * @throws {Error} - API调用失败或JSON解析失败时抛出
  */
 async function chatCompletion({ messages, schema, maxTokens = 4096, temperature = 0.3, timeout = 30000, retries = 1 }) {
-  const apiKey = process.env.ARK_API_KEY
-  if (!apiKey) {
-    throw new Error('ARK_API_KEY 环境变量未设置')
-  }
+  const apiKey = getApiKey()
 
   const body = {
     model: TEXT_MODEL,
@@ -63,21 +130,13 @@ async function chatCompletion({ messages, schema, maxTokens = 4096, temperature 
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      // 使用 Promise.race 实现超时控制，兼容 Node.js 16+
-      const fetchPromise = fetch(`${ARK_BASE}/chat/completions`, {
-        method: 'POST',
+      const resp = await httpPost(`${ARK_BASE}/chat/completions`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`
         },
         body: JSON.stringify(body)
-      })
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`方舟API请求超时(${timeout}ms)`)), timeout)
-      })
-
-      const resp = await Promise.race([fetchPromise, timeoutPromise])
+      }, timeout)
 
       if (!resp.ok) {
         const errText = await resp.text()
@@ -129,4 +188,4 @@ async function chatCompletion({ messages, schema, maxTokens = 4096, temperature 
   throw lastError
 }
 
-module.exports = { chatCompletion, buildSchema, ARK_BASE, TEXT_MODEL }
+module.exports = { chatCompletion, buildSchema, getApiKey, ARK_BASE, TEXT_MODEL }

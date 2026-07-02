@@ -9,16 +9,20 @@ const CATEGORIES = [
   { key: 'blood', label: '血液' },
   { key: 'urine', label: '尿液' },
   { key: 'spine', label: '脊柱' },
-  { key: 'internal', label: '内科' }
+  { key: 'internal', label: '内科' },
+  { key: 'development', label: '发育评估' },
+  { key: 'rickets', label: '佝偻病' },
+  { key: 'physical', label: '体格检查' }
 ]
 
 // 各类别字段配置
 const FIELD_CONFIG = {
   growth: [
-    { key: 'height', label: '身高', type: 'number', unit: 'cm', placeholder: '如：105' },
+    { key: 'height', label: '身高/身长', type: 'number', unit: 'cm', placeholder: '如：105' },
     { key: 'weight', label: '体重', type: 'number', unit: 'kg', placeholder: '如：17.5' },
     { key: 'head_circ', label: '头围', type: 'number', unit: 'cm', placeholder: '如：50' },
-    { key: 'chest_circ', label: '胸围', type: 'number', unit: 'cm', placeholder: '如：52' }
+    { key: 'chest_circ', label: '胸围', type: 'number', unit: 'cm', placeholder: '如：52' },
+    { key: 'evaluation', label: '发育评价', type: 'text', placeholder: '上/中/下 或 正常/低体重/消瘦/生长迟缓/超重' }
   ],
   vision: [
     { key: 'left', label: '左眼视力', type: 'number', placeholder: '如：5.0' },
@@ -28,10 +32,12 @@ const FIELD_CONFIG = {
   ],
   hearing: [
     { key: 'left', label: '左耳', type: 'text', placeholder: '正常/异常' },
-    { key: 'right', label: '右耳', type: 'text', placeholder: '正常/异常' }
+    { key: 'right', label: '右耳', type: 'text', placeholder: '正常/异常' },
+    { key: 'result', label: '听力筛查', type: 'text', placeholder: '通过/未通过/未测' }
   ],
   dental: [
-    { key: 'caries_count', label: '龋齿数', type: 'number', placeholder: '如：0' },
+    { key: 'teeth_count', label: '出牙数', type: 'number', unit: '颗', placeholder: '如：8' },
+    { key: 'caries_count', label: '龋齿数', type: 'number', unit: '颗', placeholder: '如：0' },
     { key: 'caries_teeth', label: '龋齿牙位', type: 'text', placeholder: '如：左上第一乳磨牙' }
   ],
   blood: [
@@ -54,6 +60,30 @@ const FIELD_CONFIG = {
     { key: 'lung', label: '肺部', type: 'text', placeholder: '正常/异常描述' },
     { key: 'abdomen', label: '腹部', type: 'text', placeholder: '正常/异常描述' },
     { key: 'note', label: '备注', type: 'text', placeholder: '其他检查备注' }
+  ],
+  development: [
+    { key: 'screening_result', label: '预警征筛查', type: 'text', placeholder: '正常/阳性' },
+    { key: 'positive_items', label: '阳性条目', type: 'text', placeholder: '如：不会独坐;不会区分生人和熟人' }
+  ],
+  rickets: [
+    { key: 'symptoms', label: '佝偻病症状', type: 'text', placeholder: '无 或 夜惊,多汗,烦躁' },
+    { key: 'signs', label: '佝偻病体征', type: 'text', placeholder: '无 或 肋串珠,方颅,鸡胸等' }
+  ],
+  physical: [
+    { key: 'complexion', label: '面色', type: 'text', placeholder: '红润/黄染/其他' },
+    { key: 'skin', label: '皮肤', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'eyes', label: '眼睛', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'ears', label: '耳外观', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'anterior_fontanelle', label: '前囟', type: 'text', placeholder: '闭合 或 未闭 1.5cm×1.5cm' },
+    { key: 'neck_mass', label: '颈部包块', type: 'text', placeholder: '有/无' },
+    { key: 'chest', label: '胸部', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'abdomen', label: '腹部', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'limbs', label: '四肢', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'umbilicus', label: '脐部', type: 'text', placeholder: '未脱/脱落/脐部有渗出/其他' },
+    { key: 'gait', label: '步态', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'anus_genitalia', label: '肛门/外生殖器', type: 'text', placeholder: '未见异常/异常描述' },
+    { key: 'outdoor_activity', label: '户外活动', type: 'number', unit: '小时/日', placeholder: '如：2' },
+    { key: 'vitamin_d', label: '服用维生素D', type: 'number', unit: 'IU/日', placeholder: '如：400' }
   ]
 }
 

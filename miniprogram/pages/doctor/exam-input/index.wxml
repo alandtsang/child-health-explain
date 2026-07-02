@@ -77,17 +77,16 @@
       </view>
     </view>
 
-    <!-- OCR 入口 -->
+    <!-- OCR 入口（仅OCR模式显示上传按钮） -->
     <view wx:if="{{inputMethod === 'ocr'}}" class="ocr-section card">
       <text class="ocr-title">拍照上传体检单</text>
-      <text class="ocr-desc">系统将自动识别体检单内容并提取数据，之后可在校对页修改</text>
+      <text class="ocr-desc">上传后自动识别提取数据，也可在下方直接手动填写</text>
       <view class="btn-primary ocr-btn" bindtap="onOcrUpload">拍照/选择图片</view>
-      <view class="btn-secondary" bindtap="onGenerate" style="margin-top: 16rpx;">直接生成解读（手动数据）</view>
     </view>
 
-    <!-- 手动录入表单 -->
-    <view wx:if="{{inputMethod === 'manual'}}">
-      <metrics-form metrics="{{metrics}}" bind:change="onMetricsChange" />
+    <!-- 体检指标表单（手动和OCR模式均显示） -->
+    <view class="form-section">
+      <metrics-form id="metricsForm" metrics="{{metrics}}" />
       <view class="action-bar">
         <view class="btn-secondary action-btn-half" bindtap="onSaveDraft">保存草稿</view>
         <view class="btn-primary action-btn-half" bindtap="onGenerate">生成解读</view>
@@ -97,3 +96,4 @@
 </view>
 
 <loading-overlay visible="{{loading}}" text="处理中..." />
+<loading-overlay visible="{{generating}}" text="AI解读生成中..." />

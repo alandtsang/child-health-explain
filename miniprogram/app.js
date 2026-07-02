@@ -1,10 +1,12 @@
 // miniprogram/app.js
+const { cloudEnv } = require('./utils/env')
+
 App({
   globalData: {
     userInfo: null,
     openid: null,
     currentRole: null,
-    cloudEnv: 'cloudbase-d0gdt7b6vcb17e82c'
+    cloudEnv
   },
 
   onLaunch() {

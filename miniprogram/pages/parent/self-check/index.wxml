@@ -73,7 +73,7 @@
         </picker>
       </view>
     </view>
-    <metrics-form metrics="{{metrics}}" bind:change="onMetricsChange" />
+    <metrics-form id="metricsForm" metrics="{{metrics}}" />
     <view class="btn-primary action-full" bindtap="onToConsent">下一步：知情同意</view>
   </view>
 

@@ -14,7 +14,7 @@
     <text class="hint-text">请核对以下识别结果，点击字段可修改</text>
   </view>
 
-  <metrics-form metrics="{{metrics}}" bind:change="onMetricsChange" />
+  <metrics-form id="metricsForm" metrics="{{metrics}}" uncertainFields="{{uncertainFields}}" />
 
   <view class="action-bar">
     <view class="btn-secondary action-btn-half" bindtap="onRetake">重新拍照</view>

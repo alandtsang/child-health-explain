@@ -33,3 +33,11 @@
 .btn-save { background: #4A90D9; color: #FFF; }
 .btn-push { background: linear-gradient(135deg, #52C41A, #73D13D); color: #FFF; }
 .btn-disabled { background: #CCC !important; }
+
+/* 报告尚未生成状态 */
+.no-report-page { padding: 24rpx; }
+.no-report-tip { text-align: center; padding: 80rpx 0 40rpx; display: flex; flex-direction: column; align-items: center; }
+.no-report-icon { font-size: 80rpx; margin-bottom: 16rpx; }
+.no-report-text { font-size: 32rpx; color: #666; font-weight: 600; }
+.no-report-hint { font-size: 26rpx; color: #BBB; margin-top: 8rpx; }
+.generate-btn { margin: 0 24rpx 48rpx; background: linear-gradient(135deg, #4A90D9, #6BB5E8); color: #FFF; text-align: center; padding: 28rpx 0; border-radius: 12rpx; font-size: 32rpx; font-weight: 600; }

@@ -1,5 +1,6 @@
 // miniprogram/pages/doctor/ocr-review/ocr-review.js
 const app = getApp()
+const api = require('../../../utils/api')
 
 Page({
   data: {
@@ -15,43 +16,84 @@ Page({
     selectedChildIndex: -1,
     selectedChildId: '',
     examDate: '',          // 体检日期
-    submitting: false
+    submitting: false,
+    parsing: false         // OCR解析中
   },
 
-  onLoad() {
-    // 从全局临时数据获取OCR结果
-    const ocrData = app.globalData.tempOcrData
-    if (!ocrData) {
+  onLoad(options) {
+    // 从上一页 URL 获取上传后的图片 fileID（与 exam-input 跳转参数保持一致）
+    const { file_id, child_id, exam_date } = options || {}
+    if (!file_id) {
       wx.showToast({ title: '数据已失效，请重新上传', icon: 'none' })
       setTimeout(() => wx.navigateBack(), 1500)
       return
     }
 
-    const ocrConfidence = ocrData.ocr_raw?.confidence || 0
-    const parseConfidence = ocrData.parse_meta?.confidence || 0
-
+    // 预填体检日期（优先使用上一页传入的日期）
     this.setData({
-      ocrData,
-      imageFileId: ocrData.ocr_raw?.image_file_id || '',
-      uncertainFields: ocrData.parse_meta?.uncertain_fields || [],
-      ocrConfidence,
-      parseConfidence,
-      ocrConfidenceText: ocrConfidence === 0 ? '--' : (ocrConfidence * 100).toFixed(0) + '%',
-      parseConfidenceText: parseConfidence === 0 ? '--' : (parseConfidence * 100).toFixed(0) + '%',
-      needManual: ocrData.need_manual || false,
-      examDate: this.formatDate(new Date())
+      imageFileId: file_id,
+      examDate: exam_date || this.formatDate(new Date())
     })
 
-    // 清除临时数据
-    app.globalData.tempOcrData = null
-
-    this.loadChildren()
+    // 先加载儿童档案（获取出生日期计算月龄），再调用 OCR 解析
+    this.loadChildren(child_id).then(selectedChild => {
+      const ageMonths = selectedChild
+        ? this.calcAgeMonths(selectedChild.birth_date, this.data.examDate)
+        : null
+      this.parseOcr(file_id, ageMonths)
+    })
   },
 
   /**
-   * 加载医生创建的儿童档案列表
+   * 调用 OCR 云函数解析体检单图片
    */
-  async loadChildren() {
+  async parseOcr(fileId, ageMonths) {
+    this.setData({ parsing: true })
+    try {
+      const ocrData = await api.ocrParse(fileId, ageMonths)
+
+      const ocrConfidence = ocrData.ocr_raw?.confidence || 0
+      const parseConfidence = ocrData.parse_meta?.confidence || 0
+
+      this.setData({
+        ocrData,
+        imageFileId: ocrData.ocr_raw?.image_file_id || fileId,
+        uncertainFields: ocrData.parse_meta?.uncertain_fields || [],
+        ocrConfidence,
+        parseConfidence,
+        ocrConfidenceText: ocrConfidence === 0 ? '--' : (ocrConfidence * 100).toFixed(0) + '%',
+        parseConfidenceText: parseConfidence === 0 ? '--' : (parseConfidence * 100).toFixed(0) + '%',
+        needManual: ocrData.need_manual || false,
+        parsing: false
+      })
+
+      // 低置信度提示
+      if (ocrConfidence > 0 && ocrConfidence < 0.6) {
+        wx.showModal({
+          title: '识别提示',
+          content: '图片识别置信度较低，请仔细核对各项数据，或改用手动录入',
+          showCancel: false
+        })
+      }
+    } catch (err) {
+      console.error('[ocr-review] OCR解析失败:', err)
+      this.setData({ parsing: false })
+      wx.showModal({
+        title: '解析失败',
+        content: (err && err.message) || 'OCR解析失败，是否返回重新上传？',
+        confirmText: '返回',
+        cancelText: '留在此页',
+        success: (res) => {
+          if (res.confirm) wx.navigateBack()
+        }
+      })
+    }
+  },
+
+  /**
+   * 加载医生创建的儿童档案列表，并按 child_id 预选
+   */
+  async loadChildren(preselectChildId) {
     try {
       const db = wx.cloud.database()
       const res = await db.collection('children')
@@ -60,7 +102,16 @@ Page({
         .limit(50)
         .get()
 
-      this.setData({ children: res.data })
+      let selectedIndex = -1
+      if (preselectChildId) {
+        selectedIndex = res.data.findIndex(c => c._id === preselectChildId)
+      }
+
+      this.setData({
+        children: res.data,
+        selectedChildIndex: selectedIndex,
+        selectedChildId: selectedIndex >= 0 ? res.data[selectedIndex]._id : ''
+      })
 
       if (res.data.length === 0) {
         wx.showModal({
@@ -75,9 +126,13 @@ Page({
           }
         })
       }
+
+      // 返回预选的儿童对象（含 birth_date），供调用方计算月龄
+      return selectedIndex >= 0 ? res.data[selectedIndex] : null
     } catch (err) {
       console.error('加载儿童列表失败:', err)
       wx.showToast({ title: '加载儿童列表失败', icon: 'none' })
+      return null
     }
   },
 

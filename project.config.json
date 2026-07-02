@@ -27,7 +27,7 @@
       "outputPath": ""
     }
   },
-  "appid": "",
+  "appid": "wx9bbc1d426c011617",
   "projectname": "child-health-explain",
   "libVersion": "3.5.0",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
