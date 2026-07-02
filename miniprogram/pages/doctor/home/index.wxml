@@ -45,7 +45,10 @@
   </view>
 
   <!-- 最近体检记录 -->
-  <view class="section-header"><text class="section-title">最近体检记录</text></view>
+  <view class="section-header">
+    <text class="section-title">最近体检记录</text>
+    <text class="section-hint">长按可删除</text>
+  </view>
 
   <view wx:if="{{recentExams.length === 0 && !loading}}" class="empty-state">
     <text class="empty-icon">📋</text>
@@ -53,7 +56,7 @@
     <text class="empty-hint">点击上方"新建体检录入"开始</text>
   </view>
 
-  <view wx:for="{{recentExams}}" wx:key="_id" class="exam-card card" bindtap="onExamTap" data-id="{{item._id}}">
+  <view wx:for="{{recentExams}}" wx:key="_id" class="exam-card card" bindtap="onExamTap" bindlongpress="onExamLongPress" data-id="{{item._id}}">
     <view class="exam-card-header">
       <view class="name-wrap">
         <text class="child-name">{{item.child_name}}</text>

@@ -226,6 +226,29 @@ Page({
     return false
   },
 
+  // 删除体检记录
+  async onDeleteExam() {
+    wx.showModal({
+      title: '确认删除',
+      content: '确定要删除该体检记录吗？此操作不可恢复。',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            this.setData({ submitting: true })
+            await api.deleteExam(this.data.examId)
+            wx.showToast({ title: '删除成功', icon: 'success' })
+            setTimeout(() => wx.navigateBack(), 1500)
+          } catch (err) {
+            console.error('删除失败:', err)
+            wx.showToast({ title: '删除失败', icon: 'none' })
+          } finally {
+            this.setData({ submitting: false })
+          }
+        }
+      }
+    })
+  },
+
   // 报告尚未生成时，手动触发 AI 解读生成
   async onGenerateReport() {
     if (this.data.generating) return

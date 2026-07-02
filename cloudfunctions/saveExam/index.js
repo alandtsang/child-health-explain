@@ -112,7 +112,7 @@ async function handleUpdate(openid, event) {
   return { code: 0, data: { exam_id } }
 }
 
-// 删除体检记录
+// 删除体检记录（级联清理关联数据）
 async function handleDelete(openid, event) {
   const { exam_id } = event
   if (!exam_id) return { code: 400, message: '缺少 exam_id' }
@@ -120,8 +120,65 @@ async function handleDelete(openid, event) {
   const exam = await getExamWithPermission(exam_id, openid)
   if (!exam) return { code: 403, message: '无权删除此体检记录' }
 
+  // 权限控制：若已有关联报告且报告已推送，禁止删除
+  const reportRes = await db.collection('reports').where({ exam_id }).get()
+  const reports = reportRes.data || []
+  const hasPushedReport = reports.some(r => r.review_status === 'approved')
+  if (hasPushedReport) {
+    return { code: 403, message: '该体检记录已关联已推送报告，无法删除' }
+  }
+
+  // 级联清理关联数据
+  const errors = []
+
+  // 1. 删除关联报告
+  for (const report of reports) {
+    try {
+      await db.collection('reports').doc(report._id).remove()
+    } catch (err) {
+      errors.push(`报告删除失败: ${report._id}`)
+    }
+  }
+
+  // 2. 删除关联随访记录
+  try {
+    const followupRes = await db.collection('followups').where({ exam_id }).get()
+    for (const followup of (followupRes.data || [])) {
+      try {
+        await db.collection('followups').doc(followup._id).remove()
+      } catch (err) {
+        errors.push(`随访删除失败: ${followup._id}`)
+      }
+    }
+  } catch (err) {
+    // followups 集合可能不存在，忽略
+  }
+
+  // 3. 删除关联媒体资源（海报/视频）
+  try {
+    const reportIds = reports.map(r => r._id)
+    if (reportIds.length > 0) {
+      const mediaRes = await db.collection('media_assets').where({ report_id: db.command.in(reportIds) }).get()
+      for (const media of (mediaRes.data || [])) {
+        try {
+          // 删除云存储文件
+          if (media.file_id) {
+            try { await cloud.deleteFile({ fileList: [media.file_id] }) } catch (e) { /* ignore */ }
+          }
+          await db.collection('media_assets').doc(media._id).remove()
+        } catch (err) {
+          errors.push(`媒体删除失败: ${media._id}`)
+        }
+      }
+    }
+  } catch (err) {
+    // media_assets 集合可能不存在，忽略
+  }
+
+  // 4. 删除体检记录本身
   await db.collection('exams').doc(exam_id).remove()
-  return { code: 0, data: { exam_id } }
+
+  return { code: 0, data: { exam_id }, warnings: errors.length > 0 ? errors : undefined }
 }
 
 // 获取体检记录并校验权限（仅录入医生可操作）

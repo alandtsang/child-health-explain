@@ -111,6 +111,7 @@
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar safe-bottom">
+    <view wx:if="{{report.review_status !== 'approved'}}" class="bottom-btn btn-delete" bindtap="onDeleteExam">删除</view>
     <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
     <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
     <view class="bottom-btn btn-push" bindtap="onApproveAndPush">通过并推送</view>
@@ -156,6 +157,9 @@
   </view>
   <view class="generate-btn {{generating ? 'btn-disabled' : ''}}" bindtap="onGenerateReport">
     <text>{{generating ? '生成中...' : '生成解读报告'}}</text>
+  </view>
+  <view class="delete-btn" bindtap="onDeleteExam">
+    <text>删除此体检记录</text>
   </view>
 </view>
 

@@ -74,6 +74,9 @@ function evaluateMetrics(metrics, childInfo) {
 function saveExam(data) {
   return callFunction('saveExam', data, { loadingText: '保存中...' })
 }
+function deleteExam(examId) {
+  return callFunction('saveExam', { action: 'delete', exam_id: examId }, { loadingText: '删除中...' })
+}
 function generateReport(examId) {
   // generateReport 调用 LLM 生成解读，服务端超时 40s，客户端设 38s 提前断开
   return callFunction('generateReport', { exam_id: examId }, { loadingText: 'AI解读生成中...', timeout: 38000 })
@@ -123,6 +126,6 @@ function initCollections() { return callFunction('initDatabase', { action: 'init
 
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
-  evaluateMetrics, saveExam, generateReport, ocrParse, reviewReport,
+  evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
   selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections
 }

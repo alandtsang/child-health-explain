@@ -143,6 +143,43 @@ Page({
     wx.navigateTo({ url: `/pages/doctor/report-review/index?exam_id=${examId}` })
   },
 
+  // 长按体检记录卡片 - 删除
+  onExamLongPress(e) {
+    const examId = e.currentTarget.dataset.id
+    const exam = this.data.recentExams.find(item => item._id === examId)
+    if (!exam) return
+
+    // 草稿状态可直接删除；已生成报告但未推送的需提示
+    const isDraft = exam.is_draft
+    const content = isDraft
+      ? '确认删除此草稿体检记录？'
+      : '该体检记录已提交，删除后将同时清除关联的报告和随访数据。确认删除？'
+
+    wx.showModal({
+      title: '删除体检记录',
+      content,
+      confirmText: '删除',
+      confirmColor: '#FF4D4F',
+      success: async (res) => {
+        if (res.confirm) {
+          this.setData({ loading: true })
+          try {
+            await api.deleteExam(examId)
+            wx.showToast({ title: '已删除', icon: 'success' })
+            // 从列表中移除
+            const recentExams = this.data.recentExams.filter(item => item._id !== examId)
+            this.setData({ recentExams, loading: false })
+            // 重新加载统计
+            this.loadStats()
+          } catch (err) {
+            console.error('删除体检记录失败:', err)
+            this.setData({ loading: false })
+          }
+        }
+      }
+    })
+  },
+
   onReportList() {
     wx.navigateTo({ url: '/pages/doctor/report-list/index' })
   },
