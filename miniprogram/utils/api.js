@@ -4,7 +4,22 @@ const { API_CODE } = require('./constants')
 function callFunction(name, data, options) {
   const opts = options || {}
   if (opts.loading !== false) wx.showLoading({ title: opts.loadingText || '加载中...', mask: true })
-  return wx.cloud.callFunction({ name, data: data || {} }).then(res => {
+
+  const callPromise = wx.cloud.callFunction({ name, data: data || {} })
+
+  // 客户端超时保护：opts.timeout(毫秒) 到期后主动拒绝，避免用户无限等待
+  const wrappedPromise = opts.timeout
+    ? Promise.race([
+        callPromise,
+        new Promise((_, reject) => {
+          setTimeout(() => {
+            reject({ errCode: -504003, errMsg: `callFunction:${name} 客户端超时(${opts.timeout / 1000}秒)` })
+          }, opts.timeout)
+        })
+      ])
+    : callPromise
+
+  return wrappedPromise.then(res => {
     if (opts.loading !== false) wx.hideLoading()
     const result = res.result
     if (result && (result.code === API_CODE.SUCCESS || result.success === true)) {
@@ -35,6 +50,10 @@ function resolveCallErrorTip(err) {
   if (/function.*not.*found|not.*exist|找不到|不存在/.test(msg)) {
     return '云函数未部署，请先上传云函数'
   }
+  // 云函数执行超时（服务端 -504003 或客户端 Promise.race 超时）
+  if (/timed out|timeout|超时|-504003/.test(msg)) {
+    return '识别超时，请确认云函数超时配置后重试'
+  }
   // 网络层错误
   if (err.errCode || err.errMsg) return '网络异常，请重试'
   return ''
@@ -56,14 +75,16 @@ function saveExam(data) {
   return callFunction('saveExam', data, { loadingText: '保存中...' })
 }
 function generateReport(examId) {
-  return callFunction('generateReport', { exam_id: examId }, { loadingText: 'AI解读生成中...' })
+  // generateReport 调用 LLM 生成解读，服务端超时 40s，客户端设 38s 提前断开
+  return callFunction('generateReport', { exam_id: examId }, { loadingText: 'AI解读生成中...', timeout: 38000 })
 }
 
 // === OCR 解析（Phase 3）===
 function ocrParse(imageFileId, ageMonths) {
   const data = { fileID: imageFileId }
   if (ageMonths != null) data.age_months = ageMonths
-  return callFunction('ocrParse', data, { loadingText: '识别中...' })
+  // ocrParse 下载图片→腾讯OCR→豆包LLM 三步链路，服务端超时 60s，客户端设 55s
+  return callFunction('ocrParse', data, { loadingText: '识别中...', timeout: 55000 })
 }
 
 // === 报告审核（Phase 4）===
@@ -75,7 +96,8 @@ function reviewReport(reportId, action, doctorContent, doctorNote) {
 
 // === 家长自查（Phase 4）===
 function selfCheck(data) {
-  return callFunction('selfCheck', data, { loadingText: 'AI解读中...' })
+  // selfCheck 调用 LLM 解读，服务端超时 40s，客户端设 38s
+  return callFunction('selfCheck', data, { loadingText: 'AI解读中...', timeout: 38000 })
 }
 
 // === 海报与视频（Phase 5）===

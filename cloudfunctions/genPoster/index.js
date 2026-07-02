@@ -1,10 +1,57 @@
 const cloud = require('wx-server-sdk');
+const https = require('https');
+const http = require('http');
+const { URL } = require('url');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const ARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3';
 const SEEDREAM_MODEL = 'doubao-seedream-4-5-251128';
 
 const LEVEL_PRIORITY = { severe: 0, moderate: 1, mild: 2, normal: 3 };
+
+/**
+ * 通用 HTTP 请求，兼容所有 Node.js 版本（无需 fetch）
+ * 返回类 fetch Response 对象：{ ok, status, text(), json(), arrayBuffer() }
+ */
+function httpRequest(url, options) {
+  options = options || {};
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = Object.assign({}, options.headers || {});
+  const body = options.body || '';
+  const timeout = options.timeout || 30000;
+  if (method === 'POST' && body) {
+    headers['Content-Length'] = Buffer.byteLength(body);
+  }
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const isHttps = urlObj.protocol === 'https:';
+    const lib = isHttps ? https : http;
+    const req = lib.request({
+      hostname: urlObj.hostname,
+      port: urlObj.port || (isHttps ? 443 : 80),
+      path: urlObj.pathname + urlObj.search,
+      method,
+      headers
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const buf = Buffer.concat(chunks);
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          text: () => Promise.resolve(buf.toString('utf8')),
+          json: () => Promise.resolve(JSON.parse(buf.toString('utf8'))),
+          arrayBuffer: () => Promise.resolve(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
+        });
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeout, () => { req.destroy(new Error(`请求超时(${timeout}ms)`)); });
+    if (body) req.write(body);
+    req.end();
+  });
+}
 
 /**
  * 构建海报 prompt（主题+版式+内容文字+风格+尺寸）
@@ -144,7 +191,7 @@ exports.main = async (event, context) => {
 
   try {
     // 调用豆包 Seedream 文生图 API
-    const resp = await fetch(`${ARK_BASE}/images/generations`, {
+    const resp = await httpRequest(`${ARK_BASE}/images/generations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -172,7 +219,7 @@ exports.main = async (event, context) => {
     }
 
     // 下载图片（URL 24h 失效，必须转存）
-    const imgResp = await fetch(imgUrl);
+    const imgResp = await httpRequest(imgUrl);
     if (!imgResp.ok) {
       throw new Error(`下载图片失败: ${imgResp.status}`);
     }

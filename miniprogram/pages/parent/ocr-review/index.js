@@ -9,6 +9,7 @@ Page({
     examDate: '',
     ocrResult: null,
     confidenceText: '--',  // 预计算的置信度显示文本
+    uncertainFields: [],   // OCR不确定字段列表
     metrics: {},
     loading: true,
     parsing: false
@@ -56,16 +57,17 @@ Page({
     this.setData({ parsing: true })
     try {
       const data = await api.ocrParse(this.data.fileId, ageMonths)
-      const confidence = data.confidence || 0
+      const confidence = data.parse_meta?.confidence || data.ocr_raw?.confidence || 0
       this.setData({
         ocrResult: data,
         confidenceText: confidence > 0 ? (confidence * 100).toFixed(0) + '%' : '--',
+        uncertainFields: data.parse_meta?.uncertain_fields || [],
         metrics: data.metrics || {},
         loading: false,
         parsing: false
       })
       // 低置信度提示
-      if (data.confidence && data.confidence < 0.6) {
+      if (confidence > 0 && confidence < 0.6) {
         wx.showModal({
           title: '识别提示',
           content: '图片识别置信度较低，请仔细核对各项数据，或改用手动录入',
@@ -88,18 +90,17 @@ Page({
     }
   },
 
-  onMetricsChange(e) {
-    this.setData({ metrics: e.detail.metrics })
-  },
-
   // 确认校对完成，跳回自查页提交
   onConfirm() {
+    // 从表单组件获取校对后的完整数据
+    const form = this.selectComponent('#metricsForm')
+    const metrics = form ? form.getFormData() : this.data.metrics
     // 将校对后的 metrics 传回自查页（通过全局变量或缓存）
     const pages = getCurrentPages()
     const selfCheckPage = pages.find(p => p.route === 'pages/parent/self-check/index')
     if (selfCheckPage) {
       selfCheckPage.setData({
-        metrics: this.data.metrics,
+        metrics: metrics,
         inputMethod: 'ocr',
         step: 'consent'
       })

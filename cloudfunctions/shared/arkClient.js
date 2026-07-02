@@ -2,11 +2,16 @@
  * cloudfunctions/shared/arkClient.js
  * 火山引擎方舟API客户端 - 文本Chat调用封装
  * 支持 json_schema 模式的结构化输出
+ * 
+ * 这是共享源文件，各云函数使用各自 lib/ 目录下的副本。
  *
  * 使用方式（复制到各云函数 lib/ 目录后）：
  *   const { chatCompletion, buildSchema } = require('./lib/arkClient')
  *   const result = await chatCompletion({ messages, schema })
  */
+
+const https = require('https')
+const { URL } = require('url')
 
 const ARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3'
 const TEXT_MODEL = 'doubao-seed-2-0-pro-260215'
@@ -23,6 +28,47 @@ function buildSchema(name, schema) {
     strict: true,
     schema
   }
+}
+
+/**
+ * 基于 Node.js 原生 https 模块的 POST 请求
+ * 兼容所有 Node.js 版本（云函数运行时可能低于 Node.js 18，无全局 fetch）
+ * @param {string} url - 请求地址
+ * @param {Object} opts - { headers, body }
+ * @param {number} timeout - 超时毫秒数
+ * @returns {Promise<{ok: boolean, status: number, text: () => Promise<string>, json: () => Promise<Object>}>}
+ */
+function httpPost(url, opts, timeout) {
+  const headers = (opts && opts.headers) || {}
+  const body = (opts && opts.body) || ''
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url)
+    const req = https.request({
+      hostname: urlObj.hostname,
+      port: urlObj.port || 443,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
+      headers: Object.assign({}, headers, { 'Content-Length': Buffer.byteLength(body) })
+    }, (res) => {
+      const chunks = []
+      res.on('data', (c) => chunks.push(c))
+      res.on('end', () => {
+        const bodyStr = Buffer.concat(chunks).toString('utf8')
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          text: () => Promise.resolve(bodyStr),
+          json: () => Promise.resolve(JSON.parse(bodyStr))
+        })
+      })
+    })
+    req.on('error', reject)
+    req.setTimeout(timeout, () => {
+      req.destroy(new Error(`方舟API请求超时(${timeout}ms)`))
+    })
+    req.write(body)
+    req.end()
+  })
 }
 
 /**
@@ -63,21 +109,13 @@ async function chatCompletion({ messages, schema, maxTokens = 4096, temperature 
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      // 使用 Promise.race 实现超时控制，兼容 Node.js 16+
-      const fetchPromise = fetch(`${ARK_BASE}/chat/completions`, {
-        method: 'POST',
+      const resp = await httpPost(`${ARK_BASE}/chat/completions`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`
         },
         body: JSON.stringify(body)
-      })
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`方舟API请求超时(${timeout}ms)`)), timeout)
-      })
-
-      const resp = await Promise.race([fetchPromise, timeoutPromise])
+      }, timeout)
 
       if (!resp.ok) {
         const errText = await resp.text()

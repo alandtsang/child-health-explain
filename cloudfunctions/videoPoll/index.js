@@ -1,9 +1,56 @@
 const cloud = require('wx-server-sdk');
+const https = require('https');
+const http = require('http');
+const { URL } = require('url');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const ARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3';
 const SEEDANCE_MODEL = 'doubao-seedance-1-5-pro-251215';
 const MAX_RETRIES = 2;
+
+/**
+ * 通用 HTTP 请求，兼容所有 Node.js 版本（无需 fetch）
+ * 返回类 fetch Response 对象：{ ok, status, text(), json(), arrayBuffer() }
+ */
+function httpRequest(url, options) {
+  options = options || {};
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = Object.assign({}, options.headers || {});
+  const body = options.body || '';
+  const timeout = options.timeout || 30000;
+  if (method === 'POST' && body) {
+    headers['Content-Length'] = Buffer.byteLength(body);
+  }
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const isHttps = urlObj.protocol === 'https:';
+    const lib = isHttps ? https : http;
+    const req = lib.request({
+      hostname: urlObj.hostname,
+      port: urlObj.port || (isHttps ? 443 : 80),
+      path: urlObj.pathname + urlObj.search,
+      method,
+      headers
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const buf = Buffer.concat(chunks);
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          text: () => Promise.resolve(buf.toString('utf8')),
+          json: () => Promise.resolve(JSON.parse(buf.toString('utf8'))),
+          arrayBuffer: () => Promise.resolve(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
+        });
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeout, () => { req.destroy(new Error(`请求超时(${timeout}ms)`)); });
+    if (body) req.write(body);
+    req.end();
+  });
+}
 
 exports.main = async (event, context) => {
   if (!process.env.ARK_API_KEY) {
@@ -63,7 +110,7 @@ async function pollSingleTask(media) {
   }
 
   // 查询任务状态
-  const resp = await fetch(
+  const resp = await httpRequest(
     `${ARK_BASE}/contents/generations/tasks/${taskId}`,
     {
       headers: {
@@ -101,7 +148,7 @@ async function handleTaskSuccess(media, task) {
   }
 
   // 下载视频（URL 24h 失效，必须转存）
-  const videoResp = await fetch(videoUrl);
+  const videoResp = await httpRequest(videoUrl);
   if (!videoResp.ok) {
     throw new Error(`下载视频失败: ${videoResp.status}`);
   }
@@ -179,7 +226,7 @@ async function handleTaskFailed(media) {
 async function resubmitTask(media, retries) {
   const db = cloud.database();
 
-  const resp = await fetch(`${ARK_BASE}/contents/generations/tasks`, {
+  const resp = await httpRequest(`${ARK_BASE}/contents/generations/tasks`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

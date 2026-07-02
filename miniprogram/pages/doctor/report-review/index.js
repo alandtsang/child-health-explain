@@ -234,7 +234,7 @@ Page({
       // 直接调用 callFunction，用 generating 状态控制 WXML loading overlay
       // 关闭 wrapper 的 loading 和 toast，避免双重提示
       await api.callFunction('generateReport', { exam_id: this.data.examId }, {
-        loading: false, showError: false
+        loading: false, showError: false, timeout: 38000
       })
       wx.showToast({ title: '解读已生成', icon: 'success' })
       // 重新加载数据，进入审核界面

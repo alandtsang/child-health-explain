@@ -83,7 +83,14 @@ Page({
 
   onExamDateChange(e) { this.setData({ examDate: e.detail.value }) },
 
-  onMetricsChange(e) { this.setData({ metrics: e.detail.metrics }) },
+  // 进入知情同意步骤（先从表单组件获取数据）
+  onToConsent() {
+    const form = this.selectComponent('#metricsForm')
+    if (form) {
+      this.setData({ metrics: form.getFormData() })
+    }
+    this.setData({ step: 'consent' })
+  },
 
   // OCR 拍照上传
   async onOcrUpload() {
@@ -109,11 +116,7 @@ Page({
     }
   },
 
-  // 进入知情同意步骤
-  onToConsent() {
-    this.setData({ step: 'consent' })
-  },
-
+  // 勾选知情同意
   onConsentChange(e) {
     this.setData({ consentChecked: e.detail.value.length > 0 })
   },

@@ -106,10 +106,6 @@ Page({
     this.setData({ examDate: e.detail.value })
   },
 
-  onMetricsChange(e) {
-    this.setData({ metrics: e.detail.metrics })
-  },
-
   // OCR 拍照上传
   async onOcrUpload() {
     try {
@@ -162,7 +158,9 @@ Page({
 
   // 保存体检记录
   async saveExam(status) {
-    const { selectedChild, metrics, examDate, inputMethod } = this.data
+    const { selectedChild, examDate, inputMethod } = this.data
+    const form = this.selectComponent('#metricsForm')
+    const metrics = form ? form.getFormData() : this.data.metrics
     this.setData({ loading: true })
     try {
       const data = await api.saveExam({
@@ -189,7 +187,7 @@ Page({
     this.setData({ generating: true })
     try {
       await api.callFunction('generateReport', { exam_id: examId }, {
-        loading: false, showError: false
+        loading: false, showError: false, timeout: 38000
       })
       wx.showToast({ title: '解读已生成', icon: 'success' })
       // 跳转到报告审核页
