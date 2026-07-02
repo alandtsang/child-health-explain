@@ -1,10 +1,13 @@
 /**
- * cloudfunctions/ocrParse/lib/arkClient.js
+ * cloudfunctions/shared/arkClient.js
  * 火山引擎方舟API客户端 - 文本Chat调用封装
  * 支持 json_schema 模式的结构化输出
  *
- * 使用方式（复制到各云函数 lib/ 目录后）：
- *   const { chatCompletion, buildSchema } = require('./lib/arkClient')
+ * 这是共享源文件（canonical），各云函数使用各自 lib/ 目录下的副本。
+ * 运行 `node scripts/sync-env.js` 可自动将本文件同步到各云函数。
+ *
+ * 使用方式（在各云函数中）：
+ *   const { chatCompletion, buildSchema, getApiKey } = require('./lib/arkClient')
  *   const result = await chatCompletion({ messages, schema })
  */
 
@@ -13,6 +16,29 @@ const { URL } = require('url')
 
 const ARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3'
 const TEXT_MODEL = 'doubao-seed-2-0-pro-260215'
+
+/**
+ * 获取 ARK API Key
+ * 优先级：云函数环境变量 > secrets.local.js 本地配置文件
+ * @returns {string} API Key
+ * @throws {Error} 未配置时抛出
+ */
+function getApiKey() {
+  let apiKey = process.env.ARK_API_KEY
+  // 环境变量未设置时，回退到本地密钥配置文件（由 sync-env.js 从 .env 同步生成）
+  if (!apiKey) {
+    try {
+      const localSecrets = require('../secrets.local')
+      apiKey = localSecrets.ARK_API_KEY
+    } catch (e) {
+      // secrets.local.js 不存在时忽略
+    }
+  }
+  if (!apiKey) {
+    throw new Error('ARK_API_KEY 未配置：请在 .env 中设置后运行 node scripts/sync-env.js，或在云函数环境变量中设置 ARK_API_KEY')
+  }
+  return apiKey
+}
 
 /**
  * 构建 json_schema 响应格式对象
@@ -82,19 +108,7 @@ function httpPost(url, opts, timeout) {
  * @throws {Error} - API调用失败或JSON解析失败时抛出
  */
 async function chatCompletion({ messages, schema, maxTokens = 4096, temperature = 0.3, timeout = 30000, retries = 1 }) {
-  let apiKey = process.env.ARK_API_KEY
-  // 环境变量未设置时，回退到本地密钥配置文件
-  if (!apiKey) {
-    try {
-      const localSecrets = require('../secrets.local')
-      apiKey = localSecrets.ARK_API_KEY
-    } catch (e) {
-      // secrets.local.js 不存在时忽略
-    }
-  }
-  if (!apiKey) {
-    throw new Error('ARK_API_KEY 未配置：请在云函数环境变量中设置 ARK_API_KEY，或在 cloudfunctions/ocrParse/secrets.local.js 中填写')
-  }
+  const apiKey = getApiKey()
 
   const body = {
     model: TEXT_MODEL,
@@ -174,4 +188,4 @@ async function chatCompletion({ messages, schema, maxTokens = 4096, temperature 
   throw lastError
 }
 
-module.exports = { chatCompletion, buildSchema, ARK_BASE, TEXT_MODEL }
+module.exports = { chatCompletion, buildSchema, getApiKey, ARK_BASE, TEXT_MODEL }

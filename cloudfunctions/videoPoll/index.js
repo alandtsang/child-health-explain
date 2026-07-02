@@ -2,6 +2,7 @@ const cloud = require('wx-server-sdk');
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const { getApiKey } = require('./lib/arkClient');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const ARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3';
@@ -53,9 +54,12 @@ function httpRequest(url, options) {
 }
 
 exports.main = async (event, context) => {
-  if (!process.env.ARK_API_KEY) {
-    console.error('未配置 ARK_API_KEY');
-    return { code: 500, message: '未配置 ARK_API_KEY' };
+  let apiKey;
+  try {
+    apiKey = getApiKey();
+  } catch (e) {
+    console.error(e.message);
+    return { code: 500, message: e.message };
   }
 
   const db = cloud.database();
@@ -114,7 +118,7 @@ async function pollSingleTask(media) {
     `${ARK_BASE}/contents/generations/tasks/${taskId}`,
     {
       headers: {
-        Authorization: `Bearer ${process.env.ARK_API_KEY}`
+        Authorization: `Bearer ${getApiKey()}`
       }
     }
   );
@@ -230,7 +234,7 @@ async function resubmitTask(media, retries) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.ARK_API_KEY}`
+      Authorization: `Bearer ${getApiKey()}`
     },
     body: JSON.stringify({
       model: SEEDANCE_MODEL,

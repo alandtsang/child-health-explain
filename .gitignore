@@ -13,3 +13,7 @@ coverage/
 .env
 .env.local
 cloudfunctions/**/secrets.local.js
+
+# 自动生成文件（由 scripts/sync-env.js 从 .env 同步，含环境特定值）
+cloudbaserc.json
+miniprogram/utils/env.js
