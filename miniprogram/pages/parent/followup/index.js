@@ -2,6 +2,7 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
+const subscribe = require('../../../utils/subscribe')
 
 const db = wx.cloud.database()
 const _ = db.command
@@ -17,7 +18,9 @@ Page({
     // 详情
     detailVisible: false,
     detailFollowup: null,
-    completing: false
+    completing: false,
+    // 订阅引导
+    showSubscribeBanner: false
   },
 
   onLoad(options) {
@@ -26,6 +29,10 @@ Page({
     if (options.id) {
       // 从首页直接跳入某条随访详情
       this.loadDetail(options.id)
+    }
+    // 检查是否需要引导订阅
+    if (!subscribe.isInCooldown('followup_remind')) {
+      this.setData({ showSubscribeBanner: true })
     }
   },
 
@@ -155,5 +162,16 @@ Page({
     if (this.data.hasMore && !this.data.loadingMore) {
       this.loadFollowups()
     }
+  },
+
+  // 订阅随访提醒
+  async onTapSubscribe() {
+    await subscribe.subscribeFollowupReminder()
+    this.setData({ showSubscribeBanner: false })
+  },
+
+  // 关闭订阅横幅
+  onCloseSubscribeBanner() {
+    this.setData({ showSubscribeBanner: false })
   }
 })

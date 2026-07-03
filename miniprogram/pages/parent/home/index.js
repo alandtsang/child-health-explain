@@ -1,6 +1,7 @@
 // miniprogram/pages/parent/home/index.js
 const auth = require('../../../utils/auth')
 const format = require('../../../utils/format')
+const subscribe = require('../../../utils/subscribe')
 
 const db = wx.cloud.database()
 const _ = db.command
@@ -13,7 +14,9 @@ Page({
     recentReports: [],
     pendingFollowups: [],
     loading: true,
-    showChildPicker: false
+    showChildPicker: false,
+    // 订阅引导横幅
+    showSubscribeBanner: false
   },
 
   onLoad() {
@@ -25,6 +28,30 @@ Page({
     const userInfo = auth.getUserInfo()
     this.setData({ parentInfo: userInfo ? userInfo.parent_info : null })
     this.loadChildren()
+    this.checkSubscribeStatus()
+  },
+
+  // 检查是否需要引导订阅消息
+  checkSubscribeStatus() {
+    // report_push 或 followup_remind 任一在冷却期内则不显示横幅
+    const needReport = !subscribe.isInCooldown('report_push')
+    const needFollowup = !subscribe.isInCooldown('followup_remind')
+    if (needReport || needFollowup) {
+      this.setData({ showSubscribeBanner: true })
+    } else {
+      this.setData({ showSubscribeBanner: false })
+    }
+  },
+
+  // 点击订阅引导横幅
+  async onTapSubscribe() {
+    await subscribe.subscribeParentNotifications()
+    this.setData({ showSubscribeBanner: false })
+  },
+
+  // 关闭订阅横幅
+  onCloseSubscribeBanner() {
+    this.setData({ showSubscribeBanner: false })
   },
 
   // 加载绑定的儿童档案

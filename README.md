@@ -48,3 +48,20 @@ node scripts/sync-env.js
 ### 生产环境建议
 
 除了使用 `secrets.local.js`，建议在微信开发者工具中为每个云函数设置环境变量 `ARK_API_KEY`，这样即使不上传 `secrets.local.js` 也能正常运行。
+
+### 订阅消息配置
+
+通知推送功能依赖微信订阅消息，需在 [微信公众平台](https://mp.weixin.qq.com/) 后台创建订阅消息模板：
+
+1. 进入「功能」→「订阅消息」→「我的模板」
+2. 创建以下 3 个模板，记录模板 ID 填入 `.env`：
+
+| 环境变量 | 模板用途 | 关键词字段 |
+|----------|----------|-----------|
+| `SUBSCRIBE_TEMPLATE_REPORT_PUSH` | 报告推送通知 | thing1(报告标题), date2(报告日期) |
+| `SUBSCRIBE_TEMPLATE_FOLLOWUP_REMIND` | 随访到期提醒 | thing1(随访项目), date2(计划日期), thing3(提醒内容) |
+| `SUBSCRIBE_TEMPLATE_VIDEO_DONE` | 视频生成完成 | thing1(通知标题), thing2(操作提示) |
+
+3. 如需短信兜底，还需在腾讯云 SMS 控制台创建短信模板，填入 `SMS_TEMPLATE_*` 变量
+4. 运行 `node scripts/sync-env.js` 同步配置
+5. 重新部署 `sendNotification` 云函数

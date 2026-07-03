@@ -3,6 +3,7 @@ const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
+const subscribe = require('../../../utils/subscribe')
 
 const db = wx.cloud.database()
 const _ = db.command
@@ -19,7 +20,9 @@ Page({
     loading: true,
     posterVisible: false,
     generatingPoster: false,
-    generatingVideo: false
+    generatingVideo: false,
+    // 订阅引导（有异常项时显示，引导订阅随访提醒）
+    showSubscribeTip: false
   },
 
   onLoad(options) {
@@ -57,8 +60,13 @@ Page({
         level_info: ABNORMAL_LEVEL_INFO[a.level] || ABNORMAL_LEVEL_INFO.normal
       }))
 
+      // 有异常项且未在冷却期内 → 显示随访提醒订阅引导
+      const hasAbnormal = (exam.abnormal_items || []).some(a => a.level !== 'normal')
+      const needSubscribe = hasAbnormal && !subscribe.isInCooldown('followup_remind')
+
       this.setData({
         report, exam, child, content,
+        showSubscribeTip: needSubscribe,
         loading: false
       })
 
@@ -124,13 +132,22 @@ Page({
     }
   },
 
-  // 播放视频
+  // 播放视频（直接展示视频组件，无需跳转）
   onPlayVideo() {
     if (this.data.video && this.data.video.file_id) {
-      wx.navigateTo({
-        url: `/pages/parent/report-detail/index?report_id=${this.data.reportId}&play_video=1`
-      })
+      this.setData({ videoVisible: true })
     }
+  },
+
+  // 订阅随访提醒
+  async onTapSubscribeFollowup() {
+    await subscribe.subscribeFollowupReminder()
+    this.setData({ showSubscribeTip: false })
+  },
+
+  // 关闭订阅提示
+  onCloseSubscribeTip() {
+    this.setData({ showSubscribeTip: false })
   },
 
   onShareAppMessage() {

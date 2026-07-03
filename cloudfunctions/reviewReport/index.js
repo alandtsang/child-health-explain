@@ -15,6 +15,20 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const _ = db.command
+
+// 加载本地密钥配置（由 sync-env.js 从 .env 同步生成，已 gitignore）
+let localSecrets = {}
+try {
+  localSecrets = require('./secrets.local')
+} catch (e) {
+  // secrets.local.js 不存在时忽略，使用云函数环境变量
+}
+
+// 从环境变量或本地密钥配置中获取配置值
+function getConfig(key) {
+  return process.env[key] || localSecrets[key] || ''
+}
 
 const DISCLAIMER = 'AI生成内容经医生审核，仅供参考'
 
@@ -57,8 +71,7 @@ async function handleSave(reportId, doctorContent, doctorNote, openid) {
 
   const updateData = {}
   if (doctorContent) {
-    updateData.doctor_content = { ...doctorContent }
-    if (doctorNote) updateData.doctor_content.doctor_note = doctorNote
+    updateData.doctor_content = _.set({ ...doctorContent, doctor_note: doctorNote || '' })
   }
   updateData.updated_at = db.serverDate()
 
@@ -81,7 +94,7 @@ async function handleApprove(reportId, openid) {
 
   await db.collection('reports').doc(reportId).update({
     data: {
-      doctor_content: doctorContent,
+      doctor_content: _.set(doctorContent),
       review_status: 'approved',
       reviewed_by: openid,
       reviewed_at: db.serverDate(),
@@ -112,7 +125,7 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
   // 1. 更新报告状态
   await db.collection('reports').doc(reportId).update({
     data: {
-      doctor_content: finalDoctorContent,
+      doctor_content: _.set(finalDoctorContent),
       review_status: 'approved',
       reviewed_by: openid,
       reviewed_at: db.serverDate(),
@@ -222,7 +235,7 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
   // 6. 更新报告推送状态
   await db.collection('reports').doc(reportId).update({
     data: {
-      pushed_to: pushedTo,
+      pushed_to: _.set(pushedTo),
       pushed_at: pushedTo.length > 0 ? db.serverDate() : null
     }
   })
@@ -284,9 +297,9 @@ async function updateExamStatus(examId, status) {
  * 发送微信订阅消息
  */
 async function sendSubscribeMessage(openid, child, reportId) {
-  const templateId = process.env.SUBSCRIBE_TEMPLATE_REPORT
+  const templateId = getConfig('SUBSCRIBE_TEMPLATE_REPORT_PUSH')
   if (!templateId) {
-    console.log('[reviewReport] SUBSCRIBE_TEMPLATE_REPORT未配置，跳过订阅消息发送')
+    console.log('[reviewReport] SUBSCRIBE_TEMPLATE_REPORT_PUSH 未配置，跳过订阅消息发送')
     return
   }
 
@@ -297,11 +310,10 @@ async function sendSubscribeMessage(openid, child, reportId) {
     await cloud.openapi.subscribeMessage.send({
       touser: openid,
       templateId,
-      page: `pages/parent/report-detail/report-detail?reportId=${reportId}`,
+      page: `pages/parent/report-detail/index?report_id=${reportId}`,
       data: {
         thing1: { value: `${child?.name || '儿童'}的体检报告` },
-        time2: { value: dateStr },
-        thing3: { value: '医生已生成解读报告，请查看' }
+        date2: { value: dateStr }
       },
       miniprogramState: 'formal'
     })

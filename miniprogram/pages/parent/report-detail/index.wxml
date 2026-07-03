@@ -90,6 +90,19 @@
   <view class="disclaimer-card">
     <text class="disclaimer-text">{{report.disclaimer || 'AI生成内容经医生审核，仅供参考，不能替代专业医疗诊断'}}</text>
   </view>
+
+  <!-- 随访提醒订阅引导（有异常项时显示） -->
+  <view wx:if="{{showSubscribeTip}}" class="subscribe-tip-card">
+    <view class="subscribe-tip-content" bindtap="onTapSubscribeFollowup">
+      <text class="subscribe-tip-icon">🔔</text>
+      <view class="subscribe-tip-text">
+        <text class="subscribe-tip-title">开启随访提醒</text>
+        <text class="subscribe-tip-desc">体检有异常项，订阅后可在随访到期时收到提醒</text>
+      </view>
+      <text class="subscribe-tip-btn">订阅</text>
+    </view>
+    <text class="subscribe-tip-close" bindtap="onCloseSubscribeTip">×</text>
+  </view>
 </view>
 
 <view wx:if="{{!loading && !report}}" class="empty-state"><text>报告加载失败</text></view>

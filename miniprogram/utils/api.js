@@ -93,7 +93,7 @@ function ocrParse(imageFileId, ageMonths) {
 // === 报告审核（Phase 4）===
 function reviewReport(reportId, action, doctorContent, doctorNote) {
   return callFunction('reviewReport', {
-    report_id: reportId, action, doctor_content: doctorContent, doctor_note: doctorNote
+    reportId, action, doctorContent, doctorNote
   }, { loadingText: '提交中...' })
 }
 

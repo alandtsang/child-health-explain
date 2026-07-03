@@ -157,12 +157,12 @@ Page({
 
   // 一键通过（不修改内容，直接审核通过）
   async onQuickApprove() {
-    await this.submitReview('approve', false)
+    await this.submitReview('approve')
   },
 
   // 保存修改（仅保存 doctor_content，不改变状态）
   async onSaveChanges() {
-    await this.submitReview('save', false)
+    await this.submitReview('save')
   },
 
   // 审核通过并推送
@@ -172,14 +172,14 @@ Page({
       content: '审核通过后报告将推送给家长，并创建随访计划。确认操作？',
       success: async (res) => {
         if (res.confirm) {
-          await this.submitReview('approve_and_push', true)
+          await this.submitReview('approveAndPush')
         }
       }
     })
   },
 
   // 提交审核
-  async submitReview(action, push) {
+  async submitReview(action) {
     this.setData({ submitting: true })
     try {
       await api.reviewReport(this.data.report._id, action, this.data.editContent, this.data.doctorNote)
@@ -190,7 +190,7 @@ Page({
       } else if (action === 'approve') {
         wx.showToast({ title: '审核通过', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 1500)
-      } else if (action === 'approve_and_push') {
+      } else if (action === 'approveAndPush') {
         wx.showToast({ title: '已推送家长', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 1500)
       }

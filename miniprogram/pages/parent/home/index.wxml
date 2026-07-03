@@ -17,6 +17,19 @@
     <view class="quick-card" bindtap="onFollowup"><text class="quick-icon">📅</text><text class="quick-label">随访提醒</text></view>
   </view>
 
+  <!-- 订阅消息引导横幅 -->
+  <view wx:if="{{showSubscribeBanner}}" class="subscribe-banner">
+    <view class="subscribe-banner-content" bindtap="onTapSubscribe">
+      <text class="subscribe-icon">🔔</text>
+      <view class="subscribe-text">
+        <text class="subscribe-title">开启消息通知</text>
+        <text class="subscribe-desc">接收体检报告推送和随访到期提醒</text>
+      </view>
+      <text class="subscribe-btn">去开启</text>
+    </view>
+    <text class="subscribe-close" bindtap="onCloseSubscribeBanner">×</text>
+  </view>
+
   <!-- 待办随访 -->
   <view wx:if="{{pendingFollowups.length > 0}}" class="section">
     <view class="section-header"><text class="section-title">待办随访</text></view>

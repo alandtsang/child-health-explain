@@ -1,5 +1,18 @@
 <!-- miniprogram/pages/parent/followup/index.wxml -->
 <view class="followup-page">
+  <!-- 订阅消息引导横幅 -->
+  <view wx:if="{{showSubscribeBanner}}" class="subscribe-banner">
+    <view class="subscribe-banner-content" bindtap="onTapSubscribe">
+      <text class="subscribe-icon">🔔</text>
+      <view class="subscribe-text">
+        <text class="subscribe-title">开启随访提醒</text>
+        <text class="subscribe-desc">到期前7天和1天收到通知，不漏复查</text>
+      </view>
+      <text class="subscribe-btn">去开启</text>
+    </view>
+    <text class="subscribe-close" bindtap="onCloseSubscribeBanner">×</text>
+  </view>
+
   <view wx:if="{{followups.length === 0 && !loading}}" class="empty-state">
     <text class="empty-icon">📅</text>
     <text>暂无待办随访</text>
