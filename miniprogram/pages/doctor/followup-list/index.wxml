@@ -1,4 +1,5 @@
 <!-- miniprogram/pages/doctor/followup-list/index.wxml -->
+<wxs src="../../../utils/trigger-label.wxs" module="tl" />
 <view class="followup-list-page">
   <!-- 状态筛选 Tab -->
   <scroll-view scroll-x class="tab-scroll">
@@ -24,7 +25,7 @@
     </view>
     <view class="fu-body">
       <view class="fu-info">
-        <text class="fu-trigger">{{item.trigger_summary}}</text>
+        <text class="fu-trigger">{{tl.summary(item.trigger_items)}}</text>
         <text class="fu-plan">计划复查：{{item.plan_date_fmt}}</text>
       </view>
       <view class="fu-badge">
@@ -52,7 +53,7 @@
       <view class="detail-section">
         <text class="detail-section-title">触发项</text>
         <view wx:for="{{detailFollowup.trigger_items}}" wx:key="item" class="trigger-item">
-          <text>{{item.item}}</text>
+          <text>{{tl.formatItem(item.item)}}</text>
           <abnormal-tag level="{{item.level}}" />
         </view>
       </view>

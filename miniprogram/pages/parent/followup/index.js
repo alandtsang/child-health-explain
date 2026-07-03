@@ -101,8 +101,7 @@ Page({
         plan_date_fmt: f.plan_date,
         days_left: diffDays,
         days_text: diffDays > 0 ? `${diffDays}天后` : diffDays === 0 ? '今天' : `已超期${Math.abs(diffDays)}天`,
-        max_level: maxLevel,
-        trigger_summary: (f.trigger_items || []).map(t => t.item).join('、')
+        max_level: maxLevel
       }
     })
   },

@@ -1,4 +1,5 @@
 <!-- miniprogram/pages/parent/home/index.wxml -->
+<wxs src="../../../utils/trigger-label.wxs" module="tl" />
 <view class="parent-home">
   <!-- 儿童信息头 -->
   <view class="child-header" bindtap="onShowChildPicker">
@@ -35,7 +36,7 @@
     <view class="section-header"><text class="section-title">待办随访</text></view>
     <view wx:for="{{pendingFollowups}}" wx:key="_id" class="followup-card card" bindtap="onFollowupTap" data-id="{{item._id}}">
       <view class="followup-info">
-        <text class="followup-item">{{item.item}}</text>
+        <text class="followup-item">{{tl.summary(item.trigger_items)}}</text>
         <text class="followup-date">计划复查：{{item.plan_date}}</text>
       </view>
       <view class="followup-badge">

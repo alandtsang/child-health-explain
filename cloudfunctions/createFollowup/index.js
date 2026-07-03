@@ -96,7 +96,7 @@ exports.main = async (event, context) => {
   // 提取所有非 normal 项作为触发项
   const triggerItems = abnormalItems
     .filter(item => item.level !== 'normal')
-    .map(item => ({ item: item.item, level: item.level }));
+    .map(item => ({ item: item.item_label || item.item, level: item.level }));
 
   // 所有项 normal → 不生成随访
   if (triggerItems.length === 0) {

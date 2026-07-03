@@ -130,7 +130,7 @@ Page({
         return {
           _id: f._id,
           plan_date: f.plan_date,
-          item: (f.trigger_items || []).map(t => t.item).join('、'),
+          trigger_items: f.trigger_items || [],
           days_left: diffDays
         }
       })
