@@ -105,7 +105,7 @@ function selfCheck(data) {
 
 // === 海报与视频（Phase 5）===
 function genPoster(source, params) {
-  return callFunction('genPoster', { source, ...params }, { loadingText: '海报生成中...' })
+  return callFunction('genPoster', { source, ...params }, { loadingText: '海报生成中...', timeout: 55000 })
 }
 function videoCreate(reportId) {
   return callFunction('videoCreate', { report_id: reportId }, { loadingText: '提交中...' })

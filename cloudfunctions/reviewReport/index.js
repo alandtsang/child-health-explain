@@ -169,38 +169,18 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
     }
   }
 
-  // 4. 触发海报生成（创建media_assets记录，实际生成由Phase 5 genPoster处理）
-  if (parentIds.length > 0 || true) {
+  // 4. 触发海报生成（有绑定家长时自动生成，医生也可在审核页手动生成）
+  if (parentIds.length > 0) {
     try {
-      const posterRecord = {
-        report_id: reportId,
-        self_check_id: null,
-        source: 'doctor',
-        type: 'poster',
-        status: 'pending',
-        prompt: '', // 由genPoster云函数构建(Phase 5)
-        file_id: null,
-        thumbnail_file_id: null,
-        generation_meta: { model: '', cost: 0, duration_ms: 0, error: null },
-        created_at: db.serverDate(),
-        completed_at: null
-      }
-      const posterRes = await db.collection('media_assets').add({ data: posterRecord })
-      results.poster = { media_id: posterRes._id, status: 'pending' }
-      console.log('[reviewReport] 海报任务已创建:', posterRes._id)
-
-      // 尝试调用genPoster（Phase 5实现，不存在则忽略）
-      try {
-        await cloud.callFunction({
-          name: 'genPoster',
-          data: { media_id: posterRes._id, report_id: reportId }
-        })
-      } catch (genErr) {
-        console.log('[reviewReport] genPoster未部署或调用失败，海报记录保持pending:', genErr.message)
-      }
+      const posterRes = await cloud.callFunction({
+        name: 'genPoster',
+        data: { source: 'doctor', report_id: reportId }
+      })
+      results.poster = posterRes.result
+      console.log('[reviewReport] 海报生成结果:', posterRes.result.code === 0 ? '成功' : posterRes.result.message)
     } catch (err) {
-      console.error('[reviewReport] 创建海报记录失败:', err.message)
-      results.poster = { success: false, error: err.message }
+      console.error('[reviewReport] 海报生成失败:', err.message)
+      results.poster = { code: 500, message: err.message }
     }
   }
 

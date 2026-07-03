@@ -109,6 +109,25 @@
     />
   </view>
 
+  <!-- 科普海报 -->
+  <view class="card poster-card">
+    <view class="card-title">科普海报</view>
+    <view wx:if="{{poster}}" class="poster-preview" bindtap="onViewPoster">
+      <image class="poster-thumb" src="{{poster.file_id}}" mode="aspectFit" />
+      <text class="poster-tap-hint">点击查看大图</text>
+    </view>
+    <view wx:else class="poster-empty">
+      <text class="poster-empty-text">暂无海报</text>
+      <view class="poster-btn {{generatingPoster ? 'btn-disabled' : ''}}" bindtap="onGeneratePoster">
+        {{generatingPoster ? '生成中...' : '生成海报'}}
+      </view>
+    </view>
+    <view wx:if="{{poster}}" class="poster-actions-row">
+      <view class="poster-action-btn" bindtap="onViewPoster">查看海报</view>
+      <view class="poster-action-btn poster-regenerate" bindtap="onRegeneratePoster">重新生成</view>
+    </view>
+  </view>
+
   <!-- 底部操作栏 -->
   <view class="bottom-bar safe-bottom">
     <view wx:if="{{report.review_status !== 'approved'}}" class="bottom-btn btn-delete" bindtap="onDeleteExam">删除</view>
@@ -170,3 +189,4 @@
 <loading-overlay visible="{{loading}}" text="加载中..." />
 <loading-overlay visible="{{submitting}}" text="提交中..." />
 <loading-overlay visible="{{generating}}" text="AI解读生成中..." />
+<loading-overlay visible="{{generatingPoster}}" text="海报生成中..." />

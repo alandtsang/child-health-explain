@@ -28,7 +28,11 @@ Page({
     // 是否有修改
     hasChanges: false,
     loading: true,
-    submitting: false
+    submitting: false,
+    // 海报相关
+    poster: null,           // 已生成的海报 media_assets 记录
+    posterVisible: false,   // 海报查看器弹窗
+    generatingPoster: false  // 海报生成中
   },
 
   onLoad(options) {
@@ -101,6 +105,9 @@ Page({
         doctorNote: (report.doctor_content || {}).doctor_note || '',
         loading: false
       })
+
+      // 加载已有海报
+      this.loadPoster(report._id)
     } catch (err) {
       console.error('加载报告失败:', err)
       this.setData({ loading: false })
@@ -274,6 +281,99 @@ Page({
     } finally {
       this.setData({ generating: false })
     }
+  },
+
+  // === 海报功能 ===
+
+  // 加载已有海报（查询 media_assets 中已完成的 poster）
+  async loadPoster(reportId) {
+    try {
+      const res = await db.collection('media_assets')
+        .where({ report_id: reportId, type: 'poster', status: 'done' })
+        .orderBy('created_at', 'desc')
+        .limit(1)
+        .get()
+      if (res.data.length > 0) {
+        this.setData({ poster: res.data[0] })
+      }
+    } catch (err) {
+      console.error('加载海报失败:', err)
+    }
+  },
+
+  // 生成海报（调用 genPoster 云函数）
+  async onGeneratePoster() {
+    if (this.data.generatingPoster) return
+    this.setData({ generatingPoster: true })
+    try {
+      // 直接用 callFunction 以控制 loading 和错误提示方式
+      // genPoster 调豆包 Seedream 文生图，服务端超时 60s，客户端设 55s
+      const data = await api.callFunction('genPoster',
+        { source: 'doctor', report_id: this.data.report._id },
+        { loading: false, showError: false, timeout: 55000 }
+      )
+      const poster = { _id: data.media_id, file_id: data.file_id, type: 'poster' }
+      this.setData({ poster })
+      wx.showToast({ title: '海报已生成', icon: 'success' })
+      // 延迟 500ms 弹出全屏预览，让 toast 先显示
+      setTimeout(() => this.onViewPoster(), 500)
+    } catch (err) {
+      console.error('生成海报失败:', err)
+      const errMsg = (err && err.message) || String(err) || '海报生成失败'
+      // 云函数超时（服务端 3 秒限制，需重新部署 config.json）
+      if (errMsg.includes('timed out') || errMsg.includes('-504003') || errMsg.includes('TIME_LIMIT')) {
+        wx.showModal({
+          title: '海报生成超时',
+          content: 'genPoster 云函数超时（默认仅 3 秒）。请在微信开发者工具中右键 genPoster 云函数 → 上传并部署：云端安装依赖，使 config.json 中的 timeout:60 生效。',
+          showCancel: false
+        })
+      } else if (errMsg.includes('ARK_API_KEY') || errMsg.includes('未配置')) {
+        wx.showModal({
+          title: '海报生成失败',
+          content: 'genPoster 云函数未配置 ARK_API_KEY。请在微信开发者工具中右键 genPoster 云函数 → 上传并部署（云端安装依赖），确保 secrets.local.js 一起上传。',
+          showCancel: false
+        })
+      } else {
+        wx.showModal({
+          title: '海报生成失败',
+          content: errMsg,
+          showCancel: false
+        })
+      }
+    } finally {
+      this.setData({ generatingPoster: false })
+    }
+  },
+
+  // 重新生成海报（需确认）
+  onRegeneratePoster() {
+    wx.showModal({
+      title: '重新生成',
+      content: '将重新生成科普海报，原海报将被替换。确认操作？',
+      success: (res) => {
+        if (res.confirm) {
+          this.onGeneratePoster()
+        }
+      }
+    })
+  },
+
+  // 查看已有海报（直接调 wx.previewImage 全屏预览）
+  onViewPoster() {
+    if (!this.data.poster || !this.data.poster.file_id) return
+    wx.previewImage({
+      urls: [this.data.poster.file_id],
+      current: this.data.poster.file_id,
+      fail(err) {
+        console.error('预览海报失败:', err)
+        wx.showToast({ title: '预览失败，请重试', icon: 'none' })
+      }
+    })
+  },
+
+  // 关闭海报查看器
+  onPosterClose() {
+    this.setData({ posterVisible: false })
   },
 
   onPullDownRefresh() {
