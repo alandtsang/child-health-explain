@@ -19,20 +19,25 @@ function callFunction(name, data, options) {
       ])
     : callPromise
 
+  let loadingHidden = false
   return wrappedPromise.then(res => {
-    if (opts.loading !== false) wx.hideLoading()
+    if (opts.loading !== false) { wx.hideLoading(); loadingHidden = true }
     const result = res.result
     if (result && (result.code === API_CODE.SUCCESS || result.success === true)) {
       return result.data || result
     }
     const errMsg = (result && (result.message || result.error)) || '请求失败'
-    if (opts.showError !== false) wx.showToast({ title: errMsg, icon: 'none', duration: 3000 })
     return Promise.reject(new Error(errMsg))
   }).catch(err => {
-    if (opts.loading !== false) wx.hideLoading()
+    // 仅在 .then 未执行过 hideLoading 时调用（网络错误场景）
+    if (opts.loading !== false && !loadingHidden) wx.hideLoading()
     if (opts.showError !== false) {
       const tip = resolveCallErrorTip(err)
-      if (tip) wx.showToast({ title: tip, icon: 'none', duration: 3000 })
+      const msg = tip || (err && err.message) || '请求失败'
+      // 延迟显示，避免与 hideLoading 冲突导致 toast 被关闭
+      setTimeout(() => {
+        wx.showToast({ title: msg, icon: 'none', duration: 3000 })
+      }, 100)
     }
     return Promise.reject(err)
   })
@@ -112,8 +117,9 @@ function videoCreate(reportId) {
 }
 
 // === 随访管理（Phase 6）===
-function updateFollowup(followupId, action, planDate) {
-  return callFunction('updateFollowup', { followup_id: followupId, action, plan_date: planDate }, { loadingText: '处理中...' })
+// options 可传入 { loading: false, showError: false } 让调用方自行管理 loading 和错误提示
+function updateFollowup(followupId, action, planDate, options) {
+  return callFunction('updateFollowup', { followup_id: followupId, action, plan_date: planDate }, options || { loadingText: '处理中...' })
 }
 
 // === 儿童档案 ===

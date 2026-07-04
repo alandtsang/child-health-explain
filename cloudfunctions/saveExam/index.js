@@ -77,7 +77,55 @@ async function handleCreate(openid, event) {
   }
 
   const result = await db.collection('exams').add({ data: examData })
-  return { code: 0, data: { exam_id: result._id } }
+  const examId = result._id
+
+  // 随访自动完成：同一儿童有活跃随访且新体检日期 ≥ 计划复查日期，自动标记完成
+  await autoCompleteFollowups(child_id, exam_date, examId)
+
+  return { code: 0, data: { exam_id: examId } }
+}
+
+/**
+ * 随访自动完成判定（设计规格 7.3）
+ * 同一 child_id 有 status=scheduled|reminded 的随访，且新体检 exam_date ≥ plan_date
+ * → 自动标记为 completed，completion_source = 'doctor_input'
+ * @param {string} childId - 儿童ID
+ * @param {string} examDate - 新体检日期 'YYYY-MM-DD'
+ * @param {string} examId - 新创建的体检记录ID（记录到 completed_exam_id）
+ */
+async function autoCompleteFollowups(childId, examDate, examId) {
+  try {
+    const _ = db.command
+    // 查询该儿童所有活跃随访（scheduled / reminded）
+    const followupRes = await db.collection('followups')
+      .where({
+        child_id: childId,
+        status: _.in(['scheduled', 'reminded'])
+      })
+      .get()
+
+    for (const followup of (followupRes.data || [])) {
+      // 计划复查日期 ≤ 新体检日期 → 视为已复查，自动完成
+      if (followup.plan_date <= examDate) {
+        await db.collection('followups').doc(followup._id).update({
+          data: {
+            status: 'completed',
+            completed_at: new Date(),
+            completion_source: 'doctor_input',
+            completed_exam_id: examId,
+            updated_at: new Date()
+          }
+        })
+      }
+    }
+  } catch (err) {
+    // 随访自动完成失败不影响体检创建主流程
+    if (isCollectionMissingError(err)) {
+      console.warn('[saveExam] followups 集合未初始化，跳过随访自动完成')
+    } else {
+      console.error('[saveExam] 随访自动完成失败:', err.message || err.errMsg)
+    }
+  }
 }
 
 // 更新体检记录（如草稿转正式、修改指标）

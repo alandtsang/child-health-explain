@@ -3,29 +3,42 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 
+// 版本号，用于前端校验云端是否运行最新代码
+const VERSION = 'v2.0.0'
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
-  const { action } = event
+  const { action, followup_id, plan_date } = event
+
+  console.log('[updateFollowup] 调用开始 version=%s action=%s followup_id=%s plan_date=%s openid=%s',
+    VERSION, action, followup_id, plan_date, openid)
 
   try {
+    let result
     switch (action) {
-      case 'complete': return await handleComplete(openid, event)
-      case 'adjust_date': return await handleAdjustDate(openid, event)
-      case 'cancel': return await handleCancel(openid, event)
-      default: return { code: 400, message: '未知的 action: ' + action }
+      case 'complete': result = await handleComplete(openid, event); break
+      case 'adjust_date': result = await handleAdjustDate(openid, event); break
+      case 'cancel': result = await handleCancel(openid, event); break
+      case 'reactivate': result = await handleReactivate(openid, event); break
+      default:
+        console.warn('[updateFollowup] 未知 action: %s', action)
+        return { code: 400, message: '未知的 action: ' + action, version: VERSION }
     }
+    console.log('[updateFollowup] action=%s 完成, result=%j', action, result)
+    return result
   } catch (err) {
     console.error('[updateFollowup] action=%s openid=%s error:', action, openid, err)
     if (isCollectionMissingError(err)) {
       return {
         code: 503,
         message: '数据库集合未初始化，请先调用 initDatabase 初始化集合',
-        error: err.errMsg || err.message
+        error: err.errMsg || err.message,
+        version: VERSION
       }
     }
     const detail = err.errMsg || err.message || '未知错误'
-    return { code: 500, message: '服务器错误：' + detail, error: err.message }
+    return { code: 500, message: '服务器错误：' + detail, error: err.message, version: VERSION }
   }
 }
 
@@ -51,7 +64,8 @@ async function handleComplete(openid, event) {
     return { code: 0, message: '随访已完成', data: { followup_id } }
   }
 
-  await db.collection('followups').doc(followup_id).update({
+  console.log('[updateFollowup] complete 更新数据库, id=%s', followup_id)
+  const updateRes = await db.collection('followups').doc(followup_id).update({
     data: {
       status: 'completed',
       completed_at: new Date(),
@@ -59,6 +73,7 @@ async function handleComplete(openid, event) {
       updated_at: new Date()
     }
   })
+  console.log('[updateFollowup] complete 更新结果, stats=%j', updateRes.stats)
   return { code: 0, data: { followup_id } }
 }
 
@@ -73,6 +88,7 @@ async function handleAdjustDate(openid, event) {
 
   // 仅医生可调整日期
   if (followup.doctor_id !== openid) {
+    console.warn('[updateFollowup] adjust_date 权限拒绝, doctor_id=%s openid=%s', followup.doctor_id, openid)
     return { code: 403, message: '仅医生可调整随访日期' }
   }
 
@@ -80,12 +96,31 @@ async function handleAdjustDate(openid, event) {
     return { code: 400, message: '已完成的随访不可调整日期' }
   }
 
-  await db.collection('followups').doc(followup_id).update({
+  console.log('[updateFollowup] adjust_date 更新数据库, id=%s 旧日期=%s 新日期=%s',
+    followup_id, followup.plan_date, plan_date)
+  const updateRes = await db.collection('followups').doc(followup_id).update({
     data: {
       plan_date,
       updated_at: new Date()
     }
   })
+  console.log('[updateFollowup] adjust_date 更新结果, stats=%j', updateRes.stats)
+  const updatedFollowup = await getFollowup(followup_id)
+  if (!updatedFollowup || updatedFollowup.plan_date !== plan_date) {
+    console.error('[updateFollowup] adjust_date 写后校验失败, id=%s expected=%s actual=%s stats=%j',
+      followup_id, plan_date, updatedFollowup && updatedFollowup.plan_date, updateRes.stats)
+    return {
+      code: 500,
+      message: '随访日期写入未生效，请重试',
+      data: {
+        followup_id,
+        expected_plan_date: plan_date,
+        actual_plan_date: updatedFollowup && updatedFollowup.plan_date,
+        stats: updateRes.stats
+      },
+      version: VERSION
+    }
+  }
   return { code: 0, data: { followup_id, plan_date } }
 }
 
@@ -105,13 +140,50 @@ async function handleCancel(openid, event) {
     return { code: 400, message: '已完成的随访不可取消' }
   }
 
-  await db.collection('followups').doc(followup_id).update({
+  console.log('[updateFollowup] cancel 更新数据库, id=%s', followup_id)
+  const updateRes = await db.collection('followups').doc(followup_id).update({
     data: {
       status: 'cancelled',
       updated_at: new Date()
     }
   })
+  console.log('[updateFollowup] cancel 更新结果, stats=%j', updateRes.stats)
   return { code: 0, data: { followup_id } }
+}
+
+// 重新激活失访/已取消的随访
+async function handleReactivate(openid, event) {
+  const { followup_id, plan_date } = event
+  if (!followup_id) return { code: 400, message: '缺少 followup_id' }
+  if (!plan_date) return { code: 400, message: '请选择新的计划日期' }
+
+  const followup = await getFollowup(followup_id)
+  if (!followup) return { code: 404, message: '随访记录不存在' }
+
+  // 仅医生可重新激活
+  if (followup.doctor_id !== openid) {
+    return { code: 403, message: '仅医生可重新激活随访' }
+  }
+
+  // 仅失访或已取消的随访可重新激活
+  if (!['lost', 'cancelled'].includes(followup.status)) {
+    return { code: 400, message: '仅失访或已取消的随访可重新激活' }
+  }
+
+  console.log('[updateFollowup] reactivate 更新数据库, id=%s 新日期=%s', followup_id, plan_date)
+  const updateRes = await db.collection('followups').doc(followup_id).update({
+    data: {
+      status: 'scheduled',
+      plan_date,
+      // 重置提醒记录，使定时任务可重新发送提醒
+      remind_records: [],
+      completed_at: null,
+      completion_source: null,
+      updated_at: new Date()
+    }
+  })
+  console.log('[updateFollowup] reactivate 更新结果, stats=%j', updateRes.stats)
+  return { code: 0, data: { followup_id, plan_date } }
 }
 
 // 获取随访记录
