@@ -30,11 +30,15 @@ exports.main = async (event, context) => {
 }
 
 // 创建儿童档案
+// 角色感知：医生建档时 bound_parent_ids 留空（待家长扫码认领），
+// 家长建档时 bound_parent_ids 含自己 openid
 async function handleCreate(openid, event) {
   const { name, gender, birth_date } = event
   if (!name || !name.trim()) return { code: 400, message: '请输入姓名' }
   if (!gender) return { code: 400, message: '请选择性别' }
   if (!birth_date) return { code: 400, message: '请选择出生日期' }
+
+  const isDoctor = await isCallerDoctor(openid)
 
   const now = new Date()
   const childData = {
@@ -42,7 +46,7 @@ async function handleCreate(openid, event) {
     gender,
     birth_date,
     medical_record_no: event.medical_record_no || '',
-    bound_parent_ids: [openid],
+    bound_parent_ids: isDoctor ? [] : [openid],
     created_by: openid,
     created_at: now,
     updated_at: now
@@ -50,6 +54,24 @@ async function handleCreate(openid, event) {
 
   const result = await db.collection('children').add({ data: childData })
   return { code: 0, data: { child_id: result._id } }
+}
+
+// 判断调用方是否为医生：users.roles 含 'doctor' 即为医生
+async function isCallerDoctor(openid) {
+  try {
+    const res = await db.collection('users')
+      .where({ openid })
+      .limit(1)
+      .get()
+    const user = res.data[0]
+    return !!(user && Array.isArray(user.roles) && user.roles.includes('doctor'))
+  } catch (err) {
+    if (isCollectionMissingError(err)) {
+      // users 集合未初始化，保守视为非医生（家长路径）
+      return false
+    }
+    throw err
+  }
 }
 
 // 更新儿童档案
