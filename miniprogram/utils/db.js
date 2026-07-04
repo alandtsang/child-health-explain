@@ -8,4 +8,13 @@ function isCollectionMissingError(err) {
   return /collection.*(not.*exist|不存在)|-502003/i.test(msg)
 }
 
-module.exports = { isCollectionMissingError }
+// 校验当前家长是否有权访问该儿童档案（创建者或已绑定家长）
+// 与 cloudfunctions/saveChild 中的 getChildWithPermission 权限模型保持一致：
+// 家长只能查看自己绑定/创建的儿童数据，避免越权查看他人孩子的体检数据
+function isChildAccessibleToParent(child, openid) {
+  if (!child || !openid) return false
+  const bound = Array.isArray(child.bound_parent_ids) ? child.bound_parent_ids : []
+  return child.created_by === openid || bound.includes(openid)
+}
+
+module.exports = { isCollectionMissingError, isChildAccessibleToParent }

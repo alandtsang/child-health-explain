@@ -3,6 +3,7 @@ const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 const subscribe = require('../../../utils/subscribe')
+const { isChildAccessibleToParent } = require('../../../utils/db')
 
 const db = wx.cloud.database()
 const _ = db.command
@@ -110,6 +111,19 @@ Page({
     try {
       const res = await db.collection('followups').doc(followupId).get()
       const followup = res.data
+      if (!followup) return
+
+      // 权限校验：仅允许查看自己绑定儿童的随访，避免家长查看他人孩子的数据
+      const childRes = await db.collection('children').doc(followup.child_id).get().catch(() => ({ data: null }))
+      if (!isChildAccessibleToParent(childRes.data, auth.getOpenid())) {
+        wx.showModal({
+          title: '无权查看',
+          content: '该随访不属于您绑定的孩子，无法查看',
+          showCancel: false
+        })
+        return
+      }
+
       // 丰富数据
       const enriched = await this.enrichFollowups([followup])
       this.setData({ detailFollowup: enriched[0], detailVisible: true })

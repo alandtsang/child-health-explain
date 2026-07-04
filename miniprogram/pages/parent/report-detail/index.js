@@ -4,6 +4,7 @@ const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
 const subscribe = require('../../../utils/subscribe')
+const { isChildAccessibleToParent } = require('../../../utils/db')
 
 const db = wx.cloud.database()
 const _ = db.command
@@ -40,11 +41,6 @@ Page({
         return
       }
 
-      // 标记已查看
-      if (!report.viewed_at) {
-        db.collection('reports').doc(this.data.reportId).update({ data: { viewed_at: db.serverDate() } })
-      }
-
       // 查询体检+儿童
       const examRes = await db.collection('exams').doc(report.exam_id).get()
       const exam = examRes.data
@@ -52,6 +48,23 @@ Page({
       if (exam) {
         const childRes = await db.collection('children').doc(exam.child_id).get()
         child = childRes.data
+      }
+
+      // 权限校验：仅允许查看自己绑定/创建儿童的报告，避免家长查看他人孩子的体检数据
+      if (!isChildAccessibleToParent(child, auth.getOpenid())) {
+        this.setData({ loading: false })
+        wx.showModal({
+          title: '无权查看',
+          content: '该报告关联的儿童不是您绑定的孩子，无法查看',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
+        return
+      }
+
+      // 权限校验通过后再标记已查看
+      if (!report.viewed_at) {
+        db.collection('reports').doc(this.data.reportId).update({ data: { viewed_at: db.serverDate() } })
       }
 
       const content = report.doctor_content || report.ai_content || {}

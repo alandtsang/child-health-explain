@@ -1,0 +1,73 @@
+{
+  "_doc": "微信云开发数据库自定义安全规则。每个集合一份规则，key 为操作类型(read/write/create/update/delete)，value 为表达式。表达式语法见 https://cloud.tencent.com/document/product/876/41802 。重要约束：1) 规则只限制 C 端(小程序客户端)请求，云函数请求不受限制；2) where 查询条件必须是规则的子集，doc(id).get() 单文档读取在带 doc 限制的规则下会被拒绝，需改写为 where({_id, <ownerField>}) 形式；3) 粘贴到云开发控制台时请删除所有 _ 开头的说明字段。",
+  "_status_legend": "ready=可立即启用, needs_refactor=需先完成前置重构(见 docs/database-security-rules.md), default=保持默认",
+
+  "self_checks": {
+    "_status": "ready",
+    "_comment": "纯家长自查数据，医生端不直接读取。读取/写入均限定为 parent_openid == 当前家长。客户端读取已改写为 where({_id, parent_openid}) 以满足子集要求。云函数(selfCheck 写入、genPoster 读取)不受影响。",
+    "read": "doc.parent_openid == auth.openid",
+    "write": "doc.parent_openid == auth.openid",
+    "create": "request.data.parent_openid == auth.openid",
+    "update": "doc.parent_openid == auth.openid",
+    "delete": "doc.parent_openid == auth.openid"
+  },
+
+  "reports": {
+    "_status": "needs_refactor",
+    "_comment": "医生(reviewed_by)与家长(pushed_to)双角色客户端直读。此规则允许审核医生或被推送家长读取。前置条件：1) 父端 report-detail 的 doc(reportId).get() 改写为 where({_id, pushed_to}) 或保留前端权限校验并改写查询；2) 医生端列表查询 reviewed_by 用 {openid} 模板。未改写前启用会导致单文档读取被拒。",
+    "read": "doc.reviewed_by == auth.openid || doc.pushed_to == auth.openid",
+    "write": "doc.reviewed_by == auth.openid",
+    "_note": "推送、生成海报等写入由云函数完成，不受规则限制"
+  },
+
+  "children": {
+    "_status": "needs_refactor",
+    "_comment": "目标规则：仅创建者或绑定家长可读写。但医生端(home/report-list/report-review/exam-input/ocr-review)客户端直读 children 且无归属字段，启用此规则会把医生全部锁死。前置条件：医生端 children 读取全部改为云函数(server-side 校验医生身份后返回)。完成前请保持默认权限。",
+    "read": "doc.created_by == auth.openid || auth.openid in doc.bound_parent_ids",
+    "write": "doc.created_by == auth.openid || auth.openid in doc.bound_parent_ids",
+    "create": "request.data.created_by == auth.openid"
+  },
+
+  "exams": {
+    "_status": "needs_refactor",
+    "_comment": "exam 文档无家长/医生 openid 字段，无法用表达式区分归属。目标：改为『仅业务端可读写』(cloud-function-only)，所有读取/写入经云函数(saveExam 等)在服务端按角色校验。前置条件：doctor/home、doctor/report-list、doctor/report-review 的 exams 客户端直读改为云函数。",
+    "read": "false",
+    "write": "false",
+    "_fallback": "若暂不迁移，保持默认权限并依赖前端权限校验 + 云函数写入"
+  },
+
+  "followups": {
+    "_status": "needs_refactor",
+    "_comment": "家长按 child_id 关联读取、医生按 doctor_id 读取，文档本身不含家长 openid。get() 跨集合关联 child.bound_parent_ids 受单表达式 3 次/10 文档限制，列表场景不可行。目标：改为『仅业务端可读写』，列表与详情读取走云函数按角色校验。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "media_assets": {
+    "_status": "needs_refactor",
+    "_comment": "按 report_id / self_check_id 关联，需 get() 二跳校验关联报告归属，受 get 次数限制不适合列表。目标：改为『仅业务端可读写』，海报/视频读取走云函数。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "users": {
+    "_status": "ready",
+    "_comment": "用户自身档案，仅本人可读写。login 云函数的 getOrCreate/updateUserRecord 不受规则限制。",
+    "read": "doc.openid == auth.openid",
+    "write": "doc.openid == auth.openid"
+  },
+
+  "doctor_whitelist": {
+    "_status": "ready",
+    "_comment": "医生白名单，仅后台/云函数维护，C 端不可读写。seedDoctorWhitelist 云函数不受影响。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "notifications": {
+    "_status": "needs_refactor",
+    "_comment": "通知按目标用户分发。目标规则需确认通知文档的接收者字段名(target_openid / openid)后启用；启用前先核对字段并改写单文档读取。",
+    "read": "doc.openid == auth.openid",
+    "write": "false"
+  }
+}
