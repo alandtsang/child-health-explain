@@ -82,6 +82,7 @@ async function handleSave(reportId, doctorContent, doctorNote, openid) {
 
 /**
  * 一键通过（不推送）
+ * 若有绑定家长则标记 pushed，无绑定家长则标记 pending_binding 待家长绑定后补发
  */
 async function handleApprove(reportId, openid) {
   const report = await getReport(reportId)
@@ -92,20 +93,38 @@ async function handleApprove(reportId, openid) {
   // 一键通过：doctor_content = ai_content
   const doctorContent = { ...report.ai_content, doctor_note: '' }
 
+  // 取 exam + child 判断是否有绑定家长
+  let pushStatus = 'pending_binding'
+  try {
+    const examRes = await db.collection('exams').doc(report.exam_id).get()
+    const exam = examRes.data
+    if (exam) {
+      const childRes = await db.collection('children').doc(exam.child_id).get()
+      const child = childRes.data
+      if (child && Array.isArray(child.bound_parent_ids) && child.bound_parent_ids.length > 0) {
+        pushStatus = 'pushed'
+      }
+    }
+  } catch (err) {
+    console.warn('[reviewReport] handleApprove 获取 child 失败，默认 pending_binding:', err.message)
+  }
+
   await db.collection('reports').doc(reportId).update({
     data: {
       doctor_content: _.set(doctorContent),
       review_status: 'approved',
       reviewed_by: openid,
       reviewed_at: db.serverDate(),
-      updated_at: db.serverDate()
+      updated_at: db.serverDate(),
+      push_status: pushStatus
     }
   })
 
   // 更新体检记录状态
   await updateExamStatus(report.exam_id, 'reported')
 
-  return { success: true, message: '审核通过', review_status: 'approved' }
+  const msg = pushStatus === 'pushed' ? '审核通过' : '审核通过，待家长绑定后自动推送'
+  return { success: true, message: msg, review_status: 'approved' }
 }
 
 /**
@@ -186,29 +205,36 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
 
   // 5. 推送通知给绑定家长
   const pushedTo = []
-  for (const parentId of parentIds) {
-    try {
-      // 创建通知记录
-      const notifRecord = {
-        target_openid: parentId,
-        type: 'report_push',
-        title: `${child?.name || '儿童'}的体检报告已生成`,
-        content: '医生已为您生成体检解读报告，请点击查看',
-        channel: 'mp_subscribe',
-        status: 'pending',
-        related_id: reportId,
-        sent_at: null,
-        created_at: db.serverDate()
-      }
-      const notifRes = await db.collection('notifications').add({ data: notifRecord })
-      results.notifications.push({ notification_id: notifRes._id, target: parentId, status: 'pending' })
+  let pushStatus = 'pushed'
 
-      // 尝试发送订阅消息
-      await sendSubscribeMessage(parentId, child, reportId)
-      pushedTo.push(parentId)
-    } catch (err) {
-      console.error('[reviewReport] 推送通知失败:', parentId, err.message)
-      results.notifications.push({ target: parentId, status: 'failed', error: err.message })
+  if (parentIds.length === 0) {
+    // 无绑定家长：标记 pending_binding，待家长扫码绑定后由 claimChild 触发补发
+    pushStatus = 'pending_binding'
+  } else {
+    for (const parentId of parentIds) {
+      try {
+        // 创建通知记录
+        const notifRecord = {
+          target_openid: parentId,
+          type: 'report_push',
+          title: `${child?.name || '儿童'}的体检报告已生成`,
+          content: '医生已为您生成体检解读报告，请点击查看',
+          channel: 'mp_subscribe',
+          status: 'pending',
+          related_id: reportId,
+          sent_at: null,
+          created_at: db.serverDate()
+        }
+        const notifRes = await db.collection('notifications').add({ data: notifRecord })
+        results.notifications.push({ notification_id: notifRes._id, target: parentId, status: 'pending' })
+
+        // 尝试发送订阅消息
+        await sendSubscribeMessage(parentId, child, reportId)
+        pushedTo.push(parentId)
+      } catch (err) {
+        console.error('[reviewReport] 推送通知失败:', parentId, err.message)
+        results.notifications.push({ target: parentId, status: 'failed', error: err.message })
+      }
     }
   }
 
@@ -216,13 +242,15 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
   await db.collection('reports').doc(reportId).update({
     data: {
       pushed_to: _.set(pushedTo),
-      pushed_at: pushedTo.length > 0 ? db.serverDate() : null
+      pushed_at: pushedTo.length > 0 ? db.serverDate() : null,
+      push_status: pushStatus
     }
   })
 
+  const msg = pushStatus === 'pushed' ? '审核通过并推送成功' : '审核通过，待家长绑定后自动推送'
   return {
     success: true,
-    message: '审核通过并推送成功',
+    message: msg,
     review_status: 'approved',
     results
   }
