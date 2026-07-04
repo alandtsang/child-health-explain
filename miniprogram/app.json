@@ -16,6 +16,7 @@
     "pages/parent/self-check-result/index",
     "pages/parent/followup/index",
     "pages/parent/profile/index",
+    "pages/parent/bind-confirm/index",
     "pages/child-edit/child-edit"
   ],
   "window": {

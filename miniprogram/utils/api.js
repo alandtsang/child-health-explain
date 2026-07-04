@@ -127,11 +127,23 @@ function saveChild(data) {
   return callFunction('saveChild', data, { loadingText: '保存中...' })
 }
 
+// === 家长↔儿童档案绑定 ===
+function createBindInvite(childId) {
+  return callFunction('createBindInvite', { child_id: childId }, { loadingText: '生成邀请...' })
+}
+function previewInvite(code) {
+  return callFunction('claimChild', { code, action: 'preview' }, { loading: false, showError: false })
+}
+function claimChild(code) {
+  return callFunction('claimChild', { code }, { loadingText: '绑定中...' })
+}
+
 // === 数据库初始化（Phase 1 已有）===
 function initCollections() { return callFunction('initDatabase', { action: 'initCollections' }, { loadingText: '初始化数据库...' }) }
 
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
-  selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections
+  selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections,
+  createBindInvite, previewInvite, claimChild
 }
