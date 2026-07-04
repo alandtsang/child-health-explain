@@ -55,3 +55,18 @@
 .poster-actions-row { display: flex; gap: 16rpx; margin-top: 20rpx; }
 .poster-action-btn { flex: 1; text-align: center; padding: 18rpx 0; border-radius: 10rpx; font-size: 26rpx; font-weight: 500; background: #F0F5FF; color: #4A90D9; }
 .poster-regenerate { background: #FFF7E6; color: #FA8C16; }
+
+/* 邀请家长弹窗 */
+.invite-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.invite-dialog { background: #fff; border-radius: 16rpx; padding: 32rpx; width: 80%; max-width: 600rpx; }
+.invite-title { font-size: 32rpx; font-weight: 600; text-align: center; margin-bottom: 24rpx; }
+.qr-wrap { text-align: center; margin: 24rpx 0; }
+.qr-img { width: 400rpx; height: 400rpx; }
+.invite-code-row { display: flex; align-items: center; justify-content: center; margin: 16rpx 0; }
+.invite-code-label { font-size: 28rpx; color: #7A8794; }
+.invite-code { font-size: 40rpx; font-weight: 700; letter-spacing: 8rpx; color: #4A90D9; }
+.invite-copy { font-size: 24rpx; color: #4A90D9; margin-left: 16rpx; }
+.invite-tip { font-size: 24rpx; color: #7A8794; text-align: center; margin: 16rpx 0 24rpx; }
+.invite-actions { display: flex; gap: 16rpx; }
+.invite-btn { flex: 1; font-size: 28rpx; border-radius: 8rpx; }
+.invite-btn-primary { background: #4A90D9; color: #fff; }

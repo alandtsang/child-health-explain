@@ -32,7 +32,11 @@ Page({
     // 海报相关
     poster: null,           // 已生成的海报 media_assets 记录
     posterVisible: false,   // 海报查看器弹窗
-    generatingPoster: false  // 海报生成中
+    generatingPoster: false,  // 海报生成中
+    // 家长绑定状态
+    isBound: false,          // 该儿童是否已有家长绑定
+    inviteData: null,        // 邀请码 + 小程序码信息
+    inviteVisible: false     // 邀请弹窗显示
   },
 
   onLoad(options) {
@@ -100,6 +104,7 @@ Page({
         exam,
         report,
         child,
+        isBound: !!(child && Array.isArray(child.bound_parent_ids) && child.bound_parent_ids.length > 0),
         aiContent,
         editContent,
         doctorNote: (report.doctor_content || {}).doctor_note || '',
@@ -172,16 +177,68 @@ Page({
     await this.submitReview('save')
   },
 
-  // 审核通过并推送
+  // 审核通过：根据绑定状态分流
   async onApproveAndPush() {
-    wx.showModal({
-      title: '确认推送',
-      content: '审核通过后报告将推送给家长，并创建随访计划。确认操作？',
-      success: async (res) => {
-        if (res.confirm) {
-          await this.submitReview('approveAndPush')
+    if (this.data.isBound) {
+      // 已绑定家长 → 直接推送
+      wx.showModal({
+        title: '确认推送',
+        content: '审核通过后报告将推送给家长，并创建随访计划。确认操作？',
+        success: async (res) => {
+          if (res.confirm) await this.submitReview('approveAndPush')
         }
-      }
+      })
+    } else {
+      // 未绑定家长 → 先审核，再邀请家长
+      wx.showModal({
+        title: '暂无绑定家长',
+        content: '该儿童档案暂无家长绑定，需先邀请家长扫码绑定后才能推送报告。是否现在生成邀请？',
+        confirmText: '生成邀请',
+        success: async (res) => {
+          if (res.confirm) {
+            await this.submitReview('approve')
+            this.onInviteParent()
+          }
+        }
+      })
+    }
+  },
+
+  // 邀请家长绑定（无绑定家长时）
+  async onInviteParent() {
+    if (!this.data.child) return
+    try {
+      const data = await api.createBindInvite(this.data.child._id)
+      this.setData({ inviteData: data, inviteVisible: true })
+    } catch (err) {
+      console.error('生成邀请失败:', err)
+    }
+  },
+
+  onCloseInvite() {
+    this.setData({ inviteVisible: false })
+  },
+
+  // 复制邀请码
+  onCopyCode() {
+    wx.setClipboardData({
+      data: this.data.inviteData.code,
+      success: () => wx.showToast({ title: '已复制', icon: 'success' })
+    })
+  },
+
+  // 保存邀请码图片
+  onSaveQr() {
+    if (!this.data.inviteData || !this.data.inviteData.qr_file_id) {
+      wx.showToast({ title: '小程序码未生成', icon: 'none' })
+      return
+    }
+    wx.cloud.downloadFile({ fileID: this.data.inviteData.qr_file_id }).then(res => {
+      wx.saveImageToPhotosAlbum({
+        filePath: res.tempFilePath,
+        success: () => wx.showToast({ title: '已保存', icon: 'success' }),
+        fail: () => wx.showToast({ title: '保存失败', icon: 'none' })
+      })
     })
   },
 
@@ -198,7 +255,7 @@ Page({
         wx.showToast({ title: '审核通过', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 1500)
       } else if (action === 'approveAndPush') {
-        wx.showToast({ title: '已推送家长', icon: 'success' })
+        wx.showToast({ title: this.data.isBound ? '已推送家长' : '已审核，待家长绑定后自动推送', icon: 'none' })
         setTimeout(() => wx.navigateBack(), 1500)
       }
     } catch (err) {

@@ -133,7 +133,27 @@
     <view wx:if="{{report.review_status !== 'approved'}}" class="bottom-btn btn-delete" bindtap="onDeleteExam">删除</view>
     <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
     <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
-    <view class="bottom-btn btn-push" bindtap="onApproveAndPush">通过并推送</view>
+    <view class="bottom-btn btn-push" bindtap="onApproveAndPush">{{isBound ? '通过并推送' : '通过并邀请家长'}}</view>
+  </view>
+</view>
+
+<!-- 邀请家长弹窗 -->
+<view wx:if="{{inviteVisible}}" class="invite-mask" bindtap="onCloseInvite">
+  <view class="invite-dialog" catchtap="">
+    <view class="invite-title">家长绑定邀请</view>
+    <view wx:if="{{inviteData.qr_file_id}}" class="qr-wrap">
+      <image src="{{inviteData.qr_file_id}}" mode="aspectFit" class="qr-img" />
+    </view>
+    <view class="invite-code-row">
+      <text class="invite-code-label">邀请码：</text>
+      <text class="invite-code">{{inviteData.code}}</text>
+      <text class="invite-copy" bindtap="onCopyCode">复制</text>
+    </view>
+    <view class="invite-tip">有效期 {{inviteData.expires_in_days}} 天，家长扫码或输入邀请码即可绑定</view>
+    <view class="invite-actions">
+      <button wx:if="{{inviteData.qr_file_id}}" class="invite-btn" bindtap="onSaveQr">保存二维码</button>
+      <button class="invite-btn invite-btn-primary" bindtap="onCloseInvite">完成</button>
+    </view>
   </view>
 </view>
 
