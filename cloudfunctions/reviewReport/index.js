@@ -41,6 +41,12 @@ exports.main = async (event, context) => {
     return { success: false, error: '缺少必要参数: action, reportId' }
   }
 
+  // 服务端强制校验：仅已审核通过的医生可执行审核操作
+  const doctorCheck = await validateApprovedDoctor(openid)
+  if (!doctorCheck.isValid) {
+    return { success: false, error: doctorCheck.message, code: doctorCheck.code }
+  }
+
   try {
     switch (action) {
       case 'save':
@@ -337,5 +343,27 @@ async function sendSubscribeMessage(openid, child, reportId) {
   } catch (err) {
     console.error('[reviewReport] 订阅消息发送失败:', openid, err.message)
     // 不抛出错误，推送失败不影响审核流程
+  }
+}
+
+// 严格校验调用方是否为已审核通过的医生
+// 同时满足：users.roles 含 'doctor' + doctor_info.status === 'approved'
+async function validateApprovedDoctor(openid) {
+  try {
+    const res = await db.collection('users').where({ openid }).limit(1).get()
+    const user = res.data[0]
+    if (!user || !Array.isArray(user.roles) || !user.roles.includes('doctor')) {
+      return { isValid: false, code: 403, message: '您不是医生角色，无权执行此操作' }
+    }
+    if (!user.doctor_info || user.doctor_info.status !== 'approved') {
+      return { isValid: false, code: 403, message: '医生身份未审核通过，无法执行此操作' }
+    }
+    return { isValid: true, user }
+  } catch (err) {
+    const msg = (err && (err.errMsg || err.message)) || ''
+    if (/collection.*(not.*exist|不存在)|-502003/i.test(msg)) {
+      return { isValid: false, code: 503, message: '数据库集合未初始化' }
+    }
+    throw err
   }
 }

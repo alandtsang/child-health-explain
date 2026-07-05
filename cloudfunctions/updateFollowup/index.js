@@ -83,13 +83,17 @@ async function handleAdjustDate(openid, event) {
   if (!followup_id) return { code: 400, message: '缺少 followup_id' }
   if (!plan_date) return { code: 400, message: '请选择新的计划日期' }
 
+  // 服务端校验：仅已审核通过的医生可调整随访日期
+  const doctorCheck = await validateApprovedDoctor(openid)
+  if (!doctorCheck.isValid) return { code: doctorCheck.code, message: doctorCheck.message }
+
   const followup = await getFollowup(followup_id)
   if (!followup) return { code: 404, message: '随访记录不存在' }
 
-  // 仅医生可调整日期
+  // 仅录入医生可调整日期
   if (followup.doctor_id !== openid) {
     console.warn('[updateFollowup] adjust_date 权限拒绝, doctor_id=%s openid=%s', followup.doctor_id, openid)
-    return { code: 403, message: '仅医生可调整随访日期' }
+    return { code: 403, message: '仅录入医生可调整随访日期' }
   }
 
   if (followup.status === 'completed') {
@@ -129,11 +133,15 @@ async function handleCancel(openid, event) {
   const { followup_id } = event
   if (!followup_id) return { code: 400, message: '缺少 followup_id' }
 
+  // 服务端校验：仅已审核通过的医生可取消随访
+  const doctorCheck = await validateApprovedDoctor(openid)
+  if (!doctorCheck.isValid) return { code: doctorCheck.code, message: doctorCheck.message }
+
   const followup = await getFollowup(followup_id)
   if (!followup) return { code: 404, message: '随访记录不存在' }
 
   if (followup.doctor_id !== openid) {
-    return { code: 403, message: '仅医生可取消随访' }
+    return { code: 403, message: '仅录入医生可取消随访' }
   }
 
   if (followup.status === 'completed') {
@@ -157,12 +165,16 @@ async function handleReactivate(openid, event) {
   if (!followup_id) return { code: 400, message: '缺少 followup_id' }
   if (!plan_date) return { code: 400, message: '请选择新的计划日期' }
 
+  // 服务端校验：仅已审核通过的医生可重新激活随访
+  const doctorCheck = await validateApprovedDoctor(openid)
+  if (!doctorCheck.isValid) return { code: doctorCheck.code, message: doctorCheck.message }
+
   const followup = await getFollowup(followup_id)
   if (!followup) return { code: 404, message: '随访记录不存在' }
 
-  // 仅医生可重新激活
+  // 仅录入医生可重新激活
   if (followup.doctor_id !== openid) {
-    return { code: 403, message: '仅医生可重新激活随访' }
+    return { code: 403, message: '仅录入医生可重新激活随访' }
   }
 
   // 仅失访或已取消的随访可重新激活
@@ -213,4 +225,25 @@ async function checkParentBound(childId, openid) {
 function isCollectionMissingError(err) {
   const msg = (err && (err.errMsg || err.message)) || ''
   return /collection.*(not.*exist|不存在)|-502003/i.test(msg)
+}
+
+// 严格校验调用方是否为已审核通过的医生
+// 同时满足：users.roles 含 'doctor' + doctor_info.status === 'approved'
+async function validateApprovedDoctor(openid) {
+  try {
+    const res = await db.collection('users').where({ openid }).limit(1).get()
+    const user = res.data[0]
+    if (!user || !Array.isArray(user.roles) || !user.roles.includes('doctor')) {
+      return { isValid: false, code: 403, message: '您不是医生角色，无权执行此操作' }
+    }
+    if (!user.doctor_info || user.doctor_info.status !== 'approved') {
+      return { isValid: false, code: 403, message: '医生身份未审核通过，无法执行此操作' }
+    }
+    return { isValid: true, user }
+  } catch (err) {
+    if (isCollectionMissingError(err)) {
+      return { isValid: false, code: 503, message: '数据库集合未初始化' }
+    }
+    throw err
+  }
 }

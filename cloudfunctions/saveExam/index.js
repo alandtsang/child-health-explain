@@ -35,6 +35,13 @@ async function handleCreate(openid, event) {
   if (!child_id) return { code: 400, message: '缺少 child_id' }
   if (!exam_date) return { code: 400, message: '请选择体检日期' }
 
+  // 服务端校验：如果调用者是医生角色，必须 doctor_info.status === 'approved'
+  // 防止未审核或已吊销的医生录入体检数据
+  const doctorCheck = await checkDoctorApproved(openid)
+  if (doctorCheck.isDoctor && !doctorCheck.approved) {
+    return { code: 403, message: '医生身份未审核通过，无法录入体检数据' }
+  }
+
   // 查询儿童档案以计算月龄
   let child
   try {
@@ -249,6 +256,24 @@ function calcAgeMonths(birthDate, examDate) {
   const exam = new Date(examDate)
   return (exam.getFullYear() - birth.getFullYear()) * 12 +
          (exam.getMonth() - birth.getMonth())
+}
+
+// 检查调用方是否为医生角色及是否已审核通过
+// 返回 { isDoctor: bool, approved: bool }
+// 如果 isDoctor=true 且 approved=false，说明是未审核/已吊销的医生，应拒绝
+async function checkDoctorApproved(openid) {
+  try {
+    const res = await db.collection('users').where({ openid }).limit(1).get()
+    const user = res.data[0]
+    if (!user || !Array.isArray(user.roles) || !user.roles.includes('doctor')) {
+      return { isDoctor: false, approved: false }
+    }
+    const approved = !!(user.doctor_info && user.doctor_info.status === 'approved')
+    return { isDoctor: true, approved }
+  } catch (err) {
+    if (isCollectionMissingError(err)) return { isDoctor: false, approved: false }
+    throw err
+  }
 }
 
 function isCollectionMissingError(err) {

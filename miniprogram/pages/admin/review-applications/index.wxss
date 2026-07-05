@@ -1,0 +1,205 @@
+/* miniprogram/pages/admin/review-applications/index.wxss */
+.review-page {
+  min-height: 100vh;
+  background: #F5F6FA;
+  padding-bottom: 40rpx;
+}
+
+/* === Tab 栏 === */
+.tab-bar {
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+}
+.tab-item {
+  flex: 1;
+  padding: 24rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #999;
+  border-bottom: 4rpx solid transparent;
+  box-sizing: border-box;
+}
+.tab-item.active {
+  color: #4A90D9;
+  border-bottom: 4rpx solid #4A90D9;
+}
+
+/* === 申请卡片 === */
+.app-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin: 24rpx;
+}
+
+/* === 信息行 === */
+.info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+.info-row:last-child {
+  margin-bottom: 0;
+}
+.info-label {
+  width: 200rpx;
+  color: #999;
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+.info-value {
+  flex: 1;
+  color: #333;
+  font-size: 28rpx;
+  word-break: break-all;
+}
+.reject-note {
+  color: #FF4D4F;
+}
+
+/* === 证书照片 === */
+.photo-section {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.photo-title {
+  display: block;
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+.photo-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.photo-thumb {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+  margin-bottom: 16rpx;
+  background: #f5f5f5;
+}
+
+/* === 操作按钮 === */
+.action-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 24rpx;
+  margin-top: 32rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.btn-approve {
+  flex: 1;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 30rpx;
+  background: #52C41A;
+  color: #fff;
+}
+.btn-reject {
+  flex: 1;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 30rpx;
+  background: #fff;
+  color: #FF4D4F;
+  border: 1rpx solid #FF4D4F;
+  box-sizing: border-box;
+}
+
+/* === 空状态 === */
+.empty-state {
+  padding: 200rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+}
+
+/* === 加载更多 === */
+.loading-more,
+.no-more {
+  text-align: center;
+  padding: 24rpx;
+  color: #999;
+  font-size: 26rpx;
+}
+
+/* === 驳回弹窗 === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  width: 600rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.modal-title {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+}
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  line-height: 1;
+}
+.modal-body {
+  padding: 32rpx;
+}
+.reject-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  background: #F5F6FA;
+  border-radius: 12rpx;
+  box-sizing: border-box;
+}
+.modal-actions {
+  display: flex;
+  flex-direction: row;
+  padding: 0 32rpx 32rpx;
+  gap: 24rpx;
+}
+.modal-btn {
+  flex: 1;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 30rpx;
+}
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+.btn-confirm {
+  background: #FF4D4F;
+  color: #fff;
+}

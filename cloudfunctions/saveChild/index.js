@@ -56,7 +56,9 @@ async function handleCreate(openid, event) {
   return { code: 0, data: { child_id: result._id } }
 }
 
-// 判断调用方是否为医生：users.roles 含 'doctor' 即为医生
+// 判断调用方是否为已审核通过的医生
+// 同时满足：users.roles 含 'doctor' + doctor_info.status === 'approved'
+// 防止未审核或已吊销的医生以医生身份建档（bound_parent_ids 留空）
 async function isCallerDoctor(openid) {
   try {
     const res = await db.collection('users')
@@ -64,7 +66,14 @@ async function isCallerDoctor(openid) {
       .limit(1)
       .get()
     const user = res.data[0]
-    return !!(user && Array.isArray(user.roles) && user.roles.includes('doctor'))
+    if (!user || !Array.isArray(user.roles) || !user.roles.includes('doctor')) {
+      return false
+    }
+    // 必须同时校验 doctor_info.status，防止审核中或已吊销的医生绕过
+    if (!user.doctor_info || user.doctor_info.status !== 'approved') {
+      return false
+    }
+    return true
   } catch (err) {
     if (isCollectionMissingError(err)) {
       // users 集合未初始化，保守视为非医生（家长路径）

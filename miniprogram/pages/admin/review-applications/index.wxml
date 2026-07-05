@@ -1,0 +1,93 @@
+<!-- miniprogram/pages/admin/review-applications/index.wxml -->
+<view class="review-page">
+  <!-- 顶部 Tab 栏 -->
+  <view class="tab-bar">
+    <view wx:for="{{tabs}}" wx:key="key"
+      class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+      bindtap="onSwitchTab" data-key="{{item.key}}">
+      <text>{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{applications.length === 0 && !loading}}" class="empty-state">
+    <text>暂无申请记录</text>
+  </view>
+
+  <!-- 申请列表 -->
+  <view wx:for="{{applications}}" wx:key="_id" class="app-card">
+    <!-- 申请人信息 -->
+    <view class="info-row">
+      <text class="info-label">姓名</text>
+      <text class="info-value">{{item.name}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">执业地点</text>
+      <text class="info-value">{{item.practice_location}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">所在医疗机构</text>
+      <text class="info-value">{{item.hospital}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">执业证编号</text>
+      <text class="info-value">{{item.license_no}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">提交时间</text>
+      <text class="info-value">{{item.created_at_fmt}}</text>
+    </view>
+
+    <!-- 驳回原因（仅已驳回且存在原因时显示） -->
+    <view wx:if="{{item.status === 'rejected' && item.review_note}}" class="info-row">
+      <text class="info-label">驳回原因</text>
+      <text class="info-value reject-note">{{item.review_note}}</text>
+    </view>
+
+    <!-- 证书照片 -->
+    <view wx:if="{{item.cert_photos.length > 0}}" class="photo-section">
+      <text class="photo-title">证书照片</text>
+      <view class="photo-grid">
+        <image wx:for="{{item.cert_photos}}" wx:for-item="photo" wx:key="*this"
+          class="photo-thumb"
+          src="{{photo}}"
+          mode="aspectFill"
+          bindtap="onPreviewPhoto"
+          data-urls="{{item.cert_photos}}"
+          data-current="{{photo}}" />
+      </view>
+    </view>
+
+    <!-- 操作按钮（仅待审核状态显示） -->
+    <view wx:if="{{activeTab === 'pending'}}" class="action-bar">
+      <view class="btn-approve" bindtap="onApprove" data-id="{{item._id}}">通过</view>
+      <view class="btn-reject" bindtap="onReject" data-id="{{item._id}}">驳回</view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view wx:if="{{loadingMore}}" class="loading-more">加载中...</view>
+  <view wx:if="{{!hasMore && applications.length > 0}}" class="no-more">没有更多了</view>
+</view>
+
+<!-- 驳回原因弹窗 -->
+<view wx:if="{{rejectVisible}}" class="modal-overlay" bindtap="onCancelReject">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">驳回原因</text>
+      <text class="modal-close" bindtap="onCancelReject">×</text>
+    </view>
+    <view class="modal-body">
+      <textarea class="reject-textarea"
+        placeholder="请输入驳回原因"
+        value="{{rejectNote}}"
+        bindinput="onRejectNoteInput"
+        maxlength="200"
+        auto-height />
+    </view>
+    <view class="modal-actions">
+      <view class="modal-btn btn-cancel" bindtap="onCancelReject">取消</view>
+      <view class="modal-btn btn-confirm" bindtap="onConfirmReject">确认驳回</view>
+    </view>
+  </view>
+</view>

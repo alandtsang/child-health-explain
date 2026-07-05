@@ -64,6 +64,13 @@
     "write": "false"
   },
 
+  "doctor_applications": {
+    "_status": "ready",
+    "_comment": "医生认证申请记录，仅云函数(doctorCert)可读写。申请人状态查询走 getStatus 云函数，管理员审核走 listPending/review 云函数，C 端不可直接读写。",
+    "read": "false",
+    "write": "false"
+  },
+
   "notifications": {
     "_status": "needs_refactor",
     "_comment": "通知按目标用户分发。目标规则需确认通知文档的接收者字段名(target_openid / openid)后启用；启用前先核对字段并改写单文档读取。",

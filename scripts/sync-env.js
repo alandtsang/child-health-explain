@@ -114,6 +114,14 @@ function main() {
   const reviewKeys = ['SUBSCRIBE_TEMPLATE_REPORT_PUSH']
   writeFile(path.join(CF, 'reviewReport'), 'secrets.local.js', genSecretsFile(reviewKeys, config, 'reviewReport'))
 
+  // doctorCert: 管理员 openid 列表（用于医生认证申请审核）
+  const doctorCertKeys = ['ADMIN_OPENIDS']
+  writeFile(path.join(CF, 'doctorCert'), 'secrets.local.js', genSecretsFile(doctorCertKeys, config, 'doctorCert'))
+
+  // login: 管理员 openid 列表（用于首页识别管理员身份，展示审核入口）
+  const loginKeys = ['ADMIN_OPENIDS']
+  writeFile(path.join(CF, 'login'), 'secrets.local.js', genSecretsFile(loginKeys, config, 'login'))
+
   // 2. 同步 arkClient.js 到各云函数 lib/ 目录
   console.log('\n同步 arkClient.js:')
   const sharedArk = path.join(CF, 'shared', 'arkClient.js')

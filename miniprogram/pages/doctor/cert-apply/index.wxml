@@ -1,0 +1,103 @@
+<!-- miniprogram/pages/doctor/cert-apply/index.wxml -->
+<view class="cert-page">
+
+  <!-- 顶部标题区 -->
+  <view class="cert-header">
+    <view class="header-icon"><text class="header-emoji">👨‍⚕️</text></view>
+    <text class="header-title">医生认证申请</text>
+    <text class="header-subtitle">提交执业信息，审核通过后即可激活医生身份</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="status-view" wx:if="{{pageStatus === 'loading'}}">
+    <view class="status-icon">⏳</view>
+    <text class="status-title">加载中...</text>
+    <text class="status-desc">正在获取认证状态</text>
+  </view>
+
+  <!-- 表单视图 -->
+  <view class="form-wrap" wx:if="{{pageStatus === 'form'}}">
+
+    <!-- 驳回提示（rejected 时展示） -->
+    <view class="reject-tip" wx:if="{{rejectReason}}">
+      <text class="reject-tip-title">上次申请未通过</text>
+      <text class="reject-tip-text">{{rejectReason}}</text>
+    </view>
+
+    <!-- 基本信息表单 -->
+    <view class="card form-card">
+      <view class="form-item">
+        <text class="form-label">姓名</text>
+        <input class="form-input" type="text" placeholder="请输入真实姓名" value="{{name}}" data-field="name" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">执业地点</text>
+        <input class="form-input" type="text" placeholder="如：北京市、广东省" value="{{practice_location}}" data-field="practice_location" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">所在医疗机构</text>
+        <input class="form-input" type="text" placeholder="如：北京儿童医院" value="{{hospital}}" data-field="hospital" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">医师执业证书编号</text>
+        <input class="form-input" type="text" placeholder="请输入执业证书编号" value="{{license_no}}" data-field="license_no" bindinput="onInputChange" />
+      </view>
+    </view>
+
+    <!-- 证件照片上传 -->
+    <view class="card form-card">
+      <view class="form-item">
+        <text class="form-label">证件照片</text>
+        <text class="form-tip">请上传医师执业证书或工作证件，最多3张</text>
+      </view>
+      <view class="photo-grid">
+        <view class="photo-thumb" wx:for="{{cert_photos}}" wx:key="*this">
+          <image class="photo-img" src="{{item}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreviewPhoto"></image>
+          <view class="photo-delete" data-index="{{index}}" catchtap="onDeletePhoto">×</view>
+        </view>
+        <view class="photo-upload" wx:if="{{cert_photos.length < 3}}" bindtap="onChoosePhotos">
+          <text class="upload-icon">+</text>
+          <text class="upload-text">{{uploading ? '上传中...' : '添加照片'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-btn {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">
+      {{submitting ? '提交中...' : '提交申请'}}
+    </view>
+  </view>
+
+  <!-- 审核中视图 -->
+  <view class="status-view" wx:if="{{pageStatus === 'pending'}}">
+    <view class="status-icon">⏳</view>
+    <text class="status-title">申请审核中</text>
+    <text class="status-desc">您的认证申请已提交，请耐心等待管理员审核</text>
+
+    <view class="card detail-card" wx:if="{{application}}">
+      <view class="detail-row"><text class="detail-label">姓名</text><text class="detail-value">{{application.name}}</text></view>
+      <view class="detail-row"><text class="detail-label">执业地点</text><text class="detail-value">{{application.practice_location}}</text></view>
+      <view class="detail-row"><text class="detail-label">所在医疗机构</text><text class="detail-value">{{application.hospital}}</text></view>
+      <view class="detail-row"><text class="detail-label">执业证书编号</text><text class="detail-value">{{application.license_no}}</text></view>
+    </view>
+
+    <text class="status-hint">审核结果将在此页面展示，请稍后返回查看</text>
+  </view>
+
+  <!-- 认证通过视图 -->
+  <view class="status-view" wx:if="{{pageStatus === 'whitelisted'}}">
+    <view class="status-icon">✅</view>
+    <text class="status-title">认证已通过</text>
+    <text class="status-desc">恭喜！您的医生认证已通过，请返回点击「我是医生」激活身份</text>
+
+    <view class="card detail-card" wx:if="{{doctorInfo}}">
+      <view class="detail-row"><text class="detail-label">姓名</text><text class="detail-value">{{doctorInfo.name}}</text></view>
+      <view class="detail-row"><text class="detail-label">执业地点</text><text class="detail-value">{{doctorInfo.practice_location}}</text></view>
+      <view class="detail-row"><text class="detail-label">所在医疗机构</text><text class="detail-value">{{doctorInfo.hospital}}</text></view>
+      <view class="detail-row"><text class="detail-label">执业证书编号</text><text class="detail-value">{{doctorInfo.license_no}}</text></view>
+    </view>
+
+    <view class="submit-btn" bindtap="onGoRoleSelect">返回选择「我是医生」</view>
+  </view>
+
+</view>

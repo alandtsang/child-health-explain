@@ -138,6 +138,20 @@ function claimChild(code) {
   return callFunction('claimChild', { code }, { loadingText: '绑定中...' })
 }
 
+// === 医生认证申请 ===
+function submitDoctorCert(data) {
+  return callFunction('doctorCert', { action: 'submit', ...data }, { loadingText: '提交中...' })
+}
+function getDoctorCertStatus() {
+  return callFunction('doctorCert', { action: 'getStatus' }, { loading: false, showError: false })
+}
+function listDoctorApplications(status, page, pageSize) {
+  return callFunction('doctorCert', { action: 'listPending', status, page, pageSize }, { loadingText: '加载中...' })
+}
+function reviewDoctorApplication(applicationId, decision, reviewNote) {
+  return callFunction('doctorCert', { action: 'review', application_id: applicationId, decision, review_note: reviewNote }, { loadingText: '处理中...' })
+}
+
 // === 数据库初始化（Phase 1 已有）===
 function initCollections() { return callFunction('initDatabase', { action: 'initCollections' }, { loadingText: '初始化数据库...' }) }
 
@@ -145,5 +159,6 @@ module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
   selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections,
-  createBindInvite, previewInvite, claimChild
+  createBindInvite, previewInvite, claimChild,
+  submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication
 }
