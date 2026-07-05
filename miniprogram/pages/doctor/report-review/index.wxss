@@ -34,6 +34,8 @@
 .btn-push { background: linear-gradient(135deg, #52C41A, #73D13D); color: #FFF; }
 .btn-disabled { background: #CCC !important; }
 .btn-delete { background: #FFF1F0; color: #FF4D4F; }
+.btn-status { flex: 1; text-align: center; padding: 24rpx 0; border-radius: 12rpx; font-size: 30rpx; font-weight: 600; background: #F5F5F5; color: #999; }
+.btn-status-rejected { background: #FFF1F0; color: #FF4D4F; }
 
 /* 报告尚未生成状态 */
 .no-report-page { padding: 24rpx; }

@@ -36,7 +36,9 @@ Page({
     // 家长绑定状态
     isBound: false,          // 该儿童是否已有家长绑定
     inviteData: null,        // 邀请码 + 小程序码信息
-    inviteVisible: false     // 邀请弹窗显示
+    inviteVisible: false,    // 邀请弹窗显示
+    // 底部按钮状态：review(待审核) | pending_binding(已审核待绑定) | pushed(已推送) | rejected(已驳回)
+    btnState: 'review'
   },
 
   onLoad(options) {
@@ -100,6 +102,14 @@ Page({
         home_interventions: baseContent.home_interventions || []
       }))
 
+      // 计算底部按钮状态
+      let btnState = 'review'
+      if (report.review_status === 'approved') {
+        btnState = report.push_status === 'pending_binding' ? 'pending_binding' : 'pushed'
+      } else if (report.review_status === 'rejected') {
+        btnState = 'rejected'
+      }
+
       this.setData({
         exam,
         report,
@@ -108,6 +118,7 @@ Page({
         aiContent,
         editContent,
         doctorNote: (report.doctor_content || {}).doctor_note || '',
+        btnState,
         loading: false
       })
 
@@ -179,6 +190,19 @@ Page({
 
   // 审核通过：根据绑定状态分流
   async onApproveAndPush() {
+    if (this.data.btnState === 'pending_binding') {
+      // 已审核待绑定：若家长已绑定则补推，否则按钮不可点击
+      if (!this.data.isBound) return
+      wx.showModal({
+        title: '确认推送',
+        content: '家长已绑定，确认将报告推送给家长？',
+        success: async (res) => {
+          if (res.confirm) await this.submitReview('approveAndPush')
+        }
+      })
+      return
+    }
+
     if (this.data.isBound) {
       // 已绑定家长 → 直接推送
       wx.showModal({
@@ -189,14 +213,14 @@ Page({
         }
       })
     } else {
-      // 未绑定家长 → 先审核，再邀请家长
+      // 未绑定家长 → 先审核，再邀请家长（不自动返回，保留页面展示邀请码）
       wx.showModal({
         title: '暂无绑定家长',
         content: '该儿童档案暂无家长绑定，需先邀请家长扫码绑定后才能推送报告。是否现在生成邀请？',
         confirmText: '生成邀请',
         success: async (res) => {
           if (res.confirm) {
-            await this.submitReview('approve')
+            await this.submitReview('approve', { skipNavigateBack: true })
             this.onInviteParent()
           }
         }
@@ -243,7 +267,8 @@ Page({
   },
 
   // 提交审核
-  async submitReview(action) {
+  async submitReview(action, opts) {
+    const { skipNavigateBack = false } = opts || {}
     this.setData({ submitting: true })
     try {
       await api.reviewReport(this.data.report._id, action, this.data.editContent, this.data.doctorNote)
@@ -252,10 +277,14 @@ Page({
         wx.showToast({ title: '修改已保存', icon: 'success' })
         this.setData({ hasChanges: false })
       } else if (action === 'approve') {
-        wx.showToast({ title: '审核通过', icon: 'success' })
-        setTimeout(() => wx.navigateBack(), 1500)
+        // approve 后：已绑定→pushed，未绑定→pending_binding
+        const newBtnState = this.data.isBound ? 'pushed' : 'pending_binding'
+        this.setData({ btnState: newBtnState, 'report.review_status': 'approved', 'report.push_status': this.data.isBound ? 'pushed' : 'pending_binding' })
+        wx.showToast({ title: this.data.isBound ? '审核通过' : '审核通过，待家长绑定后自动推送', icon: 'none' })
+        if (!skipNavigateBack) setTimeout(() => wx.navigateBack(), 1500)
       } else if (action === 'approveAndPush') {
-        wx.showToast({ title: this.data.isBound ? '已推送家长' : '已审核，待家长绑定后自动推送', icon: 'none' })
+        this.setData({ btnState: 'pushed', 'report.review_status': 'approved', 'report.push_status': 'pushed' })
+        wx.showToast({ title: '已推送家长', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 1500)
       }
     } catch (err) {

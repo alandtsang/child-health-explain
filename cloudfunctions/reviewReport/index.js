@@ -132,28 +132,35 @@ async function handleApprove(reportId, openid) {
  */
 async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid) {
   const report = await getReport(reportId)
-  if (report.review_status !== 'pending') {
+
+  // 允许两种场景：
+  // 1. 待审核报告（review_status=pending）：完整审核 + 推送
+  // 2. 已审核待绑定报告（review_status=approved, push_status=pending_binding）：仅补推
+  const isPendingReview = report.review_status === 'pending'
+  const isPendingBinding = report.review_status === 'approved' && report.push_status === 'pending_binding'
+
+  if (!isPendingReview && !isPendingBinding) {
     return { success: false, error: '报告当前状态不允许审核' }
   }
 
-  // 如果未提供doctorContent，使用ai_content
-  const finalDoctorContent = doctorContent
-    ? { ...doctorContent, doctor_note: doctorNote || '' }
-    : { ...report.ai_content, doctor_note: doctorNote || '' }
+  // 仅在待审核时更新报告内容（已审核待绑定的报告内容不再变动）
+  if (isPendingReview) {
+    const finalDoctorContent = doctorContent
+      ? { ...doctorContent, doctor_note: doctorNote || '' }
+      : { ...report.ai_content, doctor_note: doctorNote || '' }
 
-  // 1. 更新报告状态
-  await db.collection('reports').doc(reportId).update({
-    data: {
-      doctor_content: _.set(finalDoctorContent),
-      review_status: 'approved',
-      reviewed_by: openid,
-      reviewed_at: db.serverDate(),
-      updated_at: db.serverDate()
-    }
-  })
+    await db.collection('reports').doc(reportId).update({
+      data: {
+        doctor_content: _.set(finalDoctorContent),
+        review_status: 'approved',
+        reviewed_by: openid,
+        reviewed_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    })
 
-  // 更新体检记录状态
-  await updateExamStatus(report.exam_id, 'reported')
+    await updateExamStatus(report.exam_id, 'reported')
+  }
 
   // 2. 读取体检记录和儿童信息
   const examRes = await db.collection('exams').doc(report.exam_id).get()

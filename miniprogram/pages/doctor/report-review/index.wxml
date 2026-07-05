@@ -130,10 +130,22 @@
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar safe-bottom">
-    <view wx:if="{{report.review_status !== 'approved'}}" class="bottom-btn btn-delete" bindtap="onDeleteExam">删除</view>
-    <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
-    <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
-    <view class="bottom-btn btn-push" bindtap="onApproveAndPush">{{isBound ? '通过并推送' : '通过并邀请家长'}}</view>
+    <!-- 待审核：完整操作按钮 -->
+    <block wx:if="{{btnState === 'review'}}">
+      <view class="bottom-btn btn-delete" bindtap="onDeleteExam">删除</view>
+      <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
+      <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
+      <view class="bottom-btn btn-push" bindtap="onApproveAndPush">{{isBound ? '通过并推送' : '通过并邀请家长'}}</view>
+    </block>
+    <!-- 已审核待绑定：家长已绑定可补推，否则等待 -->
+    <block wx:elif="{{btnState === 'pending_binding'}}">
+      <view wx:if="{{isBound}}" class="bottom-btn btn-push" bindtap="onApproveAndPush">推送给家长</view>
+      <view wx:else class="bottom-btn btn-status">待家长绑定后自动推送</view>
+    </block>
+    <!-- 已推送 -->
+    <view wx:elif="{{btnState === 'pushed'}}" class="bottom-btn btn-status">已审核已推送</view>
+    <!-- 已驳回 -->
+    <view wx:elif="{{btnState === 'rejected'}}" class="bottom-btn btn-status btn-status-rejected">已驳回</view>
   </view>
 </view>
 
