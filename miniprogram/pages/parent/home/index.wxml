@@ -88,7 +88,10 @@
         </view>
         <text wx:if="{{currentChild._id === item._id}}" class="check-icon">✓</text>
       </view>
-      <view class="add-child-btn" bindtap="onAddChild">+ 新建儿童档案</view>
+      <view class="bind-actions">
+        <view class="add-child-btn" bindtap="onAddChild">+ 新建儿童档案</view>
+        <view class="bind-invite-btn" bindtap="onBindByCode">输入邀请码绑定</view>
+      </view>
     </view>
   </view>
 </view>

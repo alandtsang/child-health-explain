@@ -144,7 +144,9 @@ Page({
 
   // 显示儿童选择
   onShowChildPicker() {
-    if (this.data.children.length <= 1) return
+    // 仅当恰好 1 个儿童时无需切换；0 个或多于 1 个时都弹出选择器
+    // 0 个儿童时弹出选择器让家长看到"新建档案"和"输入邀请码绑定"
+    if (this.data.children.length === 1) return
     this.setData({ showChildPicker: true })
   },
 
@@ -161,6 +163,12 @@ Page({
   // 新建儿童档案
   onAddChild() {
     wx.navigateTo({ url: '/pages/child-edit/child-edit' })
+  },
+
+  // 输入邀请码绑定已有档案
+  onBindByCode() {
+    this.setData({ showChildPicker: false })
+    wx.navigateTo({ url: '/pages/parent/bind-confirm/index' })
   },
 
   // 快捷入口
