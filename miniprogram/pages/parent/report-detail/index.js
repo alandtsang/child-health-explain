@@ -7,7 +7,6 @@ const subscribe = require('../../../utils/subscribe')
 const { isChildAccessibleToParent } = require('../../../utils/db')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 Page({
   data: {
@@ -34,21 +33,22 @@ Page({
 
   async loadReport() {
     try {
-      const res = await db.collection('reports').doc(this.data.reportId).get()
-      const report = res.data
+      const openid = auth.getOpenid()
+      // reports 安全规则：doc(id).get() 不满足子集要求，改用 where + pushed_to 查询
+      // pushed_to 是数组，需用 db.command.in 查询以满足 auth.openid in doc.pushed_to 子集要求
+      const res = await db.collection('reports')
+        .where({ _id: this.data.reportId, pushed_to: db.command.in([openid]) })
+        .get()
+      const report = res.data[0]
       if (!report) {
         wx.showToast({ title: '报告不存在', icon: 'none' })
         return
       }
 
-      // 查询体检+儿童
-      const examRes = await db.collection('exams').doc(report.exam_id).get()
-      const exam = examRes.data
-      let child = null
-      if (exam) {
-        const childRes = await db.collection('children').doc(exam.child_id).get()
-        child = childRes.data
-      }
+      // 查询体检+儿童（exams read:false，改走云函数，同时返回 child）
+      const examDetail = await api.getExamDetail(report.exam_id)
+      const exam = examDetail.exam
+      const child = examDetail.child
 
       // 权限校验：仅允许查看自己绑定/创建儿童的报告，避免家长查看他人孩子的体检数据
       if (!isChildAccessibleToParent(child, auth.getOpenid())) {
@@ -62,9 +62,9 @@ Page({
         return
       }
 
-      // 权限校验通过后再标记已查看
+      // 权限校验通过后再标记已查看（reports write 限医生，家长改走云函数）
       if (!report.viewed_at) {
-        db.collection('reports').doc(this.data.reportId).update({ data: { viewed_at: db.serverDate() } })
+        api.markReportViewed(this.data.reportId)
       }
 
       const content = report.doctor_content || report.ai_content || {}
@@ -95,11 +95,10 @@ Page({
   // 加载关联的海报和视频
   async loadMedia(reportId) {
     try {
-      const res = await db.collection('media_assets')
-        .where({ report_id: reportId, status: 'done' })
-        .get()
-      const poster = res.data.find(m => m.type === 'poster')
-      const video = res.data.find(m => m.type === 'video')
+      // media_assets read:false，改走云函数
+      const assets = await api.listMediaByReport(reportId, null, 'done')
+      const poster = assets.find(m => m.type === 'poster')
+      const video = assets.find(m => m.type === 'video')
       this.setData({ poster: poster || null, video: video || null })
     } catch (err) {
       console.error('加载媒体失败:', err)

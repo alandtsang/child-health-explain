@@ -32,9 +32,8 @@ Page({
   async startParse() {
     let ageMonths = null
     try {
-      const db = wx.cloud.database()
-      const res = await db.collection('children').doc(this.data.childId).get()
-      const child = res.data
+      // children doc(id).get() 改走云函数（安全规则迁移）
+      const child = await api.getChildDetail(this.data.childId)
       // 权限校验：仅允许为自己的孩子进行 OCR 自查，避免越权读取他人儿童档案
       if (!isChildAccessibleToParent(child, auth.getOpenid())) {
         this.setData({ loading: false })

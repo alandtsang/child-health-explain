@@ -51,20 +51,14 @@ Page({
   async loadData() {
     this.setData({ loading: true })
     try {
-      // 查询体检记录
-      const examRes = await db.collection('exams').doc(this.data.examId).get()
-      const exam = examRes.data
+      // 查询体检记录 + 儿童信息（通过云函数，exams read:false 后无法客户端直读）
+      const detail = await api.getExamDetail(this.data.examId)
+      const exam = detail.exam
       if (!exam) {
         wx.showToast({ title: '体检记录不存在', icon: 'none' })
         return
       }
-
-      // 查询儿童信息（先查儿童，报告缺失时也需要展示体检信息）
-      let child = null
-      try {
-        const childRes = await db.collection('children').doc(exam.child_id).get()
-        child = childRes.data
-      } catch (e) { /* ignore */ }
+      const child = detail.child
 
       // 格式化体检数据展示
       exam.exam_date_fmt = format.formatDate(exam.exam_date)
@@ -77,9 +71,10 @@ Page({
         level_info: ABNORMAL_LEVEL_INFO[a.level] || ABNORMAL_LEVEL_INFO.normal
       }))
 
-      // 查询关联报告
+      // 查询关联报告（添加 reviewed_by 约束以符合 reports 安全规则）
+      const openid = auth.getOpenid()
       const reportRes = await db.collection('reports')
-        .where({ exam_id: this.data.examId })
+        .where({ exam_id: this.data.examId, reviewed_by: openid })
         .orderBy('created_at', 'desc')
         .limit(1)
         .get()
@@ -374,13 +369,9 @@ Page({
   // 加载已有海报（查询 media_assets 中已完成的 poster）
   async loadPoster(reportId) {
     try {
-      const res = await db.collection('media_assets')
-        .where({ report_id: reportId, type: 'poster', status: 'done' })
-        .orderBy('created_at', 'desc')
-        .limit(1)
-        .get()
-      if (res.data.length > 0) {
-        this.setData({ poster: res.data[0] })
+      const assets = await api.listMediaByReport(reportId, 'poster', 'done')
+      if (assets.length > 0) {
+        this.setData({ poster: assets[0] })
       }
     } catch (err) {
       console.error('加载海报失败:', err)

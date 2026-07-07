@@ -1,9 +1,9 @@
 // miniprogram/pages/parent/report-list/index.js
 const auth = require('../../../utils/auth')
+const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 Page({
   data: {
@@ -36,9 +36,9 @@ Page({
 
     try {
       if (this.data.activeTab === 'doctor') {
-        // 查询推送给我的报告
+        // 查询推送给我的报告（pushed_to 是数组，用 db.command.in 满足子集要求）
         const res = await db.collection('reports')
-          .where({ pushed_to: openid, review_status: 'approved' })
+          .where({ pushed_to: db.command.in([openid]), review_status: 'approved' })
           .orderBy('pushed_at', 'desc')
           .skip(currentPage * this.data.pageSize)
           .limit(this.data.pageSize)
@@ -83,14 +83,16 @@ Page({
   async enrichReports(reports) {
     if (reports.length === 0) return reports
     const examIds = [...new Set(reports.map(r => r.exam_id))]
-    const examRes = await db.collection('exams').where({ _id: _.in(examIds) }).get()
+    // exams read:false，改走云函数
+    const exams = await api.getExamsByIds(examIds)
     const examMap = {}
-    examRes.data.forEach(e => { examMap[e._id] = e })
+    exams.forEach(e => { examMap[e._id] = e })
 
-    const childIds = [...new Set(examRes.data.map(e => e.child_id))]
-    const childRes = await db.collection('children').where({ _id: _.in(childIds) }).get()
+    const childIds = [...new Set(exams.map(e => e.child_id))]
+    // children doc(id).get() 改走云函数（安全规则迁移）
+    const children = await api.getChildrenByIds(childIds)
     const childMap = {}
-    childRes.data.forEach(c => { childMap[c._id] = c })
+    children.forEach(c => { childMap[c._id] = c })
 
     return reports.map(r => {
       const exam = examMap[r.exam_id] || {}

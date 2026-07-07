@@ -1,6 +1,7 @@
 {
   "_doc": "微信云开发数据库自定义安全规则。每个集合一份规则，key 为操作类型(read/write/create/update/delete)，value 为表达式。表达式语法见 https://cloud.tencent.com/document/product/876/41802 。重要约束：1) 规则只限制 C 端(小程序客户端)请求，云函数请求不受限制；2) where 查询条件必须是规则的子集，doc(id).get() 单文档读取在带 doc 限制的规则下会被拒绝，需改写为 where({_id, <ownerField>}) 形式；3) 粘贴到云开发控制台时请删除所有 _ 开头的说明字段。",
   "_status_legend": "ready=可立即启用, needs_refactor=需先完成前置重构(见 docs/database-security-rules.md), default=保持默认",
+  "_migration_note": "2026-07-06 完成选项 B 迁移：医生端 children/exams/followups/media_assets 客户端直读全部改为云函数(getChildrenByIds/listExams/listFollowups/listMediaAssets)，家长端 exams/followups/media_assets 直读改为云函数，children 的 doc(id).get() 改为 where({_id, bound_parent_ids}) 或云函数，reports 的 doc(id).get() 改为 where({_id, pushed_to})。以下集合规则可安全启用。",
 
   "self_checks": {
     "_status": "ready",
@@ -13,39 +14,38 @@
   },
 
   "reports": {
-    "_status": "needs_refactor",
-    "_comment": "医生(reviewed_by)与家长(pushed_to)双角色客户端直读。此规则允许审核医生或被推送家长读取。前置条件：1) 父端 report-detail 的 doc(reportId).get() 改写为 where({_id, pushed_to}) 或保留前端权限校验并改写查询；2) 医生端列表查询 reviewed_by 用 {openid} 模板。未改写前启用会导致单文档读取被拒。",
-    "read": "doc.reviewed_by == auth.openid || doc.pushed_to == auth.openid",
+    "_status": "ready",
+    "_comment": "医生(reviewed_by)与家长(pushed_to)双角色客户端直读。父端 report-detail 的 doc(reportId).get() 已改写为 where({_id, pushed_to})，医生端 report-review 的 reports 查询已添加 reviewed_by 约束。家长标记已读(viewed_at 更新)改走 reviewReport markViewed 云函数。",
+    "read": "doc.reviewed_by == auth.openid || auth.openid in doc.pushed_to",
     "write": "doc.reviewed_by == auth.openid",
-    "_note": "推送、生成海报等写入由云函数完成，不受规则限制"
+    "_note": "推送、生成海报、标记已读等写入由云函数完成，不受规则限制"
   },
 
   "children": {
-    "_status": "needs_refactor",
-    "_comment": "目标规则：仅创建者或绑定家长可读写。但医生端(home/report-list/report-review/exam-input/ocr-review)客户端直读 children 且无归属字段，启用此规则会把医生全部锁死。前置条件：医生端 children 读取全部改为云函数(server-side 校验医生身份后返回)。完成前请保持默认权限。",
+    "_status": "ready",
+    "_comment": "仅创建者(医生)或绑定家长可读写。医生端 children 读取全部改为云函数 getChildrenByIds(listMine/getByIds/getDetail)，服务端校验医生身份后返回。家长端 where({bound_parent_ids: openid}) 满足子集要求，doc(id).get() 已改为云函数 getChildDetail 或 where({_id, bound_parent_ids})。",
     "read": "doc.created_by == auth.openid || auth.openid in doc.bound_parent_ids",
     "write": "doc.created_by == auth.openid || auth.openid in doc.bound_parent_ids",
     "create": "request.data.created_by == auth.openid"
   },
 
   "exams": {
-    "_status": "needs_refactor",
-    "_comment": "exam 文档无家长/医生 openid 字段，无法用表达式区分归属。目标：改为『仅业务端可读写』(cloud-function-only)，所有读取/写入经云函数(saveExam 等)在服务端按角色校验。前置条件：doctor/home、doctor/report-list、doctor/report-review 的 exams 客户端直读改为云函数。",
+    "_status": "ready",
+    "_comment": "仅云函数可读写。所有客户端直读已迁移至 listExams 云函数(listByDoctor/getDetail/getByIds/listByChild)，服务端按角色校验。写入经 saveExam 云函数。OCR 页客户端直写 exams 已改为 saveExam 云函数。",
     "read": "false",
-    "write": "false",
-    "_fallback": "若暂不迁移，保持默认权限并依赖前端权限校验 + 云函数写入"
+    "write": "false"
   },
 
   "followups": {
-    "_status": "needs_refactor",
-    "_comment": "家长按 child_id 关联读取、医生按 doctor_id 读取，文档本身不含家长 openid。get() 跨集合关联 child.bound_parent_ids 受单表达式 3 次/10 文档限制，列表场景不可行。目标：改为『仅业务端可读写』，列表与详情读取走云函数按角色校验。",
+    "_status": "ready",
+    "_comment": "仅云函数可读写。所有客户端直读已迁移至 listFollowups 云函数(listByDoctor/countByDoctor/listByChildren/countByChildren/getDetail)，服务端按角色校验。写入经 updateFollowup/createFollowup 云函数。",
     "read": "false",
     "write": "false"
   },
 
   "media_assets": {
-    "_status": "needs_refactor",
-    "_comment": "按 report_id / self_check_id 关联，需 get() 二跳校验关联报告归属，受 get 次数限制不适合列表。目标：改为『仅业务端可读写』，海报/视频读取走云函数。",
+    "_status": "ready",
+    "_comment": "仅云函数可读写。所有客户端直读已迁移至 listMediaAssets 云函数(listByReport/listBySelfCheck)，服务端校验报告/自查记录归属。写入由 genPoster/videoCreate/videoPoll 云函数完成。",
     "read": "false",
     "write": "false"
   },
@@ -73,7 +73,7 @@
 
   "notifications": {
     "_status": "needs_refactor",
-    "_comment": "通知按目标用户分发。目标规则需确认通知文档的接收者字段名(target_openid / openid)后启用；启用前先核对字段并改写单文档读取。",
+    "_comment": "通知按目标用户分发。目标规则需确认通知文档的接收者字段名(target_openid / openid)后启用；启用前先核对字段并改写单文档读取。本次迁移未涉及 notifications 集合。",
     "read": "doc.openid == auth.openid",
     "write": "false"
   }

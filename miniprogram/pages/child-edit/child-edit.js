@@ -4,8 +4,6 @@ const api = require('../../utils/api')
 const format = require('../../utils/format')
 const { isChildAccessibleToParent } = require('../../utils/db')
 
-const db = wx.cloud.database()
-
 Page({
   data: {
     childId: '',
@@ -30,8 +28,8 @@ Page({
 
   async loadChild(id) {
     try {
-      const res = await db.collection('children').doc(id).get()
-      const child = res.data
+      // children doc(id).get() 改走云函数（安全规则迁移）
+      const child = await api.getChildDetail(id)
       // 权限校验：仅允许查看/编辑自己绑定或创建的儿童档案
       if (!isChildAccessibleToParent(child, auth.getOpenid())) {
         wx.showModal({

@@ -1,10 +1,7 @@
 // miniprogram/pages/doctor/followup-list/index.js
-const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
+const auth = require('../../../utils/auth')
 const format = require('../../../utils/format')
-
-const db = wx.cloud.database()
-const _ = db.command
 
 const TABS = [
   { key: 'scheduled', label: '待随访' },
@@ -56,23 +53,16 @@ Page({
 
   async loadFollowups() {
     if (this.data.loadingMore) return
-    const openid = auth.getOpenid()
     const currentPage = this.data.page
     this.setData({ loadingMore: currentPage > 0 })
 
     try {
-      const res = await db.collection('followups')
-        .where({ doctor_id: openid, status: this.data.activeTab })
-        .orderBy('plan_date', 'desc')
-        .skip(currentPage * this.data.pageSize)
-        .limit(this.data.pageSize)
-        .get()
-
-      const followups = await this.enrichFollowups(res.data)
-      const hasMore = res.data.length === this.data.pageSize
+      const followups = await api.listFollowupsByDoctor(this.data.activeTab, currentPage, this.data.pageSize)
+      const enrichedFollowups = await this.enrichFollowups(followups)
+      const hasMore = followups.length === this.data.pageSize
 
       this.setData({
-        followups: currentPage === 0 ? followups : this.data.followups.concat(followups),
+        followups: currentPage === 0 ? enrichedFollowups : this.data.followups.concat(enrichedFollowups),
         page: currentPage + 1,
         hasMore,
         loading: false,
@@ -85,18 +75,15 @@ Page({
     }
   },
 
+  // 计算展示字段（child 信息由 listFollowupsByDoctor 云函数返回）
   async enrichFollowups(followups) {
     if (followups.length === 0) return followups
-    const childIds = [...new Set(followups.map(f => f.child_id))]
-    const childRes = await db.collection('children').where({ _id: _.in(childIds) }).get()
-    const childMap = {}
-    childRes.data.forEach(c => { childMap[c._id] = c })
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
     return followups.map(f => {
-      const child = childMap[f.child_id] || {}
+      const child = f.child || {}
       const planDate = new Date(f.plan_date)
       const diffDays = Math.round((planDate - today) / (86400000))
       const maxLevel = (f.trigger_items || []).reduce((max, t) => {

@@ -3,7 +3,6 @@ const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 const TABS = [
   { key: 'pending', label: '待审核', status: 'pending' },
@@ -76,14 +75,14 @@ Page({
   async enrichReports(reports) {
     if (reports.length === 0) return reports
     const examIds = [...new Set(reports.map(r => r.exam_id))]
-    const examRes = await db.collection('exams').where({ _id: _.in(examIds) }).get()
+    const exams = await api.getExamsByIds(examIds)
     const examMap = {}
-    examRes.data.forEach(e => { examMap[e._id] = e })
+    exams.forEach(e => { examMap[e._id] = e })
 
-    const childIds = [...new Set(examRes.data.map(e => e.child_id))]
-    const childRes = await db.collection('children').where({ _id: _.in(childIds) }).get()
+    const childIds = [...new Set(exams.map(e => e.child_id))]
+    const children = await api.getChildrenByIds(childIds)
     const childMap = {}
-    childRes.data.forEach(c => { childMap[c._id] = c })
+    children.forEach(c => { childMap[c._id] = c })
 
     const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
     const format = require('../../../utils/format')

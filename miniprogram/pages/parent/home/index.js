@@ -1,10 +1,10 @@
 // miniprogram/pages/parent/home/index.js
 const auth = require('../../../utils/auth')
+const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 const subscribe = require('../../../utils/subscribe')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 Page({
   data: {
@@ -86,27 +86,24 @@ Page({
     try {
       const openid = auth.getOpenid()
 
-      const [reportsRes, followupsRes] = await Promise.all([
+      const [reportsRes, followupsData] = await Promise.all([
         // 查询推送给我且关联该儿童的报告
         db.collection('reports')
           .where({ pushed_to: openid_includes(openid), review_status: 'approved' })
           .orderBy('pushed_at', 'desc')
           .limit(5)
           .get(),
-        // 查询该儿童的待办随访
-        db.collection('followups')
-          .where({ child_id: childId, status: _.in(['scheduled', 'reminded']) })
-          .orderBy('plan_date', 'asc')
-          .get()
+        // 查询该儿童的待办随访（followups read:false，改走云函数）
+        api.listFollowupsByChildren([childId], ['scheduled', 'reminded'], 0, 100)
       ])
 
       // 过滤并丰富报告数据
       const reportExamIds = reportsRes.data.map(r => r.exam_id)
-      const examsRes = reportExamIds.length > 0
-        ? await db.collection('exams').where({ _id: _.in(reportExamIds), child_id: childId }).get()
-        : { data: [] }
+      const exams = reportExamIds.length > 0
+        ? await api.getExamsByIds(reportExamIds, childId)
+        : []
       const examMap = {}
-      examsRes.data.forEach(e => { examMap[e._id] = e })
+      exams.forEach(e => { examMap[e._id] = e })
 
       const recentReports = reportsRes.data
         .filter(r => examMap[r.exam_id])
@@ -124,7 +121,7 @@ Page({
       // 计算随访剩余天数
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      const pendingFollowups = followupsRes.data.map(f => {
+      const pendingFollowups = followupsData.map(f => {
         const planDate = new Date(f.plan_date)
         const diffDays = Math.round((planDate - today) / 86400000)
         return {

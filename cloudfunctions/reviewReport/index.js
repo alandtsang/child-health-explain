@@ -41,6 +41,16 @@ exports.main = async (event, context) => {
     return { success: false, error: '缺少必要参数: action, reportId' }
   }
 
+  // markViewed 不需要医生身份校验，家长即可调用
+  if (action === 'markViewed') {
+    try {
+      return await handleMarkViewed(reportId, openid)
+    } catch (err) {
+      console.error('[reviewReport] markViewed error:', err)
+      return { success: false, error: err.message || '标记已读失败' }
+    }
+  }
+
   // 服务端强制校验：仅已审核通过的医生可执行审核操作
   const doctorCheck = await validateApprovedDoctor(openid)
   if (!doctorCheck.isValid) {
@@ -64,6 +74,27 @@ exports.main = async (event, context) => {
     console.error('[reviewReport] error:', err)
     return { success: false, error: err.message || '审核操作过程中发生错误' }
   }
+}
+
+/**
+ * 家长标记报告已读（安全规则迁移：reports write 限医生，家长改走云函数）
+ */
+async function handleMarkViewed(reportId, openid) {
+  const report = await getReport(reportId)
+
+  // 校验：仅被推送的家长可标记已读
+  const pushedTo = Array.isArray(report.pushed_to) ? report.pushed_to : []
+  if (!pushedTo.includes(openid)) {
+    return { success: false, error: '无权操作此报告', code: 403 }
+  }
+
+  if (!report.viewed_at) {
+    await db.collection('reports').doc(reportId).update({
+      data: { viewed_at: db.serverDate() }
+    })
+  }
+
+  return { success: true, message: '已标记已读' }
 }
 
 /**

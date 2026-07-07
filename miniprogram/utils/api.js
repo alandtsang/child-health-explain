@@ -101,6 +101,10 @@ function reviewReport(reportId, action, doctorContent, doctorNote) {
     reportId, action, doctorContent, doctorNote
   }, { loadingText: '提交中...' })
 }
+// 家长标记报告已读（安全规则迁移：reports write 限医生，家长改走云函数）
+function markReportViewed(reportId) {
+  return callFunction('reviewReport', { action: 'markViewed', reportId }, { loading: false, showError: false })
+}
 
 // === 家长自查（Phase 4）===
 function selfCheck(data) {
@@ -155,10 +159,63 @@ function reviewDoctorApplication(applicationId, decision, reviewNote) {
 // === 数据库初始化（Phase 1 已有）===
 function initCollections() { return callFunction('initDatabase', { action: 'initCollections' }, { loadingText: '初始化数据库...' }) }
 
+// === 安全规则迁移：受限集合读取云函数 ===
+// 儿童档案读取（exams/followups/media_assets read:false 后，医生端无法客户端直读 children）
+function getChildrenByIds(ids) {
+  return callFunction('getChildrenByIds', { action: 'getByIds', ids }, { loading: false, showError: false })
+}
+function listMyChildren(page, pageSize) {
+  return callFunction('getChildrenByIds', { action: 'listMine', page, pageSize }, { loading: false, showError: false })
+}
+function getChildDetail(childId) {
+  return callFunction('getChildrenByIds', { action: 'getDetail', child_id: childId }, { loading: false, showError: false })
+}
+// 体检记录读取（exams read:false 后所有客户端直读被拒）
+function listExamsByDoctor(page, pageSize) {
+  return callFunction('listExams', { action: 'listByDoctor', page, pageSize }, { loading: false, showError: false })
+}
+function getExamDetail(examId) {
+  return callFunction('listExams', { action: 'getDetail', exam_id: examId }, { loading: false, showError: false })
+}
+function getExamsByIds(ids, childId) {
+  return callFunction('listExams', { action: 'getByIds', ids, child_id: childId }, { loading: false, showError: false })
+}
+function listExamsByChild(childId, examIds, page, pageSize) {
+  return callFunction('listExams', { action: 'listByChild', child_id: childId, exam_ids: examIds, page, pageSize }, { loading: false, showError: false })
+}
+// 随访记录读取（followups read:false 后所有客户端直读被拒）
+function listFollowupsByDoctor(status, page, pageSize) {
+  return callFunction('listFollowups', { action: 'listByDoctor', status, page, pageSize }, { loading: false, showError: false })
+}
+function countFollowupsByDoctor(status) {
+  return callFunction('listFollowups', { action: 'countByDoctor', status }, { loading: false, showError: false })
+}
+function listFollowupsByChildren(childIds, status, page, pageSize) {
+  return callFunction('listFollowups', { action: 'listByChildren', child_ids: childIds, status, page, pageSize }, { loading: false, showError: false })
+}
+function countFollowupsByChildren(childIds, status) {
+  return callFunction('listFollowups', { action: 'countByChildren', child_ids: childIds, status }, { loading: false, showError: false })
+}
+function getFollowupDetail(followupId) {
+  return callFunction('listFollowups', { action: 'getDetail', followup_id: followupId }, { loading: false, showError: false })
+}
+// 媒体资源读取（media_assets read:false 后所有客户端直读被拒）
+function listMediaByReport(reportId, type, status) {
+  return callFunction('listMediaAssets', { action: 'listByReport', report_id: reportId, type, status }, { loading: false, showError: false })
+}
+function listMediaBySelfCheck(selfCheckId, type, status) {
+  return callFunction('listMediaAssets', { action: 'listBySelfCheck', self_check_id: selfCheckId, type, status }, { loading: false, showError: false })
+}
+
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
   selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections,
   createBindInvite, previewInvite, claimChild,
-  submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication
+  submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication,
+  markReportViewed,
+  getChildrenByIds, listMyChildren, getChildDetail,
+  listExamsByDoctor, getExamDetail, getExamsByIds, listExamsByChild,
+  listFollowupsByDoctor, countFollowupsByDoctor, listFollowupsByChildren, countFollowupsByChildren, getFollowupDetail,
+  listMediaByReport, listMediaBySelfCheck
 }
