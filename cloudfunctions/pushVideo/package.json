@@ -1,0 +1,9 @@
+{
+  "name": "pushVideo",
+  "version": "1.0.0",
+  "description": "医生手动推送已生成视频给家长",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

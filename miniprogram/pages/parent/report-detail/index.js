@@ -20,7 +20,6 @@ Page({
     loading: true,
     posterVisible: false,
     generatingPoster: false,
-    generatingVideo: false,
     // 订阅引导（有异常项时显示，引导订阅随访提醒）
     showSubscribeTip: false
   },
@@ -129,26 +128,6 @@ Page({
 
   onPosterClose() {
     this.setData({ posterVisible: false })
-  },
-
-  // 生成视频（仅医生推送报告）
-  async onGenerateVideo() {
-    this.setData({ generatingVideo: true })
-    try {
-      await api.videoCreate(this.data.reportId)
-      wx.showToast({ title: '视频生成中，完成后通知您', icon: 'none', duration: 3000 })
-    } catch (err) {
-      console.error('视频生成失败:', err)
-    } finally {
-      this.setData({ generatingVideo: false })
-    }
-  },
-
-  // 播放视频（直接展示视频组件，无需跳转）
-  onPlayVideo() {
-    if (this.data.video && this.data.video.file_id) {
-      this.setData({ videoVisible: true })
-    }
   },
 
   // 订阅随访提醒

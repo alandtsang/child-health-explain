@@ -9,7 +9,7 @@
 // 模板类型：
 // - report_push:     报告推送通知（家长端订阅，医生推送时发送）
 // - followup_remind: 随访到期提醒（家长端订阅，定时触发器发送）
-// - video_done:      视频生成完成通知（家长端订阅，videoPoll 发送）
+// - video_done:      视频推送通知（家长端订阅，医生通过 pushVideo 云函数手动推送时发送）
 
 const { SUBSCRIBE_TEMPLATES } = require('./templateConfig')
 

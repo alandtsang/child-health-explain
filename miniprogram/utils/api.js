@@ -116,8 +116,9 @@ function selfCheck(data) {
 function genPoster(source, params) {
   return callFunction('genPoster', { source, ...params }, { loadingText: '海报生成中...', timeout: 55000 })
 }
-function videoCreate(reportId) {
-  return callFunction('videoCreate', { report_id: reportId }, { loadingText: '提交中...' })
+// 医生推送已生成的视频给家长（医生端调用）
+function pushVideo(reportId) {
+  return callFunction('pushVideo', { report_id: reportId }, { loadingText: '推送中...' })
 }
 
 // === 随访管理（Phase 6）===
@@ -210,7 +211,7 @@ function listMediaBySelfCheck(selfCheckId, type, status) {
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
-  selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections,
+  selfCheck, genPoster, pushVideo, updateFollowup, saveChild, initCollections,
   createBindInvite, previewInvite, claimChild,
   submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication,
   markReportViewed,

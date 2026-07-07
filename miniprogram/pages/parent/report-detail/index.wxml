@@ -73,16 +73,11 @@
     </view>
   </view>
 
-  <!-- 视频区域（仅医生推送报告） -->
-  <view class="card media-card">
+  <!-- 视频区域（仅展示医生推送的视频） -->
+  <view class="card media-card" wx:if="{{video}}">
     <view class="card-title">科普视频</view>
-    <view wx:if="{{video}}" class="video-preview">
+    <view class="video-preview">
       <video src="{{video.file_id}}" class="video-player" controls></video>
-    </view>
-    <view wx:else class="poster-empty">
-      <text class="poster-empty-text">暂无视频</text>
-      <view class="btn-primary media-btn" bindtap="onGenerateVideo" loading="{{generatingVideo}}">生成视频</view>
-      <text class="media-hint">视频生成约需5分钟，完成后将通知您</text>
     </view>
   </view>
 
