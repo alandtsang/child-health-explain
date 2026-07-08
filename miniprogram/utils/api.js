@@ -116,9 +116,14 @@ function selfCheck(data) {
 function genPoster(source, params) {
   return callFunction('genPoster', { source, ...params }, { loadingText: '海报生成中...', timeout: 55000 })
 }
-// 医生推送已生成的视频给家长（医生端调用）
-function pushVideo(reportId) {
-  return callFunction('pushVideo', { report_id: reportId }, { loadingText: '推送中...' })
+// 查询报告关联的科普视频列表（source='library' 的 done 视频）
+function listVideosByReport(reportId) {
+  return callFunction('listMediaAssets', {
+    action: 'listByReport',
+    report_id: reportId,
+    type: 'video',
+    status: 'done'
+  }, { loading: false, showError: false })
 }
 
 // === 随访管理（Phase 6）===
@@ -211,7 +216,7 @@ function listMediaBySelfCheck(selfCheckId, type, status) {
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
-  selfCheck, genPoster, pushVideo, updateFollowup, saveChild, initCollections,
+  selfCheck, genPoster, listVideosByReport, updateFollowup, saveChild, initCollections,
   createBindInvite, previewInvite, claimChild,
   submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication,
   markReportViewed,
