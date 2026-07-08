@@ -128,15 +128,16 @@
     </view>
   </view>
 
-  <!-- 科普视频（仅展示已生成的视频，医生可推送给家长） -->
-  <view class="card video-card" wx:if="{{video}}">
+  <!-- 科普视频（已推送的科普视频列表） -->
+  <view class="card video-card" wx:if="{{videos.length > 0}}">
     <view class="card-title">科普视频</view>
-    <view class="video-preview">
-      <video src="{{video.file_id}}" class="video-player" controls></video>
-    </view>
-    <view class="video-actions">
-      <view class="video-push-btn {{pushingVideo ? 'btn-disabled' : ''}}" bindtap="onPushVideo">
-        {{pushingVideo ? '推送中...' : '推送给家长'}}
+    <view wx:for="{{videos}}" wx:key="_id" class="video-list-item">
+      <view class="video-item-header">
+        <text class="video-item-title">{{item.category || '科普视频'}}</text>
+        <text class="video-item-tag">已推送</text>
+      </view>
+      <view class="video-preview">
+        <video src="{{item.file_id}}" class="video-player" controls></video>
       </view>
     </view>
   </view>

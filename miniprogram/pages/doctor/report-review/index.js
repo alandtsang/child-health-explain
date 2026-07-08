@@ -34,8 +34,7 @@ Page({
     posterVisible: false,   // 海报查看器弹窗
     generatingPoster: false,  // 海报生成中
     // 视频相关
-    video: null,            // 已生成的视频 media_assets 记录
-    pushingVideo: false,    // 视频推送中
+    videos: [],            // 已推送的科普视频列表
     // 家长绑定状态
     isBound: false,          // 该儿童是否已有家长绑定
     inviteData: null,        // 邀请码 + 小程序码信息
@@ -122,8 +121,8 @@ Page({
 
       // 加载已有海报
       this.loadPoster(report._id)
-      // 加载已生成的视频
-      this.loadVideo(report._id)
+      // 加载已推送的科普视频列表
+      this.loadVideos(report._id)
     } catch (err) {
       console.error('加载报告失败:', err)
       this.setData({ loading: false })
@@ -460,54 +459,16 @@ Page({
 
   // === 视频功能 ===
 
-  // 加载已生成的视频（查询 media_assets 中已完成的 video）
-  async loadVideo(reportId) {
+  // 加载已推送的科普视频列表
+  async loadVideos(reportId) {
     try {
-      const assets = await api.listMediaByReport(reportId, 'video', 'done')
-      if (assets.length > 0) {
-        this.setData({ video: assets[0] })
-      }
+      const assets = await api.listVideosByReport(reportId)
+      // 仅展示 source='library' 的视频
+      const videos = (assets || []).filter(m => m.source === 'library')
+      this.setData({ videos })
     } catch (err) {
       console.error('加载视频失败:', err)
     }
-  },
-
-  // 推送视频给家长（调用 pushVideo 云函数发送通知）
-  async onPushVideo() {
-    if (this.data.pushingVideo) return
-    if (!this.data.video) {
-      wx.showToast({ title: '暂无已生成的视频', icon: 'none' })
-      return
-    }
-    if (!this.data.isBound) {
-      wx.showToast({ title: '该儿童暂无绑定家长', icon: 'none' })
-      return
-    }
-    wx.showModal({
-      title: '确认推送视频',
-      content: '将向已绑定家长发送视频完成通知，家长可在报告详情页查看。确认推送？',
-      success: async (res) => {
-        if (!res.confirm) return
-        this.setData({ pushingVideo: true })
-        try {
-          const data = await api.pushVideo(this.data.report._id)
-          wx.showToast({
-            title: `推送成功 ${data.success_count} 人`,
-            icon: 'success'
-          })
-        } catch (err) {
-          console.error('推送视频失败:', err)
-          const errMsg = (err && err.message) || '推送失败'
-          wx.showModal({
-            title: '推送失败',
-            content: errMsg,
-            showCancel: false
-          })
-        } finally {
-          this.setData({ pushingVideo: false })
-        }
-      }
-    })
   },
 
   onPullDownRefresh() {
