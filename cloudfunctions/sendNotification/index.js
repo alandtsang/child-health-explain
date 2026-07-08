@@ -43,7 +43,10 @@ const SMS_TEMPLATES = {
     template_id: getConfig('SMS_TEMPLATE_FOLLOWUP_REMIND'),
     param_count: 3
   },
-  video_done: null
+  video_done: {
+    template_id: getConfig('SMS_TEMPLATE_VIDEO_DONE'),
+    param_count: 1
+  }
 };
 
 // SMS 客户端单例
