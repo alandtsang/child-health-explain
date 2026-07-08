@@ -172,7 +172,7 @@ exports.main = async (event, context) => {
       data: {
         pushed_count: pushedCount,
         skipped_categories: skippedCategories,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors
       }
     }
   } catch (err) {
