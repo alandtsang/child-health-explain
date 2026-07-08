@@ -291,6 +291,19 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
     }
   })
 
+  // 7. 推送科普视频（有异常项且有绑定家长时，失败不阻塞）
+  if (pushedTo.length > 0 && exam.abnormal_items && exam.abnormal_items.some(item => item.level !== 'normal')) {
+    try {
+      const videoRes = await cloud.callFunction({
+        name: 'pushEducationVideos',
+        data: { report_id: reportId }
+      })
+      console.log('[reviewReport] 科普视频推送结果:', videoRes.result)
+    } catch (err) {
+      console.error('[reviewReport] 科普视频推送失败(不阻塞):', err.message)
+    }
+  }
+
   const msg = pushStatus === 'pushed' ? '审核通过并推送成功' : '审核通过，待家长绑定后自动推送'
   return {
     success: true,
