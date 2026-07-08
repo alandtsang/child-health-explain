@@ -160,6 +160,19 @@ async function pushPendingReports(childId, parentOpenid) {
             push_status: 'pushed'
           }
         })
+        // 补发科普视频（有异常项时，失败不阻塞）
+        try {
+          const examRes = await db.collection('exams').doc(report.exam_id).get()
+          const exam = examRes.data
+          if (exam && exam.abnormal_items && exam.abnormal_items.some(item => item.level !== 'normal')) {
+            await cloud.callFunction({
+              name: 'pushEducationVideos',
+              data: { report_id: report._id }
+            })
+          }
+        } catch (videoErr) {
+          console.error('[claimChild] 补发科普视频失败(不阻塞):', report._id, videoErr.message)
+        }
         results.push({ report_id: report._id, status: 'pushed' })
       } catch (err) {
         console.error('[claimChild] 补发报告失败:', report._id, err.message)
