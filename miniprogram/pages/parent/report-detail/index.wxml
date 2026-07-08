@@ -73,11 +73,16 @@
     </view>
   </view>
 
-  <!-- 视频区域（仅展示医生推送的视频） -->
-  <view class="card media-card" wx:if="{{video}}">
+  <!-- 视频区域（医生推送的科普视频列表） -->
+  <view class="card media-card" wx:if="{{videos.length > 0}}">
     <view class="card-title">科普视频</view>
-    <view class="video-preview">
-      <video src="{{video.file_id}}" class="video-player" controls></video>
+    <view wx:for="{{videos}}" wx:key="_id" class="video-list-item">
+      <view class="video-item-header">
+        <text class="video-item-title">{{item.category || '科普视频'}}</text>
+      </view>
+      <view class="video-preview">
+        <video src="{{item.file_id}}" class="video-player" controls></video>
+      </view>
     </view>
   </view>
 

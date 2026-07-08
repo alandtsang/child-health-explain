@@ -16,7 +16,7 @@ Page({
     child: null,
     content: null,
     poster: null,
-    video: null,
+    videos: [],
     loading: true,
     posterVisible: false,
     generatingPoster: false,
@@ -97,8 +97,8 @@ Page({
       // media_assets read:false，改走云函数
       const assets = await api.listMediaByReport(reportId, null, 'done')
       const poster = assets.find(m => m.type === 'poster')
-      const video = assets.find(m => m.type === 'video')
-      this.setData({ poster: poster || null, video: video || null })
+      const videos = (assets || []).filter(m => m.type === 'video' && m.source === 'library')
+      this.setData({ poster: poster || null, videos })
     } catch (err) {
       console.error('加载媒体失败:', err)
     }
