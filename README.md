@@ -65,3 +65,57 @@ node scripts/sync-env.js
 3. 如需短信兜底，还需在腾讯云 SMS 控制台创建短信模板，填入 `SMS_TEMPLATE_*` 变量
 4. 运行 `node scripts/sync-env.js` 同步配置
 5. 重新部署 `sendNotification` 云函数
+
+### 科普视频库管理
+
+科普视频采用预生成模式，管理员通过脚本上传视频到云存储并写入 `video_library` 集合。
+
+#### 支持的异常类别
+
+| category | 说明 |
+|----------|------|
+| growth | 生长发育 |
+| obesity | 超重肥胖 |
+| anemia | 贫血 |
+| vision | 视力 |
+| dental | 口腔(龋齿) |
+| spine | 脊柱 |
+| hearing | 听力 |
+| development | 发育评估 |
+| rickets | 佝偻病 |
+
+#### 上传视频
+
+```bash
+node scripts/manage-video-library.js upload \
+  --category anemia \
+  --title "儿童贫血科普" \
+  --file ./videos/anemia.mp4 \
+  --thumbnail ./videos/anemia-cover.jpg \
+  --duration 120 \
+  --description "讲解儿童贫血的成因与应对"
+```
+
+#### 替换视频
+
+```bash
+node scripts/manage-video-library.js replace \
+  --category anemia \
+  --file ./videos/anemia-v2.mp4 \
+  --title "儿童贫血科普(更新版)"
+```
+
+#### 查看视频库
+
+```bash
+node scripts/manage-video-library.js list
+```
+
+#### 停用视频
+
+```bash
+node scripts/manage-video-library.js deactivate --category anemia
+```
+
+**注意**: 脚本依赖 `wx-server-sdk`，需先在 `cloudfunctions/pushEducationVideos/` 目录运行 `npm install`。
+视频建议压缩到 720p，单个文件控制在 30MB 以内。
