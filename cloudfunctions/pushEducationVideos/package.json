@@ -1,0 +1,9 @@
+{
+  "name": "pushEducationVideos",
+  "version": "1.0.0",
+  "description": "按异常类别匹配科普视频库并推送给家长",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
