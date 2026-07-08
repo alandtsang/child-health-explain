@@ -13,6 +13,17 @@
 .quick-card:active { opacity: 0.85; }
 .quick-icon { font-size: 48rpx; margin-bottom: 12rpx; }
 .quick-label { font-size: 26rpx; color: #333; }
+
+/* 订阅消息引导横幅 */
+.subscribe-banner { display: flex; align-items: center; background: linear-gradient(135deg, #FFF8E1, #FFF3E0); border: 1rpx solid #FFE0B2; border-radius: 16rpx; padding: 24rpx 28rpx; margin-bottom: 24rpx; position: relative; }
+.subscribe-banner-content { display: flex; align-items: center; flex: 1; }
+.subscribe-icon { font-size: 40rpx; margin-right: 20rpx; }
+.subscribe-text { flex: 1; }
+.subscribe-title { font-size: 28rpx; font-weight: 600; color: #E65100; display: block; }
+.subscribe-desc { font-size: 24rpx; color: #BF360C; margin-top: 4rpx; display: block; }
+.subscribe-btn { background: #FF9800; color: #FFF; font-size: 26rpx; padding: 12rpx 28rpx; border-radius: 24rpx; white-space: nowrap; }
+.subscribe-btn:active { opacity: 0.85; }
+.subscribe-close { position: absolute; top: 8rpx; right: 12rpx; font-size: 32rpx; color: #BF360C; opacity: 0.6; padding: 8rpx; }
 .section { margin-bottom: 32rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
 .section-title { font-size: 32rpx; font-weight: 600; color: #333; }
@@ -48,3 +59,5 @@
 .child-option-meta { font-size: 24rpx; color: #999; margin-top: 4rpx; display: block; }
 .check-icon { font-size: 40rpx; color: #52C41A; }
 .add-child-btn { text-align: center; padding: 32rpx 0; font-size: 30rpx; color: #4A90D9; }
+.bind-actions { display: flex; flex-direction: column; gap: 0; }
+.bind-invite-btn { text-align: center; padding: 24rpx 0; font-size: 28rpx; color: #52C41A; border-top: 1rpx solid #F5F5F5; }

@@ -37,8 +37,24 @@
 .poster-empty-text { font-size: 28rpx; color: #999; margin-bottom: 24rpx; }
 .media-btn { width: 60%; }
 .media-hint { font-size: 22rpx; color: #BBB; margin-top: 16rpx; }
+.video-list-item { margin-bottom: 24rpx; }
+.video-list-item:last-child { margin-bottom: 0; }
+.video-item-header { margin-bottom: 12rpx; }
+.video-item-title { font-size: 28rpx; font-weight: 600; color: #333; }
 .video-preview { width: 100%; }
 .video-player { width: 100%; border-radius: 12rpx; }
 .disclaimer-card { padding: 32rpx; text-align: center; }
 .disclaimer-text { font-size: 24rpx; color: #999; line-height: 1.6; }
+
+/* 随访提醒订阅引导卡片 */
+.subscribe-tip-card { display: flex; align-items: center; background: linear-gradient(135deg, #E8F5E9, #F1F8E9); border: 1rpx solid #C8E6C9; border-radius: 16rpx; padding: 24rpx 28rpx; margin-bottom: 24rpx; position: relative; }
+.subscribe-tip-content { display: flex; align-items: center; flex: 1; }
+.subscribe-tip-icon { font-size: 40rpx; margin-right: 20rpx; }
+.subscribe-tip-text { flex: 1; }
+.subscribe-tip-title { font-size: 28rpx; font-weight: 600; color: #2E7D32; display: block; }
+.subscribe-tip-desc { font-size: 24rpx; color: #388E3C; margin-top: 4rpx; display: block; }
+.subscribe-tip-btn { background: #4CAF50; color: #FFF; font-size: 26rpx; padding: 12rpx 28rpx; border-radius: 24rpx; white-space: nowrap; }
+.subscribe-tip-btn:active { opacity: 0.85; }
+.subscribe-tip-close { position: absolute; top: 8rpx; right: 12rpx; font-size: 32rpx; color: #388E3C; opacity: 0.6; padding: 8rpx; }
+
 .empty-state { text-align: center; padding: 120rpx 0; color: #999; }

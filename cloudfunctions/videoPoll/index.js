@@ -1,3 +1,7 @@
+/**
+ * @deprecated 此云函数已废弃，科普视频改为预生成入库。
+ * 保留代码仅供参考，不再部署。
+ */
 const cloud = require('wx-server-sdk');
 const https = require('https');
 const http = require('http');
@@ -175,8 +179,8 @@ async function handleTaskSuccess(media, task) {
     }
   });
 
-  // 发送视频完成通知给家长
-  await notifyVideoDone(media);
+  // 不再自动通知家长，由医生在医生端手动推送视频
+  // notifyVideoDone 已移除，医生通过 pushVideo 云函数手动推送
 
   return {
     media_id: media._id,
@@ -260,42 +264,6 @@ async function resubmitTask(media, retries) {
       retries
     }
   });
-}
-
-/**
- * 通知家长视频已生成完成
- */
-async function notifyVideoDone(media) {
-  const db = cloud.database();
-
-  if (!media.report_id) return;
-
-  // 获取报告中的推送目标家长
-  const reportRes = await db.collection('reports').doc(media.report_id).get();
-  const report = reportRes.data;
-  if (!report || !report.pushed_to || report.pushed_to.length === 0) return;
-
-  for (const openid of report.pushed_to) {
-    try {
-      await cloud.callFunction({
-        name: 'sendNotification',
-        data: {
-          target_openid: openid,
-          type: 'video_done',
-          title: '科普视频已生成',
-          content: '医生为您生成的科普视频已完成，点击查看',
-          related_id: media._id,
-          template_data: {
-            thing1: { value: '科普视频已生成' },
-            thing2: { value: '点击查看详情' }
-          },
-          sms_allowed: false
-        }
-      });
-    } catch (err) {
-      console.error(`视频完成通知发送失败 ${openid}: ${err.message}`);
-    }
-  }
 }
 
 /**

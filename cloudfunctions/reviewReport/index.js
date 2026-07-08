@@ -15,6 +15,20 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const _ = db.command
+
+// 加载本地密钥配置（由 sync-env.js 从 .env 同步生成，已 gitignore）
+let localSecrets = {}
+try {
+  localSecrets = require('./secrets.local')
+} catch (e) {
+  // secrets.local.js 不存在时忽略，使用云函数环境变量
+}
+
+// 从环境变量或本地密钥配置中获取配置值
+function getConfig(key) {
+  return process.env[key] || localSecrets[key] || ''
+}
 
 const DISCLAIMER = 'AI生成内容经医生审核，仅供参考'
 
@@ -25,6 +39,22 @@ exports.main = async (event, context) => {
 
   if (!action || !reportId) {
     return { success: false, error: '缺少必要参数: action, reportId' }
+  }
+
+  // markViewed 不需要医生身份校验，家长即可调用
+  if (action === 'markViewed') {
+    try {
+      return await handleMarkViewed(reportId, openid)
+    } catch (err) {
+      console.error('[reviewReport] markViewed error:', err)
+      return { success: false, error: err.message || '标记已读失败' }
+    }
+  }
+
+  // 服务端强制校验：仅已审核通过的医生可执行审核操作
+  const doctorCheck = await validateApprovedDoctor(openid)
+  if (!doctorCheck.isValid) {
+    return { success: false, error: doctorCheck.message, code: doctorCheck.code }
   }
 
   try {
@@ -47,6 +77,27 @@ exports.main = async (event, context) => {
 }
 
 /**
+ * 家长标记报告已读（安全规则迁移：reports write 限医生，家长改走云函数）
+ */
+async function handleMarkViewed(reportId, openid) {
+  const report = await getReport(reportId)
+
+  // 校验：仅被推送的家长可标记已读
+  const pushedTo = Array.isArray(report.pushed_to) ? report.pushed_to : []
+  if (!pushedTo.includes(openid)) {
+    return { success: false, error: '无权操作此报告', code: 403 }
+  }
+
+  if (!report.viewed_at) {
+    await db.collection('reports').doc(reportId).update({
+      data: { viewed_at: db.serverDate() }
+    })
+  }
+
+  return { success: true, message: '已标记已读' }
+}
+
+/**
  * 保存修改（草稿）
  */
 async function handleSave(reportId, doctorContent, doctorNote, openid) {
@@ -57,8 +108,7 @@ async function handleSave(reportId, doctorContent, doctorNote, openid) {
 
   const updateData = {}
   if (doctorContent) {
-    updateData.doctor_content = { ...doctorContent }
-    if (doctorNote) updateData.doctor_content.doctor_note = doctorNote
+    updateData.doctor_content = _.set({ ...doctorContent, doctor_note: doctorNote || '' })
   }
   updateData.updated_at = db.serverDate()
 
@@ -69,6 +119,7 @@ async function handleSave(reportId, doctorContent, doctorNote, openid) {
 
 /**
  * 一键通过（不推送）
+ * 若有绑定家长则标记 pushed，无绑定家长则标记 pending_binding 待家长绑定后补发
  */
 async function handleApprove(reportId, openid) {
   const report = await getReport(reportId)
@@ -79,20 +130,38 @@ async function handleApprove(reportId, openid) {
   // 一键通过：doctor_content = ai_content
   const doctorContent = { ...report.ai_content, doctor_note: '' }
 
+  // 取 exam + child 判断是否有绑定家长
+  let pushStatus = 'pending_binding'
+  try {
+    const examRes = await db.collection('exams').doc(report.exam_id).get()
+    const exam = examRes.data
+    if (exam) {
+      const childRes = await db.collection('children').doc(exam.child_id).get()
+      const child = childRes.data
+      if (child && Array.isArray(child.bound_parent_ids) && child.bound_parent_ids.length > 0) {
+        pushStatus = 'pushed'
+      }
+    }
+  } catch (err) {
+    console.warn('[reviewReport] handleApprove 获取 child 失败，默认 pending_binding:', err.message)
+  }
+
   await db.collection('reports').doc(reportId).update({
     data: {
-      doctor_content: doctorContent,
+      doctor_content: _.set(doctorContent),
       review_status: 'approved',
       reviewed_by: openid,
       reviewed_at: db.serverDate(),
-      updated_at: db.serverDate()
+      updated_at: db.serverDate(),
+      push_status: pushStatus
     }
   })
 
   // 更新体检记录状态
   await updateExamStatus(report.exam_id, 'reported')
 
-  return { success: true, message: '审核通过', review_status: 'approved' }
+  const msg = pushStatus === 'pushed' ? '审核通过' : '审核通过，待家长绑定后自动推送'
+  return { success: true, message: msg, review_status: 'approved' }
 }
 
 /**
@@ -100,28 +169,35 @@ async function handleApprove(reportId, openid) {
  */
 async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid) {
   const report = await getReport(reportId)
-  if (report.review_status !== 'pending') {
+
+  // 允许两种场景：
+  // 1. 待审核报告（review_status=pending）：完整审核 + 推送
+  // 2. 已审核待绑定报告（review_status=approved, push_status=pending_binding）：仅补推
+  const isPendingReview = report.review_status === 'pending'
+  const isPendingBinding = report.review_status === 'approved' && report.push_status === 'pending_binding'
+
+  if (!isPendingReview && !isPendingBinding) {
     return { success: false, error: '报告当前状态不允许审核' }
   }
 
-  // 如果未提供doctorContent，使用ai_content
-  const finalDoctorContent = doctorContent
-    ? { ...doctorContent, doctor_note: doctorNote || '' }
-    : { ...report.ai_content, doctor_note: doctorNote || '' }
+  // 仅在待审核时更新报告内容（已审核待绑定的报告内容不再变动）
+  if (isPendingReview) {
+    const finalDoctorContent = doctorContent
+      ? { ...doctorContent, doctor_note: doctorNote || '' }
+      : { ...report.ai_content, doctor_note: doctorNote || '' }
 
-  // 1. 更新报告状态
-  await db.collection('reports').doc(reportId).update({
-    data: {
-      doctor_content: finalDoctorContent,
-      review_status: 'approved',
-      reviewed_by: openid,
-      reviewed_at: db.serverDate(),
-      updated_at: db.serverDate()
-    }
-  })
+    await db.collection('reports').doc(reportId).update({
+      data: {
+        doctor_content: _.set(finalDoctorContent),
+        review_status: 'approved',
+        reviewed_by: openid,
+        reviewed_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    })
 
-  // 更新体检记录状态
-  await updateExamStatus(report.exam_id, 'reported')
+    await updateExamStatus(report.exam_id, 'reported')
+  }
 
   // 2. 读取体检记录和儿童信息
   const examRes = await db.collection('exams').doc(report.exam_id).get()
@@ -156,80 +232,82 @@ async function handleApproveAndPush(reportId, doctorContent, doctorNote, openid)
     }
   }
 
-  // 4. 触发海报生成（创建media_assets记录，实际生成由Phase 5 genPoster处理）
-  if (parentIds.length > 0 || true) {
+  // 4. 触发海报生成（有绑定家长时自动生成，医生也可在审核页手动生成）
+  if (parentIds.length > 0) {
     try {
-      const posterRecord = {
-        report_id: reportId,
-        self_check_id: null,
-        source: 'doctor',
-        type: 'poster',
-        status: 'pending',
-        prompt: '', // 由genPoster云函数构建(Phase 5)
-        file_id: null,
-        thumbnail_file_id: null,
-        generation_meta: { model: '', cost: 0, duration_ms: 0, error: null },
-        created_at: db.serverDate(),
-        completed_at: null
-      }
-      const posterRes = await db.collection('media_assets').add({ data: posterRecord })
-      results.poster = { media_id: posterRes._id, status: 'pending' }
-      console.log('[reviewReport] 海报任务已创建:', posterRes._id)
-
-      // 尝试调用genPoster（Phase 5实现，不存在则忽略）
-      try {
-        await cloud.callFunction({
-          name: 'genPoster',
-          data: { media_id: posterRes._id, report_id: reportId }
-        })
-      } catch (genErr) {
-        console.log('[reviewReport] genPoster未部署或调用失败，海报记录保持pending:', genErr.message)
-      }
+      const posterRes = await cloud.callFunction({
+        name: 'genPoster',
+        data: { source: 'doctor', report_id: reportId }
+      })
+      results.poster = posterRes.result
+      console.log('[reviewReport] 海报生成结果:', posterRes.result.code === 0 ? '成功' : posterRes.result.message)
     } catch (err) {
-      console.error('[reviewReport] 创建海报记录失败:', err.message)
-      results.poster = { success: false, error: err.message }
+      console.error('[reviewReport] 海报生成失败:', err.message)
+      results.poster = { code: 500, message: err.message }
     }
   }
 
   // 5. 推送通知给绑定家长
   const pushedTo = []
-  for (const parentId of parentIds) {
-    try {
-      // 创建通知记录
-      const notifRecord = {
-        target_openid: parentId,
-        type: 'report_push',
-        title: `${child?.name || '儿童'}的体检报告已生成`,
-        content: '医生已为您生成体检解读报告，请点击查看',
-        channel: 'mp_subscribe',
-        status: 'pending',
-        related_id: reportId,
-        sent_at: null,
-        created_at: db.serverDate()
-      }
-      const notifRes = await db.collection('notifications').add({ data: notifRecord })
-      results.notifications.push({ notification_id: notifRes._id, target: parentId, status: 'pending' })
+  let pushStatus = 'pushed'
 
-      // 尝试发送订阅消息
-      await sendSubscribeMessage(parentId, child, reportId)
-      pushedTo.push(parentId)
-    } catch (err) {
-      console.error('[reviewReport] 推送通知失败:', parentId, err.message)
-      results.notifications.push({ target: parentId, status: 'failed', error: err.message })
+  if (parentIds.length === 0) {
+    // 无绑定家长：标记 pending_binding，待家长扫码绑定后由 claimChild 触发补发
+    pushStatus = 'pending_binding'
+  } else {
+    for (const parentId of parentIds) {
+      try {
+        // 创建通知记录
+        const notifRecord = {
+          target_openid: parentId,
+          type: 'report_push',
+          title: `${child?.name || '儿童'}的体检报告已生成`,
+          content: '医生已为您生成体检解读报告，请点击查看',
+          channel: 'mp_subscribe',
+          status: 'pending',
+          related_id: reportId,
+          sent_at: null,
+          created_at: db.serverDate()
+        }
+        const notifRes = await db.collection('notifications').add({ data: notifRecord })
+        results.notifications.push({ notification_id: notifRes._id, target: parentId, status: 'pending' })
+
+        // 尝试发送订阅消息
+        await sendSubscribeMessage(parentId, child, reportId)
+        pushedTo.push(parentId)
+      } catch (err) {
+        console.error('[reviewReport] 推送通知失败:', parentId, err.message)
+        results.notifications.push({ target: parentId, status: 'failed', error: err.message })
+      }
     }
   }
 
   // 6. 更新报告推送状态
   await db.collection('reports').doc(reportId).update({
     data: {
-      pushed_to: pushedTo,
-      pushed_at: pushedTo.length > 0 ? db.serverDate() : null
+      pushed_to: _.set(pushedTo),
+      pushed_at: pushedTo.length > 0 ? db.serverDate() : null,
+      push_status: pushStatus
     }
   })
 
+  // 7. 推送科普视频（有异常项且有绑定家长时，失败不阻塞）
+  if (pushedTo.length > 0 && exam.abnormal_items && exam.abnormal_items.some(item => item.level !== 'normal')) {
+    try {
+      const videoRes = await cloud.callFunction({
+        name: 'pushEducationVideos',
+        data: { report_id: reportId }
+      })
+      console.log('[reviewReport] 科普视频推送结果:', videoRes.result)
+    } catch (err) {
+      console.error('[reviewReport] 科普视频推送失败(不阻塞):', err.message)
+    }
+  }
+
+  const msg = pushStatus === 'pushed' ? '审核通过并推送成功' : '审核通过，待家长绑定后自动推送'
   return {
     success: true,
-    message: '审核通过并推送成功',
+    message: msg,
     review_status: 'approved',
     results
   }
@@ -284,9 +362,9 @@ async function updateExamStatus(examId, status) {
  * 发送微信订阅消息
  */
 async function sendSubscribeMessage(openid, child, reportId) {
-  const templateId = process.env.SUBSCRIBE_TEMPLATE_REPORT
+  const templateId = getConfig('SUBSCRIBE_TEMPLATE_REPORT_PUSH')
   if (!templateId) {
-    console.log('[reviewReport] SUBSCRIBE_TEMPLATE_REPORT未配置，跳过订阅消息发送')
+    console.log('[reviewReport] SUBSCRIBE_TEMPLATE_REPORT_PUSH 未配置，跳过订阅消息发送')
     return
   }
 
@@ -297,11 +375,10 @@ async function sendSubscribeMessage(openid, child, reportId) {
     await cloud.openapi.subscribeMessage.send({
       touser: openid,
       templateId,
-      page: `pages/parent/report-detail/report-detail?reportId=${reportId}`,
+      page: `pages/parent/report-detail/index?report_id=${reportId}`,
       data: {
         thing1: { value: `${child?.name || '儿童'}的体检报告` },
-        time2: { value: dateStr },
-        thing3: { value: '医生已生成解读报告，请查看' }
+        date2: { value: dateStr }
       },
       miniprogramState: 'formal'
     })
@@ -310,5 +387,27 @@ async function sendSubscribeMessage(openid, child, reportId) {
   } catch (err) {
     console.error('[reviewReport] 订阅消息发送失败:', openid, err.message)
     // 不抛出错误，推送失败不影响审核流程
+  }
+}
+
+// 严格校验调用方是否为已审核通过的医生
+// 同时满足：users.roles 含 'doctor' + doctor_info.status === 'approved'
+async function validateApprovedDoctor(openid) {
+  try {
+    const res = await db.collection('users').where({ openid }).limit(1).get()
+    const user = res.data[0]
+    if (!user || !Array.isArray(user.roles) || !user.roles.includes('doctor')) {
+      return { isValid: false, code: 403, message: '您不是医生角色，无权执行此操作' }
+    }
+    if (!user.doctor_info || user.doctor_info.status !== 'approved') {
+      return { isValid: false, code: 403, message: '医生身份未审核通过，无法执行此操作' }
+    }
+    return { isValid: true, user }
+  } catch (err) {
+    const msg = (err && (err.errMsg || err.message)) || ''
+    if (/collection.*(not.*exist|不存在)|-502003/i.test(msg)) {
+      return { isValid: false, code: 503, message: '数据库集合未初始化' }
+    }
+    throw err
   }
 }

@@ -48,3 +48,74 @@ node scripts/sync-env.js
 ### 生产环境建议
 
 除了使用 `secrets.local.js`，建议在微信开发者工具中为每个云函数设置环境变量 `ARK_API_KEY`，这样即使不上传 `secrets.local.js` 也能正常运行。
+
+### 订阅消息配置
+
+通知推送功能依赖微信订阅消息，需在 [微信公众平台](https://mp.weixin.qq.com/) 后台创建订阅消息模板：
+
+1. 进入「功能」→「订阅消息」→「我的模板」
+2. 创建以下 3 个模板，记录模板 ID 填入 `.env`：
+
+| 环境变量 | 模板用途 | 关键词字段 |
+|----------|----------|-----------|
+| `SUBSCRIBE_TEMPLATE_REPORT_PUSH` | 报告推送通知 | thing1(报告标题), date2(报告日期) |
+| `SUBSCRIBE_TEMPLATE_FOLLOWUP_REMIND` | 随访到期提醒 | thing1(随访项目), date2(计划日期), thing3(提醒内容) |
+| `SUBSCRIBE_TEMPLATE_VIDEO_DONE` | 视频生成完成 | thing1(通知标题), thing2(操作提示) |
+
+3. 如需短信兜底，还需在腾讯云 SMS 控制台创建短信模板，填入 `SMS_TEMPLATE_*` 变量
+4. 运行 `node scripts/sync-env.js` 同步配置
+5. 重新部署 `sendNotification` 云函数
+
+### 科普视频库管理
+
+科普视频采用预生成模式，管理员通过脚本上传视频到云存储并写入 `video_library` 集合。
+
+#### 支持的异常类别
+
+| category | 说明 |
+|----------|------|
+| growth | 生长发育 |
+| obesity | 超重肥胖 |
+| anemia | 贫血 |
+| vision | 视力 |
+| dental | 口腔(龋齿) |
+| spine | 脊柱 |
+| hearing | 听力 |
+| development | 发育评估 |
+| rickets | 佝偻病 |
+
+#### 上传视频
+
+```bash
+node scripts/manage-video-library.js upload \
+  --category anemia \
+  --title "儿童贫血科普" \
+  --file ./videos/anemia.mp4 \
+  --thumbnail ./videos/anemia-cover.jpg \
+  --duration 120 \
+  --description "讲解儿童贫血的成因与应对"
+```
+
+#### 替换视频
+
+```bash
+node scripts/manage-video-library.js replace \
+  --category anemia \
+  --file ./videos/anemia-v2.mp4 \
+  --title "儿童贫血科普(更新版)"
+```
+
+#### 查看视频库
+
+```bash
+node scripts/manage-video-library.js list
+```
+
+#### 停用视频
+
+```bash
+node scripts/manage-video-library.js deactivate --category anemia
+```
+
+**注意**: 脚本依赖 `wx-server-sdk`，需先在 `cloudfunctions/pushEducationVideos/` 目录运行 `npm install`。
+视频建议压缩到 720p，单个文件控制在 30MB 以内。

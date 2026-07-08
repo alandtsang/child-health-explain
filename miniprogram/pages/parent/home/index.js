@@ -1,9 +1,10 @@
 // miniprogram/pages/parent/home/index.js
 const auth = require('../../../utils/auth')
+const api = require('../../../utils/api')
 const format = require('../../../utils/format')
+const subscribe = require('../../../utils/subscribe')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 Page({
   data: {
@@ -13,7 +14,9 @@ Page({
     recentReports: [],
     pendingFollowups: [],
     loading: true,
-    showChildPicker: false
+    showChildPicker: false,
+    // 订阅引导横幅
+    showSubscribeBanner: false
   },
 
   onLoad() {
@@ -25,6 +28,30 @@ Page({
     const userInfo = auth.getUserInfo()
     this.setData({ parentInfo: userInfo ? userInfo.parent_info : null })
     this.loadChildren()
+    this.checkSubscribeStatus()
+  },
+
+  // 检查是否需要引导订阅消息
+  checkSubscribeStatus() {
+    // report_push 或 followup_remind 任一在冷却期内则不显示横幅
+    const needReport = !subscribe.isInCooldown('report_push')
+    const needFollowup = !subscribe.isInCooldown('followup_remind')
+    if (needReport || needFollowup) {
+      this.setData({ showSubscribeBanner: true })
+    } else {
+      this.setData({ showSubscribeBanner: false })
+    }
+  },
+
+  // 点击订阅引导横幅
+  async onTapSubscribe() {
+    await subscribe.subscribeParentNotifications()
+    this.setData({ showSubscribeBanner: false })
+  },
+
+  // 关闭订阅横幅
+  onCloseSubscribeBanner() {
+    this.setData({ showSubscribeBanner: false })
   },
 
   // 加载绑定的儿童档案
@@ -59,27 +86,24 @@ Page({
     try {
       const openid = auth.getOpenid()
 
-      const [reportsRes, followupsRes] = await Promise.all([
+      const [reportsRes, followupsData] = await Promise.all([
         // 查询推送给我且关联该儿童的报告
         db.collection('reports')
           .where({ pushed_to: openid_includes(openid), review_status: 'approved' })
           .orderBy('pushed_at', 'desc')
           .limit(5)
           .get(),
-        // 查询该儿童的待办随访
-        db.collection('followups')
-          .where({ child_id: childId, status: _.in(['scheduled', 'reminded']) })
-          .orderBy('plan_date', 'asc')
-          .get()
+        // 查询该儿童的待办随访（followups read:false，改走云函数）
+        api.listFollowupsByChildren([childId], ['scheduled', 'reminded'], 0, 100)
       ])
 
       // 过滤并丰富报告数据
       const reportExamIds = reportsRes.data.map(r => r.exam_id)
-      const examsRes = reportExamIds.length > 0
-        ? await db.collection('exams').where({ _id: _.in(reportExamIds), child_id: childId }).get()
-        : { data: [] }
+      const exams = reportExamIds.length > 0
+        ? await api.getExamsByIds(reportExamIds, childId)
+        : []
       const examMap = {}
-      examsRes.data.forEach(e => { examMap[e._id] = e })
+      exams.forEach(e => { examMap[e._id] = e })
 
       const recentReports = reportsRes.data
         .filter(r => examMap[r.exam_id])
@@ -97,13 +121,13 @@ Page({
       // 计算随访剩余天数
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      const pendingFollowups = followupsRes.data.map(f => {
+      const pendingFollowups = followupsData.map(f => {
         const planDate = new Date(f.plan_date)
         const diffDays = Math.round((planDate - today) / 86400000)
         return {
           _id: f._id,
           plan_date: f.plan_date,
-          item: (f.trigger_items || []).map(t => t.item).join('、'),
+          trigger_items: f.trigger_items || [],
           days_left: diffDays
         }
       })
@@ -117,7 +141,9 @@ Page({
 
   // 显示儿童选择
   onShowChildPicker() {
-    if (this.data.children.length <= 1) return
+    // 仅当恰好 1 个儿童时无需切换；0 个或多于 1 个时都弹出选择器
+    // 0 个儿童时弹出选择器让家长看到"新建档案"和"输入邀请码绑定"
+    if (this.data.children.length === 1) return
     this.setData({ showChildPicker: true })
   },
 
@@ -134,6 +160,12 @@ Page({
   // 新建儿童档案
   onAddChild() {
     wx.navigateTo({ url: '/pages/child-edit/child-edit' })
+  },
+
+  // 输入邀请码绑定已有档案
+  onBindByCode() {
+    this.setData({ showChildPicker: false })
+    wx.navigateTo({ url: '/pages/parent/bind-confirm/index' })
   },
 
   // 快捷入口

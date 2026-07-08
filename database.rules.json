@@ -1,0 +1,80 @@
+{
+  "_doc": "微信云开发数据库自定义安全规则。每个集合一份规则，key 为操作类型(read/write/create/update/delete)，value 为表达式。表达式语法见 https://cloud.tencent.com/document/product/876/41802 。重要约束：1) 规则只限制 C 端(小程序客户端)请求，云函数请求不受限制；2) where 查询条件必须是规则的子集，doc(id).get() 单文档读取在带 doc 限制的规则下会被拒绝，需改写为 where({_id, <ownerField>}) 形式；3) 粘贴到云开发控制台时请删除所有 _ 开头的说明字段。",
+  "_status_legend": "ready=可立即启用, needs_refactor=需先完成前置重构(见 docs/database-security-rules.md), default=保持默认",
+  "_migration_note": "2026-07-06 完成选项 B 迁移：医生端 children/exams/followups/media_assets 客户端直读全部改为云函数(getChildrenByIds/listExams/listFollowups/listMediaAssets)，家长端 exams/followups/media_assets 直读改为云函数，children 的 doc(id).get() 改为 where({_id, bound_parent_ids}) 或云函数，reports 的 doc(id).get() 改为 where({_id, pushed_to})。以下集合规则可安全启用。",
+
+  "self_checks": {
+    "_status": "ready",
+    "_comment": "纯家长自查数据，医生端不直接读取。读取/写入均限定为 parent_openid == 当前家长。客户端读取已改写为 where({_id, parent_openid}) 以满足子集要求。云函数(selfCheck 写入、genPoster 读取)不受影响。",
+    "read": "doc.parent_openid == auth.openid",
+    "write": "doc.parent_openid == auth.openid",
+    "create": "request.data.parent_openid == auth.openid",
+    "update": "doc.parent_openid == auth.openid",
+    "delete": "doc.parent_openid == auth.openid"
+  },
+
+  "reports": {
+    "_status": "ready",
+    "_comment": "医生(reviewed_by)与家长(pushed_to)双角色客户端直读。父端 report-detail 的 doc(reportId).get() 已改写为 where({_id, pushed_to})，医生端 report-review 的 reports 查询已添加 reviewed_by 约束。家长标记已读(viewed_at 更新)改走 reviewReport markViewed 云函数。",
+    "read": "doc.reviewed_by == auth.openid || auth.openid in doc.pushed_to",
+    "write": "doc.reviewed_by == auth.openid",
+    "_note": "推送、生成海报、标记已读等写入由云函数完成，不受规则限制"
+  },
+
+  "children": {
+    "_status": "ready",
+    "_comment": "仅创建者(医生)或绑定家长可读写。医生端 children 读取全部改为云函数 getChildrenByIds(listMine/getByIds/getDetail)，服务端校验医生身份后返回。家长端 where({bound_parent_ids: openid}) 满足子集要求，doc(id).get() 已改为云函数 getChildDetail 或 where({_id, bound_parent_ids})。",
+    "read": "doc.created_by == auth.openid || auth.openid in doc.bound_parent_ids",
+    "write": "doc.created_by == auth.openid || auth.openid in doc.bound_parent_ids",
+    "create": "request.data.created_by == auth.openid"
+  },
+
+  "exams": {
+    "_status": "ready",
+    "_comment": "仅云函数可读写。所有客户端直读已迁移至 listExams 云函数(listByDoctor/getDetail/getByIds/listByChild)，服务端按角色校验。写入经 saveExam 云函数。OCR 页客户端直写 exams 已改为 saveExam 云函数。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "followups": {
+    "_status": "ready",
+    "_comment": "仅云函数可读写。所有客户端直读已迁移至 listFollowups 云函数(listByDoctor/countByDoctor/listByChildren/countByChildren/getDetail)，服务端按角色校验。写入经 updateFollowup/createFollowup 云函数。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "media_assets": {
+    "_status": "ready",
+    "_comment": "仅云函数可读写。所有客户端直读已迁移至 listMediaAssets 云函数(listByReport/listBySelfCheck)，服务端校验报告/自查记录归属。写入由 genPoster/videoCreate/videoPoll 云函数完成。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "users": {
+    "_status": "ready",
+    "_comment": "用户自身档案，仅本人可读写。login 云函数的 getOrCreate/updateUserRecord 不受规则限制。",
+    "read": "doc.openid == auth.openid",
+    "write": "doc.openid == auth.openid"
+  },
+
+  "doctor_whitelist": {
+    "_status": "ready",
+    "_comment": "医生白名单，仅后台/云函数维护，C 端不可读写。seedDoctorWhitelist 云函数不受影响。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "doctor_applications": {
+    "_status": "ready",
+    "_comment": "医生认证申请记录，仅云函数(doctorCert)可读写。申请人状态查询走 getStatus 云函数，管理员审核走 listPending/review 云函数，C 端不可直接读写。",
+    "read": "false",
+    "write": "false"
+  },
+
+  "notifications": {
+    "_status": "needs_refactor",
+    "_comment": "通知按目标用户分发。目标规则需确认通知文档的接收者字段名(target_openid / openid)后启用；启用前先核对字段并改写单文档读取。本次迁移未涉及 notifications 集合。",
+    "read": "doc.openid == auth.openid",
+    "write": "false"
+  }
+}

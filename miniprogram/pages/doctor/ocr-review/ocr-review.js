@@ -95,25 +95,20 @@ Page({
    */
   async loadChildren(preselectChildId) {
     try {
-      const db = wx.cloud.database()
-      const res = await db.collection('children')
-        .where({ created_by: app.globalData.openid })
-        .orderBy('created_at', 'desc')
-        .limit(50)
-        .get()
+      const children = await api.listMyChildren(0, 50)
 
       let selectedIndex = -1
       if (preselectChildId) {
-        selectedIndex = res.data.findIndex(c => c._id === preselectChildId)
+        selectedIndex = children.findIndex(c => c._id === preselectChildId)
       }
 
       this.setData({
-        children: res.data,
+        children,
         selectedChildIndex: selectedIndex,
-        selectedChildId: selectedIndex >= 0 ? res.data[selectedIndex]._id : ''
+        selectedChildId: selectedIndex >= 0 ? children[selectedIndex]._id : ''
       })
 
-      if (res.data.length === 0) {
+      if (children.length === 0) {
         wx.showModal({
           title: '提示',
           content: '暂无儿童档案，请先创建儿童档案',
@@ -128,7 +123,7 @@ Page({
       }
 
       // 返回预选的儿童对象（含 birth_date），供调用方计算月龄
-      return selectedIndex >= 0 ? res.data[selectedIndex] : null
+      return selectedIndex >= 0 ? children[selectedIndex] : null
     } catch (err) {
       console.error('加载儿童列表失败:', err)
       wx.showToast({ title: '加载儿童列表失败', icon: 'none' })
@@ -221,29 +216,22 @@ Page({
     wx.showLoading({ title: '保存中...', mask: true })
 
     try {
-      const db = wx.cloud.database()
+      // 1. 创建体检记录（通过云函数，exams write 限云函数）
+      const examData = await api.callFunction('saveExam', {
+        action: 'create',
+        child_id: this.data.selectedChildId,
+        exam_date: this.data.examDate,
+        source: 'ocr',
+        ocr_raw: {
+          image_file_id: this.data.imageFileId,
+          raw_text: this.data.ocrData.ocr_raw?.raw_text || '',
+          confidence: this.data.ocrConfidence
+        },
+        metrics: metrics,
+        status: 'draft'
+      }, { loading: false, showError: false })
 
-      // 1. 创建体检记录
-      const examRes = await db.collection('exams').add({
-        data: {
-          child_id: this.data.selectedChildId,
-          doctor_id: app.globalData.openid,
-          exam_date: this.data.examDate,
-          source: 'ocr',
-          ocr_raw: {
-            image_file_id: this.data.imageFileId,
-            raw_text: this.data.ocrData.ocr_raw?.raw_text || '',
-            confidence: this.data.ocrConfidence
-          },
-          basic_info: { age_months: ageMonths },
-          metrics: metrics,
-          abnormal_items: [],
-          status: 'draft',
-          created_at: db.serverDate()
-        }
-      })
-
-      const examId = examRes._id
+      const examId = examData.exam_id
       console.log('[ocr-review] 体检记录已创建:', examId)
 
       // 2. 调用evaluateMetrics获取异常分级
@@ -259,10 +247,12 @@ Page({
 
       const abnormalItems = evalRes.result.abnormal_items || []
 
-      // 更新体检记录的异常项
-      await db.collection('exams').doc(examId).update({
-        data: { abnormal_items: abnormalItems }
-      })
+      // 更新体检记录的异常项（通过云函数）
+      await api.callFunction('saveExam', {
+        action: 'update',
+        exam_id: examId,
+        abnormal_items: abnormalItems
+      }, { loading: false, showError: false })
 
       console.log('[ocr-review] 异常分级完成, 异常项数:', abnormalItems.length)
 

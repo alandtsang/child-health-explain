@@ -26,18 +26,28 @@ Page({
 
   async loadData() {
     try {
-      const res = await db.collection('self_checks').doc(this.data.selfCheckId).get()
-      const selfCheck = res.data
+      // 用 where 查询并携带 parent_openid，将归属校验下沉到查询本身：
+      // 1. 启用 self_checks 集合安全规则后，doc(id).get() 不满足子集要求会被拒绝
+      // 2. 即使未启用规则，越权请求也会直接返回空，避免泄露他人孩子数据
+      const res = await db.collection('self_checks')
+        .where({ _id: this.data.selfCheckId, parent_openid: auth.getOpenid() })
+        .get()
+      const selfCheck = res.data[0]
       if (!selfCheck) {
-        wx.showToast({ title: '记录不存在', icon: 'none' })
+        this.setData({ loading: false })
+        wx.showModal({
+          title: '无权查看',
+          content: '该自查记录不存在或不属于您，无法查看',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
         return
       }
 
-      // 查询儿童信息
+      // 查询儿童信息（children doc(id).get() 改走云函数，安全规则迁移）
       let child = null
       try {
-        const childRes = await db.collection('children').doc(selfCheck.child_id).get()
-        child = childRes.data
+        child = await api.getChildDetail(selfCheck.child_id)
       } catch (e) { /* ignore */ }
 
       const result = selfCheck.ai_result || {}
@@ -64,12 +74,10 @@ Page({
 
   async loadPoster() {
     try {
-      const res = await db.collection('media_assets')
-        .where({ self_check_id: this.data.selfCheckId, type: 'poster', status: 'done' })
-        .limit(1)
-        .get()
-      if (res.data.length > 0) {
-        this.setData({ poster: res.data[0] })
+      // media_assets read:false，改走云函数
+      const assets = await api.listMediaBySelfCheck(this.data.selfCheckId, 'poster', 'done')
+      if (assets.length > 0) {
+        this.setData({ poster: assets[0] })
       }
     } catch (err) { /* ignore */ }
   },

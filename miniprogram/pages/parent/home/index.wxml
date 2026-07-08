@@ -1,4 +1,5 @@
 <!-- miniprogram/pages/parent/home/index.wxml -->
+<wxs src="../../../utils/trigger-label.wxs" module="tl" />
 <view class="parent-home">
   <!-- 儿童信息头 -->
   <view class="child-header" bindtap="onShowChildPicker">
@@ -17,12 +18,25 @@
     <view class="quick-card" bindtap="onFollowup"><text class="quick-icon">📅</text><text class="quick-label">随访提醒</text></view>
   </view>
 
+  <!-- 订阅消息引导横幅 -->
+  <view wx:if="{{showSubscribeBanner}}" class="subscribe-banner">
+    <view class="subscribe-banner-content" bindtap="onTapSubscribe">
+      <text class="subscribe-icon">🔔</text>
+      <view class="subscribe-text">
+        <text class="subscribe-title">开启消息通知</text>
+        <text class="subscribe-desc">接收体检报告推送和随访到期提醒</text>
+      </view>
+      <text class="subscribe-btn">去开启</text>
+    </view>
+    <text class="subscribe-close" bindtap="onCloseSubscribeBanner">×</text>
+  </view>
+
   <!-- 待办随访 -->
   <view wx:if="{{pendingFollowups.length > 0}}" class="section">
     <view class="section-header"><text class="section-title">待办随访</text></view>
     <view wx:for="{{pendingFollowups}}" wx:key="_id" class="followup-card card" bindtap="onFollowupTap" data-id="{{item._id}}">
       <view class="followup-info">
-        <text class="followup-item">{{item.item}}</text>
+        <text class="followup-item">{{tl.summary(item.trigger_items)}}</text>
         <text class="followup-date">计划复查：{{item.plan_date}}</text>
       </view>
       <view class="followup-badge">
@@ -74,7 +88,10 @@
         </view>
         <text wx:if="{{currentChild._id === item._id}}" class="check-icon">✓</text>
       </view>
-      <view class="add-child-btn" bindtap="onAddChild">+ 新建儿童档案</view>
+      <view class="bind-actions">
+        <view class="add-child-btn" bindtap="onAddChild">+ 新建儿童档案</view>
+        <view class="bind-invite-btn" bindtap="onBindByCode">输入邀请码绑定</view>
+      </view>
     </view>
   </view>
 </view>

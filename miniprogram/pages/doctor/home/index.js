@@ -6,7 +6,6 @@ const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
 const { isCollectionMissingError } = require('../../../utils/db')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 Page({
   data: {
@@ -34,29 +33,32 @@ Page({
     this.resetAndLoadExams()
   },
 
-  // 加载统计数据
+  // 加载统计数据（使用 allSettled 容错：单项失败不影响其他统计）
   async loadStats() {
     const openid = auth.getOpenid()
-    try {
-      const [pendingRes, pushedRes, followupRes] = await Promise.all([
-        db.collection('reports').where({ review_status: 'pending', reviewed_by: openid }).count(),
-        db.collection('reports').where({ review_status: 'approved', reviewed_by: openid }).count(),
-        db.collection('followups').where({ doctor_id: openid, status: _.in(['scheduled', 'reminded']) }).count()
-      ])
-      this.setData({
-        stats: {
-          pendingReview: pendingRes.total,
-          pushed: pushedRes.total,
-          pendingFollowup: followupRes.total
+    const results = await Promise.allSettled([
+      db.collection('reports').where({ review_status: 'pending', reviewed_by: openid }).count(),
+      db.collection('reports').where({ review_status: 'approved', reviewed_by: openid }).count(),
+      api.countFollowupsByDoctor(['scheduled', 'reminded'])
+    ])
+
+    const stats = { ...this.data.stats }
+    if (results[0].status === 'fulfilled') stats.pendingReview = results[0].value.total
+    if (results[1].status === 'fulfilled') stats.pushed = results[1].value.total
+    if (results[2].status === 'fulfilled') stats.pendingFollowup = results[2].value.total
+    this.setData({ stats })
+
+    // 仅记录失败项，不影响已成功的统计
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        const label = ['待审核', '已推送', '待随访'][i]
+        if (isCollectionMissingError(r.reason)) {
+          console.error(`统计[${label}]失败：数据库集合未初始化`)
+        } else {
+          console.error(`统计[${label}]失败:`, r.reason)
         }
-      })
-    } catch (err) {
-      if (isCollectionMissingError(err)) {
-        console.error('加载统计失败：数据库集合未初始化，请调用 initDatabase 创建 reports/followups 集合')
-      } else {
-        console.error('加载统计失败:', err)
       }
-    }
+    })
   },
 
   // 重置并加载体检列表
@@ -68,23 +70,16 @@ Page({
   // 加载最近体检记录（关联查询儿童信息）
   async loadExams() {
     if (this.data.loadingMore || (!this.data.loading && this.data.page > 0 && !this.data.hasMore)) return
-    const openid = auth.getOpenid()
     const currentPage = this.data.page
     this.setData({ loadingMore: currentPage > 0 })
 
     try {
-      const res = await db.collection('exams')
-        .where({ doctor_id: openid })
-        .orderBy('created_at', 'desc')
-        .skip(currentPage * this.data.pageSize)
-        .limit(this.data.pageSize)
-        .get()
-
-      const exams = await this.enrichExamsWithChild(res.data)
-      const hasMore = res.data.length === this.data.pageSize
+      const exams = await api.listExamsByDoctor(currentPage, this.data.pageSize)
+      const formattedExams = this.enrichExamsWithChild(exams)
+      const hasMore = exams.length === this.data.pageSize
 
       this.setData({
-        recentExams: currentPage === 0 ? exams : this.data.recentExams.concat(exams),
+        recentExams: currentPage === 0 ? formattedExams : this.data.recentExams.concat(formattedExams),
         page: currentPage + 1,
         hasMore,
         loading: false,
@@ -93,26 +88,21 @@ Page({
     } catch (err) {
       console.error('加载体检列表失败:', err)
       this.setData({ loading: false, loadingMore: false })
-      const tip = isCollectionMissingError(err)
-        ? '数据库未初始化，请在云开发控制台运行 initDatabase'
-        : '加载失败'
+      let tip = '加载失败'
+      const msg = (err && (err.errMsg || err.message)) || ''
+      if (isCollectionMissingError(err)) {
+        tip = '数据库未初始化，请在云开发控制台运行 initDatabase'
+      } else if (/function.*not.*found|not.*exist|找不到|不存在|-502003/.test(msg)) {
+        tip = '云函数未部署，请先上传 listExams 等云函数'
+      }
       wx.showToast({ title: tip, icon: 'none', duration: 3000 })
     }
   },
 
-  // 关联查询儿童信息并计算展示字段
-  async enrichExamsWithChild(exams) {
-    const childIds = [...new Set(exams.map(e => e.child_id))]
-    if (childIds.length === 0) return exams
-
-    const childRes = await db.collection('children')
-      .where({ _id: _.in(childIds) })
-      .get()
-    const childMap = {}
-    childRes.data.forEach(c => { childMap[c._id] = c })
-
+  // 计算展示字段（child 信息由 listExamsByDoctor 云函数返回）
+  enrichExamsWithChild(exams) {
     return exams.map(exam => {
-      const child = childMap[exam.child_id] || {}
+      const child = exam.child || {}
       const abnormals = (exam.abnormal_items || []).filter(a => a.level !== 'normal')
       const maxLevel = abnormals.length > 0
         ? abnormals.reduce((max, a) =>
@@ -141,6 +131,43 @@ Page({
   onExamTap(e) {
     const examId = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/doctor/report-review/index?exam_id=${examId}` })
+  },
+
+  // 长按体检记录卡片 - 删除
+  onExamLongPress(e) {
+    const examId = e.currentTarget.dataset.id
+    const exam = this.data.recentExams.find(item => item._id === examId)
+    if (!exam) return
+
+    // 草稿状态可直接删除；已生成报告但未推送的需提示
+    const isDraft = exam.is_draft
+    const content = isDraft
+      ? '确认删除此草稿体检记录？'
+      : '该体检记录已提交，删除后将同时清除关联的报告和随访数据。确认删除？'
+
+    wx.showModal({
+      title: '删除体检记录',
+      content,
+      confirmText: '删除',
+      confirmColor: '#FF4D4F',
+      success: async (res) => {
+        if (res.confirm) {
+          this.setData({ loading: true })
+          try {
+            await api.deleteExam(examId)
+            wx.showToast({ title: '已删除', icon: 'success' })
+            // 从列表中移除
+            const recentExams = this.data.recentExams.filter(item => item._id !== examId)
+            this.setData({ recentExams, loading: false })
+            // 重新加载统计
+            this.loadStats()
+          } catch (err) {
+            console.error('删除体检记录失败:', err)
+            this.setData({ loading: false })
+          }
+        }
+      }
+    })
   },
 
   onReportList() {

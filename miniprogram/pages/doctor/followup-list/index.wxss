@@ -11,6 +11,7 @@
 .status-reminded { background: #FFF2E8; color: #FA8C16; }
 .status-completed { background: #F6FFED; color: #52C41A; }
 .status-lost { background: #FFF1F0; color: #FF4D4F; }
+.status-cancelled { background: #F5F5F5; color: #999; }
 .fu-body { display: flex; justify-content: space-between; align-items: center; }
 .fu-info { flex: 1; }
 .fu-trigger { font-size: 28rpx; color: #333; display: block; }
@@ -36,3 +37,5 @@
 .remind-item { display: flex; justify-content: space-between; padding: 12rpx 0; font-size: 26rpx; color: #666; }
 .modal-actions { display: flex; gap: 16rpx; padding: 24rpx 32rpx; padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #EEE; }
 .modal-btn { flex: 1; }
+.btn-danger { color: #FF4D4F; border-color: #FF4D4F; }
+.reactivate-hint { display: block; font-size: 24rpx; color: #999; margin-top: 16rpx; line-height: 1.5; }

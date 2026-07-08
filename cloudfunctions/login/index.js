@@ -4,6 +4,30 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+// 加载本地密钥配置（由 sync-env.js 从 .env 同步生成，已 gitignore）
+let localSecrets = {}
+try {
+  localSecrets = require('./secrets.local')
+} catch (e) {
+  // secrets.local.js 不存在时忽略，使用云函数环境变量
+}
+
+// 从环境变量或本地密钥配置中获取配置值
+function getConfig(key) {
+  return process.env[key] || localSecrets[key] || ''
+}
+
+// 获取管理员 openid 列表
+function getAdminOpenids() {
+  const raw = getConfig('ADMIN_OPENIDS')
+  return raw.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+// 判断 openid 是否为管理员
+function isAdmin(openid) {
+  return getAdminOpenids().includes(openid)
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
@@ -39,7 +63,8 @@ async function handleLogin(openid) {
   if (user.roles && user.roles.length > 0) {
     currentRole = user.last_active_role || user.roles[0]
   }
-  return { code: 0, data: { openid, user: sanitizeUser(user), currentRole, hasRole: user.roles && user.roles.length > 0 } }
+  const adminFlag = isAdmin(openid)
+  return { code: 0, data: { openid, user: sanitizeUser(user), currentRole, hasRole: user.roles && user.roles.length > 0, isAdmin: adminFlag } }
 }
 
 async function handleSelectRole(openid, role) {
@@ -50,7 +75,15 @@ async function handleSelectRole(openid, role) {
   if (role === 'doctor') {
     const whitelistEntry = await checkDoctorWhitelist(openid)
     if (!whitelistEntry) {
-      return { code: 403, message: '您的账号尚未在医生白名单中，请联系管理员激活', data: { needApproval: true } }
+      // 不在白名单：查询是否有认证申请记录，前端据此决定跳转到申请页还是待审核页
+      const applicationStatus = await getApplicationStatus(openid)
+      return {
+        code: 403,
+        message: applicationStatus === 'pending' ? '您的认证申请正在审核中，请耐心等待'
+               : applicationStatus === 'rejected' ? '您的认证申请未通过，请重新提交'
+               : '您尚未通过医生认证，请先提交认证申请',
+        data: { needApproval: true, applicationStatus }
+      }
     }
     const doctorInfo = {
       name: whitelistEntry.name, hospital: whitelistEntry.hospital || '',
@@ -116,6 +149,23 @@ async function checkDoctorWhitelist(openid) {
       console.warn('[login] doctor_whitelist 集合未初始化，请调用 initDatabase 创建')
       return null
     }
+    throw err
+  }
+}
+
+// 查询当前用户最新的认证申请状态（pending / approved / rejected / none）
+// 用于 selectRole 失败时告知前端应跳转到「申请页」还是「待审核页」
+async function getApplicationStatus(openid) {
+  try {
+    const res = await db.collection('doctor_applications')
+      .where({ openid })
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .get()
+    if (res.data.length === 0) return 'none'
+    return res.data[0].status  // pending / approved / rejected
+  } catch (err) {
+    if (isCollectionMissingError(err)) return 'none'
     throw err
   }
 }

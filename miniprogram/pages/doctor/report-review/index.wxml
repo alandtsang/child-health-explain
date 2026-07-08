@@ -22,7 +22,7 @@
     <view wx:if="{{exam.abnormal_items_fmt.length === 0}}" class="text-success">所有指标正常</view>
     <view wx:for="{{exam.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
       <view class="abnormal-left">
-        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-item">{{item.item_label || item.item}}</text>
         <text class="abnormal-value">{{item.value}}</text>
       </view>
       <view class="abnormal-right">
@@ -109,11 +109,77 @@
     />
   </view>
 
+  <!-- 科普海报 -->
+  <view class="card poster-card">
+    <view class="card-title">科普海报</view>
+    <view wx:if="{{poster}}" class="poster-preview" bindtap="onViewPoster">
+      <image class="poster-thumb" src="{{poster.file_id}}" mode="aspectFit" />
+      <text class="poster-tap-hint">点击查看大图</text>
+    </view>
+    <view wx:else class="poster-empty">
+      <text class="poster-empty-text">暂无海报</text>
+      <view class="poster-btn {{generatingPoster ? 'btn-disabled' : ''}}" bindtap="onGeneratePoster">
+        {{generatingPoster ? '生成中...' : '生成海报'}}
+      </view>
+    </view>
+    <view wx:if="{{poster}}" class="poster-actions-row">
+      <view class="poster-action-btn" bindtap="onViewPoster">查看海报</view>
+      <view class="poster-action-btn poster-regenerate" bindtap="onRegeneratePoster">重新生成</view>
+    </view>
+  </view>
+
+  <!-- 科普视频（已推送的科普视频列表） -->
+  <view class="card video-card" wx:if="{{videos.length > 0}}">
+    <view class="card-title">科普视频</view>
+    <view wx:for="{{videos}}" wx:key="_id" class="video-list-item">
+      <view class="video-item-header">
+        <text class="video-item-title">{{item.category || '科普视频'}}</text>
+        <text class="video-item-tag">已推送</text>
+      </view>
+      <view class="video-preview">
+        <video src="{{item.file_id}}" class="video-player" controls></video>
+      </view>
+    </view>
+  </view>
+
   <!-- 底部操作栏 -->
   <view class="bottom-bar safe-bottom">
-    <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
-    <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
-    <view class="bottom-btn btn-push" bindtap="onApproveAndPush">通过并推送</view>
+    <!-- 待审核：完整操作按钮 -->
+    <block wx:if="{{btnState === 'review'}}">
+      <view class="bottom-btn btn-delete" bindtap="onDeleteExam">删除</view>
+      <view class="bottom-btn btn-quick" bindtap="onQuickApprove">一键通过</view>
+      <view class="bottom-btn btn-save {{hasChanges ? '' : 'btn-disabled'}}" bindtap="onSaveChanges">保存修改</view>
+      <view class="bottom-btn btn-push" bindtap="onApproveAndPush">{{isBound ? '通过并推送' : '通过并邀请家长'}}</view>
+    </block>
+    <!-- 已审核待绑定：家长已绑定可补推，否则等待 -->
+    <block wx:elif="{{btnState === 'pending_binding'}}">
+      <view wx:if="{{isBound}}" class="bottom-btn btn-push" bindtap="onApproveAndPush">推送给家长</view>
+      <view wx:else class="bottom-btn btn-status">待家长绑定后自动推送</view>
+    </block>
+    <!-- 已推送 -->
+    <view wx:elif="{{btnState === 'pushed'}}" class="bottom-btn btn-status">已审核已推送</view>
+    <!-- 已驳回 -->
+    <view wx:elif="{{btnState === 'rejected'}}" class="bottom-btn btn-status btn-status-rejected">已驳回</view>
+  </view>
+</view>
+
+<!-- 邀请家长弹窗 -->
+<view wx:if="{{inviteVisible}}" class="invite-mask" bindtap="onCloseInvite">
+  <view class="invite-dialog" catchtap="">
+    <view class="invite-title">家长绑定邀请</view>
+    <view wx:if="{{inviteData.qr_file_id}}" class="qr-wrap">
+      <image src="{{inviteData.qr_file_id}}" mode="aspectFit" class="qr-img" />
+    </view>
+    <view class="invite-code-row">
+      <text class="invite-code-label">邀请码：</text>
+      <text class="invite-code">{{inviteData.code}}</text>
+      <text class="invite-copy" bindtap="onCopyCode">复制</text>
+    </view>
+    <view class="invite-tip">有效期 {{inviteData.expires_in_days}} 天，家长扫码或输入邀请码即可绑定</view>
+    <view class="invite-actions">
+      <button wx:if="{{inviteData.qr_file_id}}" class="invite-btn" bindtap="onSaveQr">保存二维码</button>
+      <button class="invite-btn invite-btn-primary" bindtap="onCloseInvite">完成</button>
+    </view>
   </view>
 </view>
 
@@ -139,7 +205,7 @@
     <view wx:if="{{exam.abnormal_items_fmt.length === 0}}" class="text-success">所有指标正常</view>
     <view wx:for="{{exam.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
       <view class="abnormal-left">
-        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-item">{{item.item_label || item.item}}</text>
         <text class="abnormal-value">{{item.value}}</text>
       </view>
       <view class="abnormal-right">
@@ -157,6 +223,9 @@
   <view class="generate-btn {{generating ? 'btn-disabled' : ''}}" bindtap="onGenerateReport">
     <text>{{generating ? '生成中...' : '生成解读报告'}}</text>
   </view>
+  <view class="delete-btn" bindtap="onDeleteExam">
+    <text>删除此体检记录</text>
+  </view>
 </view>
 
 <view wx:if="{{!loading && !report && !noReport}}" class="empty-state">
@@ -166,3 +235,4 @@
 <loading-overlay visible="{{loading}}" text="加载中..." />
 <loading-overlay visible="{{submitting}}" text="提交中..." />
 <loading-overlay visible="{{generating}}" text="AI解读生成中..." />
+<loading-overlay visible="{{generatingPoster}}" text="海报生成中..." />

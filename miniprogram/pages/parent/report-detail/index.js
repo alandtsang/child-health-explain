@@ -3,9 +3,10 @@ const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
+const subscribe = require('../../../utils/subscribe')
+const { isChildAccessibleToParent } = require('../../../utils/db')
 
 const db = wx.cloud.database()
-const _ = db.command
 
 Page({
   data: {
@@ -15,11 +16,12 @@ Page({
     child: null,
     content: null,
     poster: null,
-    video: null,
+    videos: [],
     loading: true,
     posterVisible: false,
     generatingPoster: false,
-    generatingVideo: false
+    // 订阅引导（有异常项时显示，引导订阅随访提醒）
+    showSubscribeTip: false
   },
 
   onLoad(options) {
@@ -30,25 +32,38 @@ Page({
 
   async loadReport() {
     try {
-      const res = await db.collection('reports').doc(this.data.reportId).get()
-      const report = res.data
+      const openid = auth.getOpenid()
+      // reports 安全规则：doc(id).get() 不满足子集要求，改用 where + pushed_to 查询
+      // pushed_to 是数组，需用 db.command.in 查询以满足 auth.openid in doc.pushed_to 子集要求
+      const res = await db.collection('reports')
+        .where({ _id: this.data.reportId, pushed_to: db.command.in([openid]) })
+        .get()
+      const report = res.data[0]
       if (!report) {
         wx.showToast({ title: '报告不存在', icon: 'none' })
         return
       }
 
-      // 标记已查看
-      if (!report.viewed_at) {
-        db.collection('reports').doc(this.data.reportId).update({ data: { viewed_at: db.serverDate() } })
+      // 查询体检+儿童（exams read:false，改走云函数，同时返回 child）
+      const examDetail = await api.getExamDetail(report.exam_id)
+      const exam = examDetail.exam
+      const child = examDetail.child
+
+      // 权限校验：仅允许查看自己绑定/创建儿童的报告，避免家长查看他人孩子的体检数据
+      if (!isChildAccessibleToParent(child, auth.getOpenid())) {
+        this.setData({ loading: false })
+        wx.showModal({
+          title: '无权查看',
+          content: '该报告关联的儿童不是您绑定的孩子，无法查看',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
+        return
       }
 
-      // 查询体检+儿童
-      const examRes = await db.collection('exams').doc(report.exam_id).get()
-      const exam = examRes.data
-      let child = null
-      if (exam) {
-        const childRes = await db.collection('children').doc(exam.child_id).get()
-        child = childRes.data
+      // 权限校验通过后再标记已查看（reports write 限医生，家长改走云函数）
+      if (!report.viewed_at) {
+        api.markReportViewed(this.data.reportId)
       }
 
       const content = report.doctor_content || report.ai_content || {}
@@ -57,8 +72,13 @@ Page({
         level_info: ABNORMAL_LEVEL_INFO[a.level] || ABNORMAL_LEVEL_INFO.normal
       }))
 
+      // 有异常项且未在冷却期内 → 显示随访提醒订阅引导
+      const hasAbnormal = (exam.abnormal_items || []).some(a => a.level !== 'normal')
+      const needSubscribe = hasAbnormal && !subscribe.isInCooldown('followup_remind')
+
       this.setData({
         report, exam, child, content,
+        showSubscribeTip: needSubscribe,
         loading: false
       })
 
@@ -74,12 +94,11 @@ Page({
   // 加载关联的海报和视频
   async loadMedia(reportId) {
     try {
-      const res = await db.collection('media_assets')
-        .where({ report_id: reportId, status: 'done' })
-        .get()
-      const poster = res.data.find(m => m.type === 'poster')
-      const video = res.data.find(m => m.type === 'video')
-      this.setData({ poster: poster || null, video: video || null })
+      // media_assets read:false，改走云函数
+      const assets = await api.listMediaByReport(reportId, null, 'done')
+      const poster = assets.find(m => m.type === 'poster')
+      const videos = (assets || []).filter(m => m.type === 'video' && m.source === 'library')
+      this.setData({ poster: poster || null, videos })
     } catch (err) {
       console.error('加载媒体失败:', err)
     }
@@ -111,26 +130,15 @@ Page({
     this.setData({ posterVisible: false })
   },
 
-  // 生成视频（仅医生推送报告）
-  async onGenerateVideo() {
-    this.setData({ generatingVideo: true })
-    try {
-      await api.videoCreate(this.data.reportId)
-      wx.showToast({ title: '视频生成中，完成后通知您', icon: 'none', duration: 3000 })
-    } catch (err) {
-      console.error('视频生成失败:', err)
-    } finally {
-      this.setData({ generatingVideo: false })
-    }
+  // 订阅随访提醒
+  async onTapSubscribeFollowup() {
+    await subscribe.subscribeFollowupReminder()
+    this.setData({ showSubscribeTip: false })
   },
 
-  // 播放视频
-  onPlayVideo() {
-    if (this.data.video && this.data.video.file_id) {
-      wx.navigateTo({
-        url: `/pages/parent/report-detail/index?report_id=${this.data.reportId}&play_video=1`
-      })
-    }
+  // 关闭订阅提示
+  onCloseSubscribeTip() {
+    this.setData({ showSubscribeTip: false })
   },
 
   onShareAppMessage() {

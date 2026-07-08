@@ -19,20 +19,25 @@ function callFunction(name, data, options) {
       ])
     : callPromise
 
+  let loadingHidden = false
   return wrappedPromise.then(res => {
-    if (opts.loading !== false) wx.hideLoading()
+    if (opts.loading !== false) { wx.hideLoading(); loadingHidden = true }
     const result = res.result
     if (result && (result.code === API_CODE.SUCCESS || result.success === true)) {
       return result.data || result
     }
     const errMsg = (result && (result.message || result.error)) || '请求失败'
-    if (opts.showError !== false) wx.showToast({ title: errMsg, icon: 'none', duration: 3000 })
     return Promise.reject(new Error(errMsg))
   }).catch(err => {
-    if (opts.loading !== false) wx.hideLoading()
+    // 仅在 .then 未执行过 hideLoading 时调用（网络错误场景）
+    if (opts.loading !== false && !loadingHidden) wx.hideLoading()
     if (opts.showError !== false) {
       const tip = resolveCallErrorTip(err)
-      if (tip) wx.showToast({ title: tip, icon: 'none', duration: 3000 })
+      const msg = tip || (err && err.message) || '请求失败'
+      // 延迟显示，避免与 hideLoading 冲突导致 toast 被关闭
+      setTimeout(() => {
+        wx.showToast({ title: msg, icon: 'none', duration: 3000 })
+      }, 100)
     }
     return Promise.reject(err)
   })
@@ -74,6 +79,9 @@ function evaluateMetrics(metrics, childInfo) {
 function saveExam(data) {
   return callFunction('saveExam', data, { loadingText: '保存中...' })
 }
+function deleteExam(examId) {
+  return callFunction('saveExam', { action: 'delete', exam_id: examId }, { loadingText: '删除中...' })
+}
 function generateReport(examId) {
   // generateReport 调用 LLM 生成解读，服务端超时 40s，客户端设 38s 提前断开
   return callFunction('generateReport', { exam_id: examId }, { loadingText: 'AI解读生成中...', timeout: 38000 })
@@ -90,8 +98,12 @@ function ocrParse(imageFileId, ageMonths) {
 // === 报告审核（Phase 4）===
 function reviewReport(reportId, action, doctorContent, doctorNote) {
   return callFunction('reviewReport', {
-    report_id: reportId, action, doctor_content: doctorContent, doctor_note: doctorNote
+    reportId, action, doctorContent, doctorNote
   }, { loadingText: '提交中...' })
+}
+// 家长标记报告已读（安全规则迁移：reports write 限医生，家长改走云函数）
+function markReportViewed(reportId) {
+  return callFunction('reviewReport', { action: 'markViewed', reportId }, { loading: false, showError: false })
 }
 
 // === 家长自查（Phase 4）===
@@ -102,15 +114,22 @@ function selfCheck(data) {
 
 // === 海报与视频（Phase 5）===
 function genPoster(source, params) {
-  return callFunction('genPoster', { source, ...params }, { loadingText: '海报生成中...' })
+  return callFunction('genPoster', { source, ...params }, { loadingText: '海报生成中...', timeout: 55000 })
 }
-function videoCreate(reportId) {
-  return callFunction('videoCreate', { report_id: reportId }, { loadingText: '提交中...' })
+// 查询报告关联的科普视频列表（source='library' 的 done 视频）
+function listVideosByReport(reportId) {
+  return callFunction('listMediaAssets', {
+    action: 'listByReport',
+    report_id: reportId,
+    type: 'video',
+    status: 'done'
+  }, { loading: false, showError: false })
 }
 
 // === 随访管理（Phase 6）===
-function updateFollowup(followupId, action, planDate) {
-  return callFunction('updateFollowup', { followup_id: followupId, action, plan_date: planDate }, { loadingText: '处理中...' })
+// options 可传入 { loading: false, showError: false } 让调用方自行管理 loading 和错误提示
+function updateFollowup(followupId, action, planDate, options) {
+  return callFunction('updateFollowup', { followup_id: followupId, action, plan_date: planDate }, options || { loadingText: '处理中...' })
 }
 
 // === 儿童档案 ===
@@ -118,11 +137,91 @@ function saveChild(data) {
   return callFunction('saveChild', data, { loadingText: '保存中...' })
 }
 
+// === 家长↔儿童档案绑定 ===
+function createBindInvite(childId) {
+  return callFunction('createBindInvite', { child_id: childId }, { loadingText: '生成邀请...' })
+}
+function previewInvite(code) {
+  return callFunction('claimChild', { code, action: 'preview' }, { loading: false, showError: false })
+}
+function claimChild(code) {
+  return callFunction('claimChild', { code }, { loadingText: '绑定中...' })
+}
+
+// === 医生认证申请 ===
+function submitDoctorCert(data) {
+  return callFunction('doctorCert', { action: 'submit', ...data }, { loadingText: '提交中...' })
+}
+function getDoctorCertStatus() {
+  return callFunction('doctorCert', { action: 'getStatus' }, { loading: false, showError: false })
+}
+function listDoctorApplications(status, page, pageSize) {
+  return callFunction('doctorCert', { action: 'listPending', status, page, pageSize }, { loadingText: '加载中...' })
+}
+function reviewDoctorApplication(applicationId, decision, reviewNote) {
+  return callFunction('doctorCert', { action: 'review', application_id: applicationId, decision, review_note: reviewNote }, { loadingText: '处理中...' })
+}
+
 // === 数据库初始化（Phase 1 已有）===
 function initCollections() { return callFunction('initDatabase', { action: 'initCollections' }, { loadingText: '初始化数据库...' }) }
 
+// === 安全规则迁移：受限集合读取云函数 ===
+// 儿童档案读取（exams/followups/media_assets read:false 后，医生端无法客户端直读 children）
+function getChildrenByIds(ids) {
+  return callFunction('getChildrenByIds', { action: 'getByIds', ids }, { loading: false, showError: false })
+}
+function listMyChildren(page, pageSize) {
+  return callFunction('getChildrenByIds', { action: 'listMine', page, pageSize }, { loading: false, showError: false })
+}
+function getChildDetail(childId) {
+  return callFunction('getChildrenByIds', { action: 'getDetail', child_id: childId }, { loading: false, showError: false })
+}
+// 体检记录读取（exams read:false 后所有客户端直读被拒）
+function listExamsByDoctor(page, pageSize) {
+  return callFunction('listExams', { action: 'listByDoctor', page, pageSize }, { loading: false, showError: false })
+}
+function getExamDetail(examId) {
+  return callFunction('listExams', { action: 'getDetail', exam_id: examId }, { loading: false, showError: false })
+}
+function getExamsByIds(ids, childId) {
+  return callFunction('listExams', { action: 'getByIds', ids, child_id: childId }, { loading: false, showError: false })
+}
+function listExamsByChild(childId, examIds, page, pageSize) {
+  return callFunction('listExams', { action: 'listByChild', child_id: childId, exam_ids: examIds, page, pageSize }, { loading: false, showError: false })
+}
+// 随访记录读取（followups read:false 后所有客户端直读被拒）
+function listFollowupsByDoctor(status, page, pageSize) {
+  return callFunction('listFollowups', { action: 'listByDoctor', status, page, pageSize }, { loading: false, showError: false })
+}
+function countFollowupsByDoctor(status) {
+  return callFunction('listFollowups', { action: 'countByDoctor', status }, { loading: false, showError: false })
+}
+function listFollowupsByChildren(childIds, status, page, pageSize) {
+  return callFunction('listFollowups', { action: 'listByChildren', child_ids: childIds, status, page, pageSize }, { loading: false, showError: false })
+}
+function countFollowupsByChildren(childIds, status) {
+  return callFunction('listFollowups', { action: 'countByChildren', child_ids: childIds, status }, { loading: false, showError: false })
+}
+function getFollowupDetail(followupId) {
+  return callFunction('listFollowups', { action: 'getDetail', followup_id: followupId }, { loading: false, showError: false })
+}
+// 媒体资源读取（media_assets read:false 后所有客户端直读被拒）
+function listMediaByReport(reportId, type, status) {
+  return callFunction('listMediaAssets', { action: 'listByReport', report_id: reportId, type, status }, { loading: false, showError: false })
+}
+function listMediaBySelfCheck(selfCheckId, type, status) {
+  return callFunction('listMediaAssets', { action: 'listBySelfCheck', self_check_id: selfCheckId, type, status }, { loading: false, showError: false })
+}
+
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
-  evaluateMetrics, saveExam, generateReport, ocrParse, reviewReport,
-  selfCheck, genPoster, videoCreate, updateFollowup, saveChild, initCollections
+  evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
+  selfCheck, genPoster, listVideosByReport, updateFollowup, saveChild, initCollections,
+  createBindInvite, previewInvite, claimChild,
+  submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication,
+  markReportViewed,
+  getChildrenByIds, listMyChildren, getChildDetail,
+  listExamsByDoctor, getExamDetail, getExamsByIds, listExamsByChild,
+  listFollowupsByDoctor, countFollowupsByDoctor, listFollowupsByChildren, countFollowupsByChildren, getFollowupDetail,
+  listMediaByReport, listMediaBySelfCheck
 }

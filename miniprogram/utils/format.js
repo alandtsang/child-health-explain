@@ -50,4 +50,32 @@ function formatMetricValue(value, decimals) {
 
 function truncate(text, maxLen) { return (!text || text.length <= maxLen) ? (text||'') : text.substring(0, maxLen) + '...' }
 
-module.exports = { formatDate, formatDateTime, calculateAgeMonths, ageMonthsToText, formatAge, relativeTime, formatMetricValue, truncate }
+// 异常项英文代码 → 中文标签映射（兼容旧数据）
+const TRIGGER_LABEL_MAP = {
+  height_for_age: '身高',
+  weight_for_age: '体重',
+  bmi: '体质指数(BMI)',
+  hemoglobin: '血红蛋白',
+  overall: '整体视力',
+  left: '左眼',
+  right: '右眼',
+  caries_count: '龋齿数',
+  spine_screening: '脊柱筛查',
+  hearing_screening: '听力筛查',
+  developmental_screening: '发育预警征筛查',
+  rickets_signs: '佝偻病体征',
+  rickets_symptoms: '佝偻病症状'
+}
+
+/**
+ * 将触发项的英文代码转为中文标签
+ * 已是中文的旧数据（如 createFollowup 修复后存储的 item_label）直接返回
+ * @param {string} item - 触发项 item 字段
+ * @returns {string} 中文标签
+ */
+function formatTriggerLabel(item) {
+  if (!item) return ''
+  return TRIGGER_LABEL_MAP[item] || item
+}
+
+module.exports = { formatDate, formatDateTime, calculateAgeMonths, ageMonthsToText, formatAge, relativeTime, formatMetricValue, truncate, formatTriggerLabel }

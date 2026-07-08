@@ -1,0 +1,41 @@
+// trigger-label.wxs
+// 异常项英文代码 → 中文标签映射（视图层 WXS，确保显示始终为中文）
+
+var TRIGGER_LABEL_MAP = {
+  height_for_age: '身高',
+  weight_for_age: '体重',
+  bmi: '体质指数(BMI)',
+  hemoglobin: '血红蛋白',
+  overall: '整体视力',
+  left: '左眼',
+  right: '右眼',
+  caries_count: '龋齿数',
+  spine_screening: '脊柱筛查',
+  hearing_screening: '听力筛查',
+  developmental_screening: '发育预警征筛查',
+  rickets_signs: '佝偻病体征',
+  rickets_symptoms: '佝偻病症状'
+}
+
+// 单个触发项标签转换
+var formatItem = function(item) {
+  if (!item) return ''
+  return TRIGGER_LABEL_MAP[item] || item
+}
+
+// 将 trigger_items 数组转为中文摘要字符串
+var summary = function(triggerItems) {
+  if (!triggerItems || triggerItems.length === 0) return ''
+  var parts = []
+  for (var i = 0; i < triggerItems.length; i++) {
+    var t = triggerItems[i]
+    var label = formatItem(t.item)
+    parts.push(label)
+  }
+  return parts.join('、')
+}
+
+module.exports = {
+  formatItem: formatItem,
+  summary: summary
+}

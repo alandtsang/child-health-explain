@@ -20,8 +20,9 @@
 .action-btn-small { flex: 1; background: #FFF; border-radius: 16rpx; padding: 24rpx 0; display: flex; flex-direction: column; align-items: center; }
 .action-icon-sm { font-size: 40rpx; }
 .action-text-sm { font-size: 24rpx; color: #666; margin-top: 8rpx; }
-.section-header { margin-bottom: 16rpx; }
+.section-header { margin-bottom: 16rpx; display: flex; justify-content: space-between; align-items: center; }
 .section-title { font-size: 32rpx; font-weight: 600; color: #333; }
+.section-hint { font-size: 22rpx; color: #BBB; }
 .empty-state { text-align: center; padding: 120rpx 0; color: #999; display: flex; flex-direction: column; align-items: center; }
 .empty-icon { font-size: 80rpx; margin-bottom: 16rpx; }
 .empty-hint { font-size: 24rpx; color: #BBB; margin-top: 8rpx; }

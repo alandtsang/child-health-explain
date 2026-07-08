@@ -1,4 +1,5 @@
 <!-- miniprogram/pages/doctor/followup-list/index.wxml -->
+<wxs src="../../../utils/trigger-label.wxs" module="tl" />
 <view class="followup-list-page">
   <!-- 状态筛选 Tab -->
   <scroll-view scroll-x class="tab-scroll">
@@ -24,11 +25,11 @@
     </view>
     <view class="fu-body">
       <view class="fu-info">
-        <text class="fu-trigger">{{item.trigger_summary}}</text>
+        <text class="fu-trigger">{{tl.summary(item.trigger_items)}}</text>
         <text class="fu-plan">计划复查：{{item.plan_date_fmt}}</text>
       </view>
       <view class="fu-badge">
-        <text class="fu-days">{{item.days_text}}</text>
+        <text wx:if="{{item.is_active}}" class="fu-days">{{item.days_text}}</text>
         <abnormal-tag wx:if="{{item.max_level !== 'normal'}}" level="{{item.max_level}}" />
       </view>
     </view>
@@ -52,7 +53,7 @@
       <view class="detail-section">
         <text class="detail-section-title">触发项</text>
         <view wx:for="{{detailFollowup.trigger_items}}" wx:key="item" class="trigger-item">
-          <text>{{item.item}}</text>
+          <text>{{tl.formatItem(item.item)}}</text>
           <abnormal-tag level="{{item.level}}" />
         </view>
       </view>
@@ -63,10 +64,22 @@
           <text class="remind-time">提前{{item.days_before}}天</text>
         </view>
       </view>
+      <view class="detail-section" wx:if="{{detailFollowup.status === 'completed' && detailFollowup.completion_source}}">
+        <text class="detail-section-title">完成信息</text>
+        <view class="remind-item">
+          <text class="remind-channel">{{detailFollowup.completion_source === 'doctor_input' ? '医生录入新体检自动完成' : '家长确认完成'}}</text>
+        </view>
+      </view>
     </view>
+    <!-- 待随访/已提醒：调整日期、取消随访、标记完成 -->
     <view class="modal-actions" wx:if="{{detailFollowup && (detailFollowup.status === 'scheduled' || detailFollowup.status === 'reminded')}}">
       <view class="btn-secondary modal-btn" bindtap="onAdjustDate" data-followup="{{detailFollowup}}">调整日期</view>
+      <view class="btn-secondary modal-btn btn-danger" bindtap="onCancelFollowup" data-followup="{{detailFollowup}}">取消随访</view>
       <view class="btn-primary modal-btn" bindtap="onMarkComplete" data-followup="{{detailFollowup}}">标记完成</view>
+    </view>
+    <!-- 失访/已取消：重新激活 -->
+    <view class="modal-actions" wx:if="{{detailFollowup && (detailFollowup.status === 'lost' || detailFollowup.status === 'cancelled')}}">
+      <view class="btn-primary modal-btn" bindtap="onReactivate" data-followup="{{detailFollowup}}">重新激活</view>
     </view>
   </view>
 </view>
@@ -85,10 +98,33 @@
           <view class="date-picker-value">{{newPlanDate || '请选择日期'}}</view>
         </picker>
       </view>
+      <text class="reactivate-hint">选择日期并点击"确定"后自动保存</text>
     </view>
     <view class="modal-actions">
       <view class="btn-secondary modal-btn" bindtap="onCancelAdjust">取消</view>
-      <view class="btn-primary modal-btn" bindtap="onConfirmAdjust">确认</view>
+      <view class="btn-primary modal-btn" bindtap="onConfirmAdjust">确定</view>
+    </view>
+  </view>
+</view>
+
+<!-- 重新激活弹窗 -->
+<view wx:if="{{reactivateVisible}}" class="modal-overlay" bindtap="onCancelReactivate">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">重新激活随访</text>
+      <text class="modal-close" bindtap="onCancelReactivate">×</text>
+    </view>
+    <view class="modal-body">
+      <view class="detail-row">
+        <text class="detail-label">新计划日期</text>
+        <picker mode="date" value="{{reactivateDate}}" bindchange="onReactivateDateChange">
+          <view class="date-picker-value">{{reactivateDate || '请选择日期'}}</view>
+        </picker>
+      </view>
+      <text class="reactivate-hint">选择日期并点击"确定"后将自动激活，状态重置为"待随访"</text>
+    </view>
+    <view class="modal-actions">
+      <view class="btn-secondary modal-btn" bindtap="onCancelReactivate">关闭</view>
     </view>
   </view>
 </view>

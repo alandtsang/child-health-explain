@@ -1,0 +1,8 @@
+{
+  "name": "createBindInvite",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "~2.6.3" },
+  "devDependencies": { "jest": "^29.7.0" },
+  "scripts": { "test": "jest" }
+}

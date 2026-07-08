@@ -33,6 +33,9 @@
 .btn-save { background: #4A90D9; color: #FFF; }
 .btn-push { background: linear-gradient(135deg, #52C41A, #73D13D); color: #FFF; }
 .btn-disabled { background: #CCC !important; }
+.btn-delete { background: #FFF1F0; color: #FF4D4F; }
+.btn-status { flex: 1; text-align: center; padding: 24rpx 0; border-radius: 12rpx; font-size: 30rpx; font-weight: 600; background: #F5F5F5; color: #999; }
+.btn-status-rejected { background: #FFF1F0; color: #FF4D4F; }
 
 /* 报告尚未生成状态 */
 .no-report-page { padding: 24rpx; }
@@ -41,3 +44,41 @@
 .no-report-text { font-size: 32rpx; color: #666; font-weight: 600; }
 .no-report-hint { font-size: 26rpx; color: #BBB; margin-top: 8rpx; }
 .generate-btn { margin: 0 24rpx 48rpx; background: linear-gradient(135deg, #4A90D9, #6BB5E8); color: #FFF; text-align: center; padding: 28rpx 0; border-radius: 12rpx; font-size: 32rpx; font-weight: 600; }
+.delete-btn { margin: 0 24rpx 48rpx; background: #FFF1F0; color: #FF4D4F; text-align: center; padding: 24rpx 0; border-radius: 12rpx; font-size: 28rpx; font-weight: 500; }
+
+/* 海报卡片 */
+.poster-card { display: flex; flex-direction: column; }
+.poster-preview { display: flex; flex-direction: column; align-items: center; }
+.poster-thumb { width: 100%; height: 400rpx; border-radius: 12rpx; background: #F5F5F5; }
+.poster-tap-hint { font-size: 24rpx; color: #BBB; margin-top: 12rpx; }
+.poster-empty { display: flex; flex-direction: column; align-items: center; padding: 32rpx 0; }
+.poster-empty-text { font-size: 28rpx; color: #999; margin-bottom: 24rpx; }
+.poster-btn { background: linear-gradient(135deg, #4A90D9, #6BB5E8); color: #FFF; text-align: center; padding: 20rpx 64rpx; border-radius: 12rpx; font-size: 28rpx; font-weight: 600; }
+.poster-actions-row { display: flex; gap: 16rpx; margin-top: 20rpx; }
+.poster-action-btn { flex: 1; text-align: center; padding: 18rpx 0; border-radius: 10rpx; font-size: 26rpx; font-weight: 500; background: #F0F5FF; color: #4A90D9; }
+.poster-regenerate { background: #FFF7E6; color: #FA8C16; }
+
+/* 视频卡片 */
+.video-card { display: flex; flex-direction: column; }
+.video-list-item { margin-bottom: 24rpx; }
+.video-list-item:last-child { margin-bottom: 0; }
+.video-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.video-item-title { font-size: 28rpx; font-weight: 600; color: #333; }
+.video-item-tag { font-size: 22rpx; color: #52C41A; background: #F6FFED; padding: 4rpx 12rpx; border-radius: 8rpx; }
+.video-preview { display: flex; flex-direction: column; align-items: center; }
+.video-player { width: 100%; height: 400rpx; border-radius: 12rpx; background: #F5F5F5; }
+
+/* 邀请家长弹窗 */
+.invite-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.invite-dialog { background: #fff; border-radius: 16rpx; padding: 32rpx; width: 80%; max-width: 600rpx; }
+.invite-title { font-size: 32rpx; font-weight: 600; text-align: center; margin-bottom: 24rpx; }
+.qr-wrap { text-align: center; margin: 24rpx 0; }
+.qr-img { width: 400rpx; height: 400rpx; }
+.invite-code-row { display: flex; align-items: center; justify-content: center; margin: 16rpx 0; }
+.invite-code-label { font-size: 28rpx; color: #7A8794; }
+.invite-code { font-size: 40rpx; font-weight: 700; letter-spacing: 8rpx; color: #4A90D9; }
+.invite-copy { font-size: 24rpx; color: #4A90D9; margin-left: 16rpx; }
+.invite-tip { font-size: 24rpx; color: #7A8794; text-align: center; margin: 16rpx 0 24rpx; }
+.invite-actions { display: flex; gap: 16rpx; }
+.invite-btn { flex: 1; font-size: 28rpx; border-radius: 8rpx; }
+.invite-btn-primary { background: #4A90D9; color: #fff; }

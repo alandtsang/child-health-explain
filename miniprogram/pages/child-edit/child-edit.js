@@ -2,8 +2,7 @@
 const auth = require('../../utils/auth')
 const api = require('../../utils/api')
 const format = require('../../utils/format')
-
-const db = wx.cloud.database()
+const { isChildAccessibleToParent } = require('../../utils/db')
 
 Page({
   data: {
@@ -29,8 +28,18 @@ Page({
 
   async loadChild(id) {
     try {
-      const res = await db.collection('children').doc(id).get()
-      const child = res.data
+      // children doc(id).get() 改走云函数（安全规则迁移）
+      const child = await api.getChildDetail(id)
+      // 权限校验：仅允许查看/编辑自己绑定或创建的儿童档案
+      if (!isChildAccessibleToParent(child, auth.getOpenid())) {
+        wx.showModal({
+          title: '无权查看',
+          content: '该儿童档案不属于您，无法查看',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
+        return
+      }
       this.setData({ form: { name: child.name, gender: child.gender, birth_date: child.birth_date } })
     } catch (err) {
       console.error('加载儿童信息失败:', err)

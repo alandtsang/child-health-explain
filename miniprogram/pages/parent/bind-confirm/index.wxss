@@ -1,0 +1,19 @@
+.bind-page { min-height: 100vh; background: #F5F6FA; padding: 24rpx; box-sizing: border-box; }
+.loading-tip { text-align: center; color: #7A8794; margin-top: 200rpx; font-size: 28rpx; }
+.card { background: #fff; border-radius: 16rpx; padding: 32rpx; margin-top: 24rpx; }
+.card-title { font-size: 32rpx; font-weight: 600; color: #1F2D3D; margin-bottom: 24rpx; }
+.child-summary .info-row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #F0F2F5; }
+.child-summary .label { color: #7A8794; font-size: 28rpx; }
+.child-summary .value { color: #1F2D3D; font-size: 28rpx; font-weight: 500; }
+.confirm-tip { color: #FAAD14; font-size: 24rpx; margin: 24rpx 0; }
+.btn-primary { background: #4A90D9; color: #fff; border-radius: 8rpx; font-size: 30rpx; margin-top: 16rpx; }
+.btn-primary[loading] { opacity: 0.7; }
+.btn-cancel { text-align: center; color: #7A8794; font-size: 28rpx; margin-top: 24rpx; padding: 16rpx; }
+.success-card { text-align: center; padding: 100rpx 32rpx; }
+.success-icon { width: 120rpx; height: 120rpx; line-height: 120rpx; border-radius: 60rpx; background: #52C41A; color: #fff; font-size: 60rpx; margin: 0 auto 24rpx; }
+.success-title { display: block; font-size: 36rpx; font-weight: 600; color: #1F2D3D; }
+.success-desc { display: block; font-size: 28rpx; color: #7A8794; margin-top: 12rpx; }
+.error-card { text-align: center; padding: 100rpx 32rpx; }
+.error-icon { width: 120rpx; height: 120rpx; line-height: 120rpx; border-radius: 60rpx; background: #FF4D4F; color: #fff; font-size: 60rpx; margin: 0 auto 24rpx; }
+.error-msg { display: block; font-size: 28rpx; color: #7A8794; margin: 12rpx 0 32rpx; }
+.code-input { border: 2rpx solid #E5E7EB; border-radius: 8rpx; padding: 20rpx; font-size: 36rpx; text-align: center; letter-spacing: 16rpx; margin: 24rpx 0; }

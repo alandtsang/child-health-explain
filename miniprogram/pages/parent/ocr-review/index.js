@@ -1,6 +1,7 @@
 // miniprogram/pages/parent/ocr-review/index.js
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
+const { isChildAccessibleToParent } = require('../../../utils/db')
 
 Page({
   data: {
@@ -31,10 +32,21 @@ Page({
   async startParse() {
     let ageMonths = null
     try {
-      const db = wx.cloud.database()
-      const res = await db.collection('children').doc(this.data.childId).get()
-      if (res.data && res.data.birth_date) {
-        ageMonths = this.calcAgeMonths(res.data.birth_date, this.data.examDate)
+      // children doc(id).get() 改走云函数（安全规则迁移）
+      const child = await api.getChildDetail(this.data.childId)
+      // 权限校验：仅允许为自己的孩子进行 OCR 自查，避免越权读取他人儿童档案
+      if (!isChildAccessibleToParent(child, auth.getOpenid())) {
+        this.setData({ loading: false })
+        wx.showModal({
+          title: '无权操作',
+          content: '该儿童档案不属于您，无法进行自查',
+          showCancel: false,
+          success: () => wx.navigateBack()
+        })
+        return
+      }
+      if (child && child.birth_date) {
+        ageMonths = this.calcAgeMonths(child.birth_date, this.data.examDate)
       }
     } catch (err) {
       console.warn('[ocr-review] 获取儿童档案失败，将不传月龄:', err)

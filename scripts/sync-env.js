@@ -102,6 +102,26 @@ function main() {
     writeFile(path.join(CF, fn), 'secrets.local.js', genSecretsFile(keys, config, fn))
   }
 
+  // sendNotification: 订阅消息模板ID + 短信配置
+  const notifKeys = [
+    'TENCENTCLOUD_SECRET_ID', 'TENCENTCLOUD_SECRET_KEY',
+    'SUBSCRIBE_TEMPLATE_REPORT_PUSH', 'SUBSCRIBE_TEMPLATE_FOLLOWUP_REMIND', 'SUBSCRIBE_TEMPLATE_VIDEO_DONE',
+    'SMS_SDK_APP_ID', 'SMS_SIGN_NAME', 'SMS_TEMPLATE_REPORT_PUSH', 'SMS_TEMPLATE_FOLLOWUP_REMIND', 'SMS_TEMPLATE_VIDEO_DONE'
+  ]
+  writeFile(path.join(CF, 'sendNotification'), 'secrets.local.js', genSecretsFile(notifKeys, config, 'sendNotification'))
+
+  // reviewReport: 订阅消息模板ID（用于审核通过时直接推送）
+  const reviewKeys = ['SUBSCRIBE_TEMPLATE_REPORT_PUSH']
+  writeFile(path.join(CF, 'reviewReport'), 'secrets.local.js', genSecretsFile(reviewKeys, config, 'reviewReport'))
+
+  // doctorCert: 管理员 openid 列表（用于医生认证申请审核）
+  const doctorCertKeys = ['ADMIN_OPENIDS']
+  writeFile(path.join(CF, 'doctorCert'), 'secrets.local.js', genSecretsFile(doctorCertKeys, config, 'doctorCert'))
+
+  // login: 管理员 openid 列表（用于首页识别管理员身份，展示审核入口）
+  const loginKeys = ['ADMIN_OPENIDS']
+  writeFile(path.join(CF, 'login'), 'secrets.local.js', genSecretsFile(loginKeys, config, 'login'))
+
   // 2. 同步 arkClient.js 到各云函数 lib/ 目录
   console.log('\n同步 arkClient.js:')
   const sharedArk = path.join(CF, 'shared', 'arkClient.js')
@@ -116,11 +136,19 @@ function main() {
 
   // 3. 生成小程序端 env.js
   console.log('\n生成小程序配置:')
+  const tmplReport = config.SUBSCRIBE_TEMPLATE_REPORT_PUSH || ''
+  const tmplFollowup = config.SUBSCRIBE_TEMPLATE_FOLLOWUP_REMIND || ''
+  const tmplVideo = config.SUBSCRIBE_TEMPLATE_VIDEO_DONE || ''
   const envJs = `// 自动生成 - 请勿手动编辑（由 scripts/sync-env.js 从 .env 同步）
 // 小程序运行时环境配置
 module.exports = {
   cloudEnv: '${config.CLOUD_ENV || ''}',
-  appId: '${config.WX_APPID || ''}'
+  appId: '${config.WX_APPID || ''}',
+  subscribeTemplates: {
+    report_push: '${tmplReport}',
+    followup_remind: '${tmplFollowup}',
+    video_done: '${tmplVideo}'
+  }
 }
 `
   writeFile(path.join(ROOT, 'miniprogram', 'utils'), 'env.js', envJs)
@@ -135,12 +163,13 @@ module.exports = {
 
   // 6. 汇总
   console.log('\n\x1b[32m[sync-env] 同步完成！\x1b[0m')
-  console.log('  - 6 个云函数 secrets.local.js 已生成')
+  console.log('  - 8 个云函数 secrets.local.js 已生成（含 sendNotification + reviewReport）')
   console.log('  - 6 个云函数 lib/arkClient.js 已同步')
-  console.log('  - miniprogram/utils/env.js 已生成')
+  console.log('  - miniprogram/utils/env.js 已生成（含订阅模板ID配置）')
   console.log('  - project.config.json appid 已更新')
   console.log('  - cloudbaserc.json envId 已更新')
-  console.log('\n\x1b[33m提示：部署云函数前，也可以在微信开发者工具中为每个云函数设置环境变量 ARK_API_KEY（推荐生产环境使用）\x1b[0m\n')
+  console.log('\n\x1b[33m提示：部署云函数前，也可以在微信开发者工具中为每个云函数设置环境变量（推荐生产环境使用）\x1b[0m')
+  console.log('\x1b[33m提示：订阅消息模板ID请在微信公众平台后台创建模板后填入 .env\x1b[0m\n')
 }
 
 main()

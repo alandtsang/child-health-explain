@@ -3,8 +3,6 @@ const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
 
-const db = wx.cloud.database()
-
 Page({
   data: {
     step: 'select',          // select(选方式) | child(选儿童) | form(填表单)
@@ -31,15 +29,10 @@ Page({
 
   // 加载医生创建过的儿童档案
   async loadChildren() {
-    const openid = auth.getOpenid()
     this.setData({ loading: true })
     try {
-      const res = await db.collection('children')
-        .where({ created_by: openid })
-        .orderBy('created_at', 'desc')
-        .limit(50)
-        .get()
-      this.setData({ children: res.data, loading: false })
+      const children = await api.listMyChildren(0, 50)
+      this.setData({ children, loading: false })
     } catch (err) {
       console.error('加载儿童列表失败:', err)
       this.setData({ loading: false })

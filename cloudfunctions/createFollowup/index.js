@@ -65,6 +65,16 @@ exports.main = async (event, context) => {
 
   const db = cloud.database();
 
+  // 防御纵深：如果调用方有 openid（客户端直接调用），校验医生身份
+  // 内部调用（reviewReport 经 cloud.callFunction 调用）无 openid，放行
+  const wxContext = cloud.getWXContext();
+  if (wxContext.OPENID) {
+    const doctorCheck = await validateApprovedDoctor(wxContext.OPENID, db);
+    if (!doctorCheck.isValid) {
+      return { code: doctorCheck.code, message: doctorCheck.message };
+    }
+  }
+
   // 幂等检查：同一 exam_id 不重复创建
   const existingRes = await db
     .collection('followups')
@@ -96,7 +106,7 @@ exports.main = async (event, context) => {
   // 提取所有非 normal 项作为触发项
   const triggerItems = abnormalItems
     .filter(item => item.level !== 'normal')
-    .map(item => ({ item: item.item, level: item.level }));
+    .map(item => ({ item: item.item_label || item.item, level: item.level }));
 
   // 所有项 normal → 不生成随访
   if (triggerItems.length === 0) {
@@ -150,3 +160,24 @@ exports.main = async (event, context) => {
     }
   };
 };
+
+// 严格校验调用方是否为已审核通过的医生
+async function validateApprovedDoctor(openid, db) {
+  try {
+    const res = await db.collection('users').where({ openid }).limit(1).get();
+    const user = res.data[0];
+    if (!user || !Array.isArray(user.roles) || !user.roles.includes('doctor')) {
+      return { isValid: false, code: 403, message: '您不是医生角色，无权执行此操作' };
+    }
+    if (!user.doctor_info || user.doctor_info.status !== 'approved') {
+      return { isValid: false, code: 403, message: '医生身份未审核通过，无法执行此操作' };
+    }
+    return { isValid: true, user };
+  } catch (err) {
+    const msg = (err && (err.errMsg || err.message)) || '';
+    if (/collection.*(not.*exist|不存在)|-502003/i.test(msg)) {
+      return { isValid: false, code: 503, message: '数据库集合未初始化' };
+    }
+    throw err;
+  }
+}

@@ -2,18 +2,65 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const { SmsClient } = require('tencentcloud-sdk-nodejs-sms').sms.v20210111;
-const { SUBSCRIBE_TEMPLATES, SMS_TEMPLATES } = require('./templates');
+
+// 加载本地密钥配置（由 sync-env.js 从 .env 同步生成，已 gitignore）
+let localSecrets = {};
+try {
+  localSecrets = require('../secrets.local');
+} catch (e) {
+  // secrets.local.js 不存在时忽略，使用云函数环境变量
+}
+
+// 从环境变量或本地密钥配置中获取配置值
+function getConfig(key) {
+  return process.env[key] || localSecrets[key] || '';
+}
+
+const SUBSCRIBE_TEMPLATES = {
+  report_push: {
+    template_id: getConfig('SUBSCRIBE_TEMPLATE_REPORT_PUSH'),
+    page: 'pages/parent/report-detail/index',
+    fields: ['thing1', 'date2']
+  },
+  followup_remind: {
+    template_id: getConfig('SUBSCRIBE_TEMPLATE_FOLLOWUP_REMIND'),
+    page: 'pages/parent/followup/index',
+    fields: ['thing1', 'date2', 'thing3']
+  },
+  video_done: {
+    template_id: getConfig('SUBSCRIBE_TEMPLATE_VIDEO_DONE'),
+    page: 'pages/parent/report-detail/index',
+    fields: ['thing1', 'thing2']
+  }
+};
+
+const SMS_TEMPLATES = {
+  report_push: {
+    template_id: getConfig('SMS_TEMPLATE_REPORT_PUSH'),
+    param_count: 2
+  },
+  followup_remind: {
+    template_id: getConfig('SMS_TEMPLATE_FOLLOWUP_REMIND'),
+    param_count: 3
+  },
+  video_done: {
+    template_id: getConfig('SMS_TEMPLATE_VIDEO_DONE'),
+    param_count: 1
+  }
+};
 
 // SMS 客户端单例
 let smsClient = null;
 
 function getSmsClient() {
   if (!smsClient) {
+    const secretId = getConfig('TENCENTCLOUD_SECRET_ID');
+    const secretKey = getConfig('TENCENTCLOUD_SECRET_KEY');
+    if (!secretId || !secretKey) {
+      throw new Error('腾讯云密钥未配置：请在 .env 中设置 TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY');
+    }
     smsClient = new SmsClient({
-      credential: {
-        secretId: process.env.TENCENTCLOUD_SECRET_ID,
-        secretKey: process.env.TENCENTCLOUD_SECRET_KEY
-      },
+      credential: { secretId, secretKey },
       region: 'ap-guangzhou'
     });
   }
@@ -128,8 +175,8 @@ exports.main = async (event, context) => {
         const client = getSmsClient();
         await client.SendSms({
           PhoneNumberSet: [`+86${phone}`],
-          SmsSdkAppId: process.env.SMS_SDK_APP_ID,
-          SignName: process.env.SMS_SIGN_NAME,
+          SmsSdkAppId: getConfig('SMS_SDK_APP_ID'),
+          SignName: getConfig('SMS_SIGN_NAME'),
           TemplateId: smsTemplate.template_id,
           TemplateParamSet: sms_params || []
         });

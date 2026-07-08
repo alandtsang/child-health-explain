@@ -32,9 +32,19 @@
       </view>
       <view class="role-arrow"><text class="arrow-icon">›</text></view>
     </view>
+
+    <!-- 管理员入口：仅管理员可见 -->
+    <view class="role-card admin-card" wx:if="{{isAdmin}}" bindtap="onAdminReview">
+      <view class="role-icon admin-icon"><text class="role-emoji">🛡️</text></view>
+      <view class="role-info">
+        <text class="role-name">医生认证审核</text>
+        <text class="role-desc">审核医生提交的认证申请</text>
+      </view>
+      <view class="role-arrow"><text class="arrow-icon">›</text></view>
+    </view>
   </view>
   <view class="footer-section">
-    <text class="footer-text">医生身份需白名单审核激活</text>
+    <text class="footer-text">医生身份需提交认证申请，管理员审核通过后激活</text>
     <text class="footer-text">家长身份即选即用</text>
   </view>
 </view>

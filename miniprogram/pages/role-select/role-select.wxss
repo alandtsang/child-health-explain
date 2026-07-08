@@ -17,6 +17,7 @@
 .role-icon { width: 96rpx; height: 96rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 24rpx; flex-shrink: 0; }
 .doctor-icon { background: #E8F2FD; }
 .parent-icon { background: #FFF0E6; }
+.admin-icon { background: #F0E8FD; }
 .role-emoji { font-size: 48rpx; }
 .role-info { flex: 1; display: flex; flex-direction: column; }
 .role-name { font-size: 34rpx; font-weight: 600; color: #333; }

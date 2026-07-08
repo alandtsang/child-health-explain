@@ -23,7 +23,7 @@ function evaluate(metrics, childInfo) {
       results.push({
         category: 'growth',
         item: 'height_for_age',
-        item_label: '身高别年龄',
+        item_label: '身高',
         value: metrics.height,
         unit: 'cm',
         standard_ref: `${zRow.z_minus2} ~ ${zRow.z_plus2} (±2SD)`,
@@ -44,7 +44,7 @@ function evaluate(metrics, childInfo) {
       results.push({
         category: 'growth',
         item: 'weight_for_age',
-        item_label: '体重别年龄',
+        item_label: '体重',
         value: metrics.weight,
         unit: 'kg',
         standard_ref: `${zRow.z_minus2} ~ ${zRow.z_plus2} (±2SD)`,

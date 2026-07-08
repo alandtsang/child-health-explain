@@ -3,7 +3,7 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 
-const COLLECTIONS = ['users','children','exams','reports','media_assets','followups','self_checks','notifications','doctor_whitelist']
+const COLLECTIONS = ['users','children','exams','reports','media_assets','followups','self_checks','notifications','doctor_whitelist','bind_invites','doctor_applications']
 
 exports.main = async (event, context) => {
   const { action } = event
