@@ -179,7 +179,7 @@ function requestSubscribe(templateTypes, options) {
  * @returns {Promise<Object>} 同 requestSubscribe 返回值
  */
 function subscribeParentNotifications(options) {
-  return requestSubscribe(['report_push', 'followup_remind'], options)
+  return requestSubscribe(['report_push', 'followup_remind', 'video_done'], options)
 }
 
 /**
@@ -203,11 +203,23 @@ function subscribeReportPush(options) {
   return requestSubscribe(['report_push'], options)
 }
 
+/**
+ * 引导订阅视频推送通知（单独订阅）
+ * 在家长查看报告详情时调用
+ *
+ * @param {Object} [options]
+ * @returns {Promise<Object>}
+ */
+function subscribeVideoDone(options) {
+  return requestSubscribe(['video_done'], options)
+}
+
 module.exports = {
   requestSubscribe,
   subscribeParentNotifications,
   subscribeFollowupReminder,
   subscribeReportPush,
+  subscribeVideoDone,
   isInCooldown,
   clearRefusal
 }
