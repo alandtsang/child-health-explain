@@ -1,3 +1,7 @@
+/**
+ * @deprecated 此云函数已废弃，科普视频改为预生成入库。
+ * 保留代码仅供参考，不再部署。
+ */
 const cloud = require('wx-server-sdk');
 const https = require('https');
 const http = require('http');

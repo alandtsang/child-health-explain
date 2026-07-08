@@ -1,3 +1,7 @@
+/**
+ * @deprecated 此云函数已废弃，由 pushEducationVideos 替代。
+ * 保留代码仅供参考，不再部署。
+ */
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
