@@ -2,9 +2,18 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
-const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
+const { ABNORMAL_LEVEL_INFO, EVALUATOR_CATEGORY_LABELS } = require('../../../utils/constants')
 
 const db = wx.cloud.database()
+
+// 格式化视频时长（秒 → "X分Y秒"）
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return ''
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  if (m > 0) return `${m}分${s}秒`
+  return `${s}秒`
+}
 
 Page({
   data: {
@@ -35,6 +44,8 @@ Page({
     generatingPoster: false,  // 海报生成中
     // 视频相关
     videos: [],            // 已推送的科普视频列表
+    previewVideos: [],     // 待推送的科普视频预览（推送前从 video_library 匹配）
+    previewSkippedCategories: [],  // 有异常但视频库无匹配的类别
     // 家长绑定状态
     isBound: false,          // 该儿童是否已有家长绑定
     inviteData: null,        // 邀请码 + 小程序码信息
@@ -123,6 +134,10 @@ Page({
       this.loadPoster(report._id)
       // 加载已推送的科普视频列表
       this.loadVideos(report._id)
+      // 推送前预览将匹配的科普视频（仅在未推送时）
+      if (btnState === 'review' || btnState === 'pending_binding') {
+        this.loadPreviewVideos(this.data.examId)
+      }
     } catch (err) {
       console.error('加载报告失败:', err)
       this.setData({ loading: false })
@@ -279,10 +294,17 @@ Page({
         // approve 后：已绑定→pushed，未绑定→pending_binding
         const newBtnState = this.data.isBound ? 'pushed' : 'pending_binding'
         this.setData({ btnState: newBtnState, 'report.review_status': 'approved', 'report.push_status': this.data.isBound ? 'pushed' : 'pending_binding' })
+        if (this.data.isBound) {
+          // 已绑定→已推送：清空预览，加载已推送视频
+          this.setData({ previewVideos: [], previewSkippedCategories: [] })
+          this.loadVideos(this.data.report._id)
+        }
         wx.showToast({ title: this.data.isBound ? '审核通过' : '审核通过，待家长绑定后自动推送', icon: 'none' })
         if (!skipNavigateBack) setTimeout(() => wx.navigateBack(), 1500)
       } else if (action === 'approveAndPush') {
-        this.setData({ btnState: 'pushed', 'report.review_status': 'approved', 'report.push_status': 'pushed' })
+        this.setData({ btnState: 'pushed', 'report.review_status': 'approved', 'report.push_status': 'pushed', previewVideos: [], previewSkippedCategories: [] })
+        // 重新加载已推送视频列表（推送后科普视频可能已自动生成）
+        this.loadVideos(this.data.report._id)
         wx.showToast({ title: '已推送家长', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 1500)
       }
@@ -468,6 +490,24 @@ Page({
       this.setData({ videos })
     } catch (err) {
       console.error('加载视频失败:', err)
+    }
+  },
+
+  // 加载待推送的科普视频预览（根据异常项匹配 video_library）
+  async loadPreviewVideos(examId) {
+    try {
+      const result = await api.previewVideosByExam(examId)
+      const videoList = (result && result.videos) || []
+      const videos = videoList.map(v => ({
+        ...v,
+        display_title: v.title || v.category_label || EVALUATOR_CATEGORY_LABELS[v.category] || v.category || '科普视频',
+        duration_text: v.duration ? formatDuration(v.duration) : ''
+      }))
+      const skipped = (result && result.skipped_categories) || []
+      const skippedLabels = skipped.map(c => EVALUATOR_CATEGORY_LABELS[c] || c)
+      this.setData({ previewVideos: videos, previewSkippedCategories: skippedLabels })
+    } catch (err) {
+      console.error('加载视频预览失败:', err)
     }
   },
 

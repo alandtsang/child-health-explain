@@ -125,6 +125,13 @@ function listVideosByReport(reportId) {
     status: 'done'
   }, { loading: false, showError: false })
 }
+// 预览体检异常项将匹配的科普视频（医生端推送前预览）
+function previewVideosByExam(examId) {
+  return callFunction('listMediaAssets', {
+    action: 'previewByExam',
+    exam_id: examId
+  }, { loading: false, showError: false })
+}
 
 // === 随访管理（Phase 6）===
 // options 可传入 { loading: false, showError: false } 让调用方自行管理 loading 和错误提示
@@ -216,7 +223,7 @@ function listMediaBySelfCheck(selfCheckId, type, status) {
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
-  selfCheck, genPoster, listVideosByReport, updateFollowup, saveChild, initCollections,
+  selfCheck, genPoster, listVideosByReport, previewVideosByExam, updateFollowup, saveChild, initCollections,
   createBindInvite, previewInvite, claimChild,
   submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication,
   markReportViewed,

@@ -78,8 +78,9 @@
     <view class="card-title">科普视频</view>
     <view wx:for="{{videos}}" wx:key="_id" class="video-list-item">
       <view class="video-item-header">
-        <text class="video-item-title">{{item.category || '科普视频'}}</text>
+        <text class="video-item-title">{{item.display_title || '科普视频'}}</text>
       </view>
+      <view wx:if="{{item.description}}" class="video-item-desc">{{item.description}}</view>
       <view class="video-preview">
         <video src="{{item.file_id}}" class="video-player" controls></video>
       </view>

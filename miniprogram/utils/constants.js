@@ -14,6 +14,18 @@ const ABNORMAL_LEVEL_INFO = {
 const FOLLOWUP_INTERVAL = { mild: 90, moderate: 30, severe: 14 }
 const EXAM_CATEGORIES = ['growth', 'vision', 'hearing', 'dental', 'blood', 'urine', 'spine', 'internal']
 const CATEGORY_LABELS = { growth: '生长发育', vision: '视力', hearing: '听力', dental: '口腔', blood: '血常规', urine: '尿常规', spine: '脊柱', internal: '内科' }
+// 异常评估器输出的类别标签（与 evaluateMetrics 的 9 个 evaluator + video_library 的 category 对应）
+const EVALUATOR_CATEGORY_LABELS = {
+  growth: '生长发育',
+  obesity: '超重肥胖',
+  anemia: '贫血',
+  vision: '视力',
+  dental: '口腔(龋齿)',
+  spine: '脊柱',
+  hearing: '听力',
+  development: '发育评估',
+  rickets: '佝偻病'
+}
 const METRIC_LABELS = {
   growth: { height: '身高(cm)', weight: '体重(kg)', head_circ: '头围(cm)', chest_circ: '胸围(cm)' },
   vision: { left: '左眼视力', right: '右眼视力', corrected_left: '矫正左眼', corrected_right: '矫正右眼' },
@@ -26,4 +38,4 @@ const METRIC_LABELS = {
 }
 const DISCLAIMER = 'AI生成内容经医生审核，仅供参考，不替代专业医疗诊断'
 const DISCLAIMER_SELF_CHECK = 'AI生成内容仅供参考，不替代医生诊断。如有疑问请及时就医。'
-module.exports = { ROLES, API_CODE, ABNORMAL_LEVEL, LEVEL_TEXT, LEVEL_COLOR, ABNORMAL_LEVEL_INFO, FOLLOWUP_INTERVAL, EXAM_CATEGORIES, CATEGORY_LABELS, METRIC_LABELS, DISCLAIMER, DISCLAIMER_SELF_CHECK }
+module.exports = { ROLES, API_CODE, ABNORMAL_LEVEL, LEVEL_TEXT, LEVEL_COLOR, ABNORMAL_LEVEL_INFO, FOLLOWUP_INTERVAL, EXAM_CATEGORIES, CATEGORY_LABELS, EVALUATOR_CATEGORY_LABELS, METRIC_LABELS, DISCLAIMER, DISCLAIMER_SELF_CHECK }
