@@ -206,22 +206,71 @@ async function handleUpload(cloud, db, opts) {
     }
   }
 
-  // 写入 video_library
-  const addRes = await db.collection('video_library').add({
-    data: {
-      category,
-      category_label: CATEGORY_LABELS[category],
-      title,
-      file_id: uploadRes.fileID,
-      thumbnail_file_id: thumbnailFileId,
-      description: description || '',
-      duration: duration ? parseInt(duration, 10) : null,
-      status: 'active',
-      version: nextVersion,
-      created_at: db.serverDate(),
-      updated_at: db.serverDate()
+  // 写入 video_library（集合不存在时自动创建）
+  let addRes
+  try {
+    addRes = await db.collection('video_library').add({
+      data: {
+        category,
+        category_label: CATEGORY_LABELS[category],
+        title,
+        file_id: uploadRes.fileID,
+        thumbnail_file_id: thumbnailFileId,
+        description: description || '',
+        duration: duration ? parseInt(duration, 10) : null,
+        status: 'active',
+        version: nextVersion,
+        created_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    })
+  } catch (addErr) {
+    if (addErr && /not exist|-502005|-502003/i.test(addErr.errMsg || addErr.message || '')) {
+      console.log('video_library 集合不存在，正在创建...')
+      // 调用 initDatabase 云函数创建集合
+      try {
+        await cloud.callFunction({
+          name: 'initDatabase',
+          data: { action: 'initCollections' }
+        })
+      } catch (initErr) {
+        console.error('自动创建集合失败:', initErr.message)
+      }
+      // 重试 add（集合创建后可能需要几秒生效）
+      let retries = 3
+      while (retries > 0) {
+        try {
+          await new Promise(r => setTimeout(r, 2000))
+          addRes = await db.collection('video_library').add({
+            data: {
+              category,
+              category_label: CATEGORY_LABELS[category],
+              title,
+              file_id: uploadRes.fileID,
+              thumbnail_file_id: thumbnailFileId,
+              description: description || '',
+              duration: duration ? parseInt(duration, 10) : null,
+              status: 'active',
+              version: nextVersion,
+              created_at: db.serverDate(),
+              updated_at: db.serverDate()
+            }
+          })
+          break
+        } catch (retryErr) {
+          retries--
+          if (retries === 0) {
+            console.error('\n无法自动创建 video_library 集合。')
+            console.error('请在微信云开发控制台手动创建 video_library 集合后重试。')
+            console.error('视频文件已上传到云存储:', uploadRes.fileID)
+            process.exit(1)
+          }
+        }
+      }
+    } else {
+      throw addErr
     }
-  })
+  }
 
   console.log(`\n✓ 视频上传成功!`)
   console.log(`  类别: ${category} (${CATEGORY_LABELS[category]})`)
