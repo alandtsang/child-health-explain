@@ -102,7 +102,19 @@ async function main() {
     process.exit(1)
   }
 
-  cloud.init({ env: cloudEnv, resourceAppid: config.WX_APPID || undefined })
+  // 本地运行 wx-server-sdk 需要腾讯云密钥
+  if (!config.TENCENTCLOUD_SECRET_ID || !config.TENCENTCLOUD_SECRET_KEY) {
+    console.error('错误: .env 中未配置 TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY')
+    console.error('请在 .env 中填入腾讯云密钥后重试')
+    process.exit(1)
+  }
+
+  cloud.init({
+    env: cloudEnv,
+    resourceAppid: config.WX_APPID || undefined,
+    secretId: config.TENCENTCLOUD_SECRET_ID,
+    secretKey: config.TENCENTCLOUD_SECRET_KEY
+  })
   const db = cloud.database()
 
   switch (command) {
@@ -141,11 +153,14 @@ async function handleUpload(cloud, db, opts) {
     process.exit(1)
   }
 
-  // 检查是否已存在 active 记录
-  const existing = await db.collection('video_library')
-    .where({ category, status: 'active' })
-    .limit(1)
-    .get()
+  // 检查是否已存在 active 记录（集合不存在时视为无记录）
+  let existing = { data: [] }
+  try {
+    existing = await db.collection('video_library')
+      .where({ category, status: 'active' })
+      .limit(1)
+      .get()
+  } catch (err) { /* 集合不存在，视为无记录 */ }
 
   if (existing.data.length > 0) {
     console.error(`类别 ${category} 已有 active 视频，请使用 replace 命令替换`)
@@ -153,12 +168,15 @@ async function handleUpload(cloud, db, opts) {
     process.exit(1)
   }
 
-  // 获取当前最大 version
-  const allVersions = await db.collection('video_library')
-    .where({ category })
-    .orderBy('version', 'desc')
-    .limit(1)
-    .get()
+  // 获取当前最大 version（集合不存在时从 v1 开始）
+  let allVersions = { data: [] }
+  try {
+    allVersions = await db.collection('video_library')
+      .where({ category })
+      .orderBy('version', 'desc')
+      .limit(1)
+      .get()
+  } catch (err) { /* 集合不存在，version 从 1 开始 */ }
 
   const nextVersion = allVersions.data.length > 0 ? (allVersions.data[0].version || 0) + 1 : 1
 
@@ -226,10 +244,13 @@ async function handleReplace(cloud, db, opts) {
     process.exit(1)
   }
 
-  // 将旧 active 记录标记为 inactive
-  const oldRecords = await db.collection('video_library')
-    .where({ category, status: 'active' })
-    .get()
+  // 将旧 active 记录标记为 inactive（集合不存在时跳过）
+  let oldRecords = { data: [] }
+  try {
+    oldRecords = await db.collection('video_library')
+      .where({ category, status: 'active' })
+      .get()
+  } catch (err) { /* 集合不存在，无旧记录 */ }
 
   for (const old of oldRecords.data) {
     await db.collection('video_library').doc(old._id).update({
@@ -244,10 +265,19 @@ async function handleReplace(cloud, db, opts) {
 }
 
 async function handleList(db) {
-  const res = await db.collection('video_library')
-    .orderBy('category', 'asc')
-    .orderBy('version', 'desc')
-    .get()
+  let res
+  try {
+    res = await db.collection('video_library')
+      .orderBy('category', 'asc')
+      .orderBy('version', 'desc')
+      .get()
+  } catch (err) {
+    if (err && /not exist|-502005|-502003/i.test(err.errMsg || err.message || '')) {
+      console.log('视频库为空（video_library 集合尚未创建，上传第一个视频后将自动创建）')
+      return
+    }
+    throw err
+  }
 
   if (res.data.length === 0) {
     console.log('视频库为空')
@@ -286,9 +316,12 @@ async function handleDeactivate(db, opts) {
     process.exit(1)
   }
 
-  const res = await db.collection('video_library')
-    .where({ category, status: 'active' })
-    .get()
+  let res = { data: [] }
+  try {
+    res = await db.collection('video_library')
+      .where({ category, status: 'active' })
+      .get()
+  } catch (err) { /* 集合不存在，视为无记录 */ }
 
   if (res.data.length === 0) {
     console.log(`类别 ${category} 无 active 视频`)
