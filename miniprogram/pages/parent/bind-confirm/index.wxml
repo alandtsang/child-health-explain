@@ -11,7 +11,7 @@
     </view>
   </block>
 
-  <block wx:elif="{{child}}">
+  <block wx:elif="{{child && !conflictChild}}">
     <view class="card">
       <view class="card-title">确认儿童档案</view>
       <view class="child-summary">
@@ -22,6 +22,19 @@
       <view class="confirm-tip">请确认这是您的孩子后点击下方按钮</view>
       <button class="btn-primary" bindtap="onConfirmBind" loading="{{binding}}">确认是我的孩子</button>
       <view class="btn-cancel" bindtap="onCancel">不是，取消</view>
+    </view>
+  </block>
+
+  <block wx:elif="{{child && conflictChild}}">
+    <view class="card">
+      <view class="card-title">发现同名档案</view>
+      <view class="conflict-tip">您已绑定过同名同生日的档案（{{conflictChild.name}}），当前邀请来自另一位医生的档案。是否仍要绑定此档案？绑定后您可同时查看两位医生的报告。</view>
+      <view class="child-summary">
+        <view class="info-row"><text class="label">姓名</text><text class="value">{{child.name}}</text></view>
+        <view class="info-row"><text class="label">出生日期</text><text class="value">{{child.birth_date}}</text></view>
+      </view>
+      <button class="btn-primary" bindtap="onForceBind" loading="{{binding}}">仍要绑定</button>
+      <view class="btn-cancel" bindtap="onCancel">取消</view>
     </view>
   </block>
 

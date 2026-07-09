@@ -74,6 +74,18 @@ Page({
     wx.navigateTo({ url: '/pages/child-edit/child-edit' })
   },
 
+  // 输入邀请码绑定已有档案
+  onBindByCode() {
+    console.log('[profile] onBindByCode triggered')
+    wx.navigateTo({
+      url: '/pages/parent/bind-confirm/index',
+      fail: (err) => {
+        console.error('[profile] navigateTo bind-confirm failed:', err)
+        wx.showToast({ title: '页面跳转失败，请重试', icon: 'none' })
+      }
+    })
+  },
+
   // 切换到医生身份
   async onSwitchToDoctor() {
     if (!this.data.hasDoctorRole) {
