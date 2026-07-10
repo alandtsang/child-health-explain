@@ -17,7 +17,7 @@
     <view class="card-title">异常项一览</view>
     <view wx:for="{{exam.abnormal_items_fmt}}" wx:key="item" class="abnormal-row">
       <view class="abnormal-left">
-        <text class="abnormal-item">{{item.item}}</text>
+        <text class="abnormal-item">{{item.item_label || item.item}}</text>
         <text class="abnormal-value">{{item.value}}</text>
       </view>
       <abnormal-tag level="{{item.level}}" />

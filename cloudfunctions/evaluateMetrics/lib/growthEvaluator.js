@@ -14,7 +14,7 @@ function evaluate(metrics, childInfo) {
   const { age_months, gender } = childInfo
   const genderKey = gender === 'male' ? 'boys' : 'girls'
 
-  // ── 身高别年龄（生长迟缓）──
+  // ── 身高（生长迟缓）──
   if (metrics.height != null && age_months != null) {
     const table = growthData.tables.height_for_age[genderKey]
     const zRow = interpolateRow(table, age_months)
@@ -35,7 +35,7 @@ function evaluate(metrics, childInfo) {
     }
   }
 
-  // ── 体重别年龄（低体重 / 超重）──
+  // ── 体重（低体重 / 超重）──
   if (metrics.weight != null && age_months != null) {
     const table = growthData.tables.weight_for_age[genderKey]
     const zRow = interpolateRow(table, age_months)

@@ -2,6 +2,7 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
+const { fixGrowthTermsDeep } = format
 const { ABNORMAL_LEVEL_INFO, EVALUATOR_CATEGORY_LABELS } = require('../../../utils/constants')
 
 const db = wx.cloud.database()
@@ -78,8 +79,9 @@ Page({
       if (child && child.birth_date) {
         exam.age_text = format.formatAge(child.birth_date, exam.exam_date)
       }
-      // 格式化异常项
-      exam.abnormal_items_fmt = (exam.abnormal_items || []).map(a => ({
+      // 格式化异常项（修正旧数据中的术语变体，统一为"身高"/"体重"）
+      exam.abnormal_items = fixGrowthTermsDeep(exam.abnormal_items || [])
+      exam.abnormal_items_fmt = exam.abnormal_items.map(a => ({
         ...a,
         level_info: ABNORMAL_LEVEL_INFO[a.level] || ABNORMAL_LEVEL_INFO.normal
       }))
@@ -99,9 +101,9 @@ Page({
       }
       const report = reportRes.data[0]
 
-      // 取 AI 内容作为编辑基线
-      const aiContent = report.ai_content || {}
-      const baseContent = report.doctor_content || aiContent
+      // 取 AI 内容作为编辑基线（修正旧数据中的术语变体，统一为"身高"/"体重"）
+      const aiContent = fixGrowthTermsDeep(report.ai_content || {})
+      const baseContent = report.doctor_content ? fixGrowthTermsDeep(report.doctor_content) : aiContent
 
       const editContent = JSON.parse(JSON.stringify({
         summary: baseContent.summary || '',

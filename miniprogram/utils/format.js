@@ -78,4 +78,37 @@ function formatTriggerLabel(item) {
   return TRIGGER_LABEL_MAP[item] || item
 }
 
-module.exports = { formatDate, formatDateTime, calculateAgeMonths, ageMonthsToText, formatAge, relativeTime, formatMetricValue, truncate, formatTriggerLabel }
+/**
+ * 修正旧数据中的术语变体，统一为简洁的"身高"/"体重"
+ * 历史数据可能使用"身高别年龄""体重别年龄"或"年龄别身高""年龄别体重"，均替换为简洁表述
+ * @param {string} text - 可能包含旧术语的文本
+ * @returns {string} 修正后的文本
+ */
+function fixGrowthTerms(text) {
+  if (!text || typeof text !== 'string') return text
+  return text
+    .replace(/身高别年龄/g, '身高')
+    .replace(/年龄别身高/g, '身高')
+    .replace(/体重别年龄/g, '体重')
+    .replace(/年龄别体重/g, '体重')
+}
+
+/**
+ * 递归修正对象中所有字符串值的错误术语（用于修正 abnormal_items、ai_content 等存储数据）
+ * @param {*} obj - 任意数据结构
+ * @returns {*} 修正后的同结构数据
+ */
+function fixGrowthTermsDeep(obj) {
+  if (typeof obj === 'string') return fixGrowthTerms(obj)
+  if (Array.isArray(obj)) return obj.map(fixGrowthTermsDeep)
+  if (obj && typeof obj === 'object') {
+    const result = {}
+    for (const key in obj) {
+      result[key] = fixGrowthTermsDeep(obj[key])
+    }
+    return result
+  }
+  return obj
+}
+
+module.exports = { formatDate, formatDateTime, calculateAgeMonths, ageMonthsToText, formatAge, relativeTime, formatMetricValue, truncate, formatTriggerLabel, fixGrowthTerms, fixGrowthTermsDeep }

@@ -2,6 +2,7 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
+const { fixGrowthTermsDeep } = format
 const { ABNORMAL_LEVEL_INFO, EVALUATOR_CATEGORY_LABELS } = require('../../../utils/constants')
 const subscribe = require('../../../utils/subscribe')
 const { isChildAccessibleToParent } = require('../../../utils/db')
@@ -66,8 +67,10 @@ Page({
         api.markReportViewed(this.data.reportId)
       }
 
-      const content = report.doctor_content || report.ai_content || {}
-      exam.abnormal_items_fmt = (exam.abnormal_items || []).map(a => ({
+      // 修正旧数据中的术语变体（统一为"身高"/"体重"）
+      const content = fixGrowthTermsDeep(report.doctor_content || report.ai_content || {})
+      exam.abnormal_items = fixGrowthTermsDeep(exam.abnormal_items || [])
+      exam.abnormal_items_fmt = exam.abnormal_items.map(a => ({
         ...a,
         level_info: ABNORMAL_LEVEL_INFO[a.level] || ABNORMAL_LEVEL_INFO.normal
       }))

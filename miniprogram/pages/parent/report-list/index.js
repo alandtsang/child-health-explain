@@ -2,6 +2,7 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
+const { fixGrowthTerms } = format
 
 const db = wx.cloud.database()
 
@@ -102,7 +103,7 @@ Page({
         ...r,
         child_name: child.name || '',
         exam_date: format.formatDate(exam.exam_date),
-        summary: content.summary || '',
+        summary: fixGrowthTerms(content.summary || ''),
         has_new: !r.viewed_at || (r.pushed_at && new Date(r.pushed_at) > new Date(r.viewed_at))
       }
     })

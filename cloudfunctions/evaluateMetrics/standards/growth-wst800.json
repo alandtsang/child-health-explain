@@ -105,7 +105,7 @@
   },
   "classification": {
     "stunting": {
-      "label": "生长迟缓（身高别年龄）", "standard_source": "WS/T 800-2022", "metric": "height_for_age",
+      "label": "生长迟缓（身高）", "standard_source": "WS/T 800-2022", "metric": "height_for_age",
       "rules": [
         { "condition": "value < z_minus3", "level": "severe", "description": "身高 < -3SD，重度生长迟缓" },
         { "condition": "z_minus3 <= value < z_minus2", "level": "moderate", "description": "身高 < -2SD，中度生长迟缓" },
@@ -113,7 +113,7 @@
       ]
     },
     "underweight": {
-      "label": "低体重（体重别年龄）", "standard_source": "WS/T 800-2022", "metric": "weight_for_age",
+      "label": "低体重（体重）", "standard_source": "WS/T 800-2022", "metric": "weight_for_age",
       "rules": [
         { "condition": "value < z_minus3", "level": "severe", "description": "体重 < -3SD，重度低体重" },
         { "condition": "z_minus3 <= value < z_minus2", "level": "moderate", "description": "体重 < -2SD，中度低体重" },
@@ -121,7 +121,7 @@
       ]
     },
     "overweight": {
-      "label": "超重（体重别年龄）", "standard_source": "WS/T 800-2022", "metric": "weight_for_age",
+      "label": "超重（体重）", "standard_source": "WS/T 800-2022", "metric": "weight_for_age",
       "rules": [
         { "condition": "z_plus2 <= value < z_plus3", "level": "mild", "description": "体重 > +2SD，超重" },
         { "condition": "value >= z_plus3", "level": "moderate", "description": "体重 > +3SD，肥胖风险" }

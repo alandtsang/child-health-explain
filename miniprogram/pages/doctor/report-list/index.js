@@ -1,6 +1,7 @@
 // miniprogram/pages/doctor/report-list/index.js
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
+const { fixGrowthTerms } = require('../../../utils/format')
 
 const db = wx.cloud.database()
 
@@ -98,7 +99,7 @@ Page({
         child_name: child.name || '未知',
         exam_date: format.formatDate(exam.exam_date),
         age_text: child.birth_date ? format.formatAge(child.birth_date, exam.exam_date) : '',
-        summary: content.summary || '',
+        summary: fixGrowthTerms(content.summary || ''),
         max_level: maxLevel,
         abnormal_count: abnormals.length,
         has_new: false

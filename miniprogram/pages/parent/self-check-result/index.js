@@ -2,6 +2,7 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
+const { fixGrowthTermsDeep } = format
 const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
 
 const db = wx.cloud.database()
@@ -50,7 +51,8 @@ Page({
         child = await api.getChildDetail(selfCheck.child_id)
       } catch (e) { /* ignore */ }
 
-      const result = selfCheck.ai_result || {}
+      // 修正旧数据中的术语变体（统一为"身高"/"体重"）
+      const result = fixGrowthTermsDeep(selfCheck.ai_result || {})
       // 格式化异常项
       if (result.abnormal_items) {
         result.abnormal_items_fmt = result.abnormal_items.map(a => ({

@@ -84,7 +84,7 @@ node scripts/sync-env.js
 | development | 发育评估 | developmentEvaluator | 预警征筛查阳性 |
 | rickets | 佝偻病 | ricketsEvaluator | 佝偻病筛查阳性 |
 
-**注意**: 6 岁以下儿童体重偏高（体重别年龄 Z-Score ≥ +2SD）只产出 `growth` 类别异常项，不产出 `obesity`（`obesityEvaluator` 仅对 6-17 岁生效）。这类报告需上传 `growth` 类别的科普视频才能匹配。
+**注意**: 6 岁以下儿童体重偏高（体重 Z-Score ≥ +2SD）只产出 `growth` 类别异常项，不产出 `obesity`（`obesityEvaluator` 仅对 6-17 岁生效）。这类报告需上传 `growth` 类别的科普视频才能匹配。
 
 #### 上传视频
 
