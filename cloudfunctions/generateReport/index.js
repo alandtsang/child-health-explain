@@ -134,6 +134,8 @@ function buildAbnormalItemsForAI(abnormalItems) {
 
 exports.main = async (event, context) => {
   const { exam_id } = event
+  const wxContext = cloud.getWXContext()
+  const openid = wxContext.OPENID
 
   if (!exam_id) {
     return { success: false, error: '缺少必要参数: exam_id' }
@@ -231,13 +233,16 @@ exports.main = async (event, context) => {
       ? (existingReports.data[0].version || 0) + 1
       : 1
 
+    // reviewed_by 设为生成报告的医生 openid，使该医生在 review_status=pending 期间
+    // 即可客户端读取报告（安全规则要求 doc.reviewed_by == auth.openid）。
+    // review_status=pending + reviewed_at=null 仍表示尚未审核。
     const reportRecord = {
       exam_id,
       version,
       ai_content: aiContent,
       doctor_content: null,
       review_status: 'pending',
-      reviewed_by: null,
+      reviewed_by: openid,
       reviewed_at: null,
       pushed_to: [],
       pushed_at: null,

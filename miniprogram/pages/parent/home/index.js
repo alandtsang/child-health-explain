@@ -139,11 +139,8 @@ Page({
     }
   },
 
-  // 显示儿童选择
+  // 显示儿童选择（始终可弹窗，确保家长随时能绑定新邀请码或新建档案）
   onShowChildPicker() {
-    // 仅当恰好 1 个儿童时无需切换；0 个或多于 1 个时都弹出选择器
-    // 0 个儿童时弹出选择器让家长看到"新建档案"和"输入邀请码绑定"
-    if (this.data.children.length === 1) return
     this.setData({ showChildPicker: true })
   },
 

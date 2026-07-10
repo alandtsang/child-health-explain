@@ -2,7 +2,7 @@
 const auth = require('../../../utils/auth')
 const api = require('../../../utils/api')
 const format = require('../../../utils/format')
-const { ABNORMAL_LEVEL_INFO } = require('../../../utils/constants')
+const { ABNORMAL_LEVEL_INFO, EVALUATOR_CATEGORY_LABELS } = require('../../../utils/constants')
 const subscribe = require('../../../utils/subscribe')
 const { isChildAccessibleToParent } = require('../../../utils/db')
 
@@ -97,7 +97,10 @@ Page({
       // media_assets read:false，改走云函数
       const assets = await api.listMediaByReport(reportId, null, 'done')
       const poster = assets.find(m => m.type === 'poster')
-      const videos = (assets || []).filter(m => m.type === 'video' && m.source === 'library')
+      const videos = (assets || []).filter(m => m.type === 'video' && m.source === 'library').map(v => ({
+        ...v,
+        display_title: v.title || v.category_label || EVALUATOR_CATEGORY_LABELS[v.category] || v.category || '科普视频'
+      }))
       this.setData({ poster: poster || null, videos })
     } catch (err) {
       console.error('加载媒体失败:', err)

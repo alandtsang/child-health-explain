@@ -69,15 +69,32 @@ Page({
         wx.reLaunch({ url: '/pages/parent/home/index' })
       }, 1500)
     } catch (err) {
-      const msg = (err && err.message) || '绑定失败'
-      this.setData({ binding: false, error: msg })
+      this.setData({ binding: false })
+      // 冲突响应：展示二次确认 UI
+      if (err.needForce && err.data && err.data.conflict_child) {
+        this.setData({ conflictChild: err.data.conflict_child })
+      } else {
+        const msg = (err && err.message) || '绑定失败'
+        wx.showToast({ title: msg, icon: 'none', duration: 3000 })
+      }
     }
   },
 
-  // 仍要绑定（冲突二次确认时用）
+  // 仍要绑定（冲突二次确认时用，传 force=true 跳过冲突检测）
   async onForceBind() {
-    this.setData({ conflictChild: null })
-    await this.onConfirmBind()
+    this.setData({ conflictChild: null, binding: true })
+    try {
+      await api.claimChild(this.data.code, true)
+      this.setData({ bindSuccess: true, binding: false })
+      wx.showToast({ title: '绑定成功', icon: 'success' })
+      setTimeout(() => {
+        wx.reLaunch({ url: '/pages/parent/home/index' })
+      }, 1500)
+    } catch (err) {
+      this.setData({ binding: false })
+      const msg = (err && err.message) || '绑定失败'
+      wx.showToast({ title: msg, icon: 'none', duration: 3000 })
+    }
   },
 
   onCancel() {

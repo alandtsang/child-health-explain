@@ -27,7 +27,14 @@ function callFunction(name, data, options) {
       return result.data || result
     }
     const errMsg = (result && (result.message || result.error)) || '请求失败'
-    return Promise.reject(new Error(errMsg))
+    const err = new Error(errMsg)
+    // 携带服务端返回的 code 和 data，供调用方区分冲突(409)等场景
+    if (result) {
+      err.code = result.code
+      err.data = result.data
+      err.needForce = result.need_force
+    }
+    return Promise.reject(err)
   }).catch(err => {
     // 仅在 .then 未执行过 hideLoading 时调用（网络错误场景）
     if (opts.loading !== false && !loadingHidden) wx.hideLoading()
@@ -125,6 +132,13 @@ function listVideosByReport(reportId) {
     status: 'done'
   }, { loading: false, showError: false })
 }
+// 预览体检异常项将匹配的科普视频（医生端推送前预览）
+function previewVideosByExam(examId) {
+  return callFunction('listMediaAssets', {
+    action: 'previewByExam',
+    exam_id: examId
+  }, { loading: false, showError: false })
+}
 
 // === 随访管理（Phase 6）===
 // options 可传入 { loading: false, showError: false } 让调用方自行管理 loading 和错误提示
@@ -144,8 +158,10 @@ function createBindInvite(childId) {
 function previewInvite(code) {
   return callFunction('claimChild', { code, action: 'preview' }, { loading: false, showError: false })
 }
-function claimChild(code) {
-  return callFunction('claimChild', { code }, { loadingText: '绑定中...' })
+function claimChild(code, force) {
+  const data = { code }
+  if (force) data.force = true
+  return callFunction('claimChild', data, { loadingText: '绑定中...', showError: false })
 }
 
 // === 医生认证申请 ===
@@ -216,7 +232,7 @@ function listMediaBySelfCheck(selfCheckId, type, status) {
 module.exports = {
   callFunction, login, selectRole, switchRole, getDoctorStatus,
   evaluateMetrics, saveExam, deleteExam, generateReport, ocrParse, reviewReport,
-  selfCheck, genPoster, listVideosByReport, updateFollowup, saveChild, initCollections,
+  selfCheck, genPoster, listVideosByReport, previewVideosByExam, updateFollowup, saveChild, initCollections,
   createBindInvite, previewInvite, claimChild,
   submitDoctorCert, getDoctorCertStatus, listDoctorApplications, reviewDoctorApplication,
   markReportViewed,

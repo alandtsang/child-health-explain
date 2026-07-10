@@ -133,12 +133,42 @@
     <view class="card-title">科普视频</view>
     <view wx:for="{{videos}}" wx:key="_id" class="video-list-item">
       <view class="video-item-header">
-        <text class="video-item-title">{{item.category || '科普视频'}}</text>
+        <text class="video-item-title">{{item.title || item.category_label || item.category || '科普视频'}}</text>
         <text class="video-item-tag">已推送</text>
       </view>
       <view class="video-preview">
         <video src="{{item.file_id}}" class="video-player" controls></video>
       </view>
+    </view>
+  </view>
+
+  <!-- 待推送科普视频预览（推送前根据异常项匹配，仅在未推送时显示） -->
+  <view class="card preview-video-card" wx:if="{{(btnState === 'review' || btnState === 'pending_binding') && previewVideos.length > 0}}">
+    <view class="card-title">
+      待推送科普视频
+      <text class="preview-count-badge">{{previewVideos.length}}个</text>
+    </view>
+    <view class="preview-hint">根据体检异常项自动匹配，推送报告时一并发送给家长</view>
+    <view wx:for="{{previewVideos}}" wx:key="_id" class="preview-video-item">
+      <view class="preview-video-thumb" wx:if="{{item.thumbnail_file_id}}">
+        <image src="{{item.thumbnail_file_id}}" mode="aspectFill" class="preview-thumb-img" />
+        <view class="preview-play-icon">▶</view>
+      </view>
+      <view class="preview-video-thumb preview-video-placeholder" wx:else>
+        <text class="preview-placeholder-icon">🎬</text>
+      </view>
+      <view class="preview-video-info">
+        <text class="preview-video-title">{{item.display_title}}</text>
+        <view class="preview-video-meta">
+          <text class="preview-video-category">{{item.category_label || item.category}}</text>
+          <text wx:if="{{item.duration_text}}" class="preview-video-duration">{{item.duration_text}}</text>
+        </view>
+        <text wx:if="{{item.description}}" class="preview-video-desc">{{item.description}}</text>
+      </view>
+      <text class="preview-video-tag">推送时发送</text>
+    </view>
+    <view wx:if="{{previewSkippedCategories.length > 0}}" class="preview-skipped">
+      <text class="preview-skipped-text">以下异常项暂无匹配视频：{{previewSkippedCategories}}</text>
     </view>
   </view>
 

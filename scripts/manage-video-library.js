@@ -102,7 +102,19 @@ async function main() {
     process.exit(1)
   }
 
-  cloud.init({ env: cloudEnv, resourceAppid: config.WX_APPID || undefined })
+  // 本地运行 wx-server-sdk 需要腾讯云密钥
+  if (!config.TENCENTCLOUD_SECRET_ID || !config.TENCENTCLOUD_SECRET_KEY) {
+    console.error('错误: .env 中未配置 TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY')
+    console.error('请在 .env 中填入腾讯云密钥后重试')
+    process.exit(1)
+  }
+
+  cloud.init({
+    env: cloudEnv,
+    resourceAppid: config.WX_APPID || undefined,
+    secretId: config.TENCENTCLOUD_SECRET_ID,
+    secretKey: config.TENCENTCLOUD_SECRET_KEY
+  })
   const db = cloud.database()
 
   switch (command) {
@@ -141,11 +153,14 @@ async function handleUpload(cloud, db, opts) {
     process.exit(1)
   }
 
-  // 检查是否已存在 active 记录
-  const existing = await db.collection('video_library')
-    .where({ category, status: 'active' })
-    .limit(1)
-    .get()
+  // 检查是否已存在 active 记录（集合不存在时视为无记录）
+  let existing = { data: [] }
+  try {
+    existing = await db.collection('video_library')
+      .where({ category, status: 'active' })
+      .limit(1)
+      .get()
+  } catch (err) { /* 集合不存在，视为无记录 */ }
 
   if (existing.data.length > 0) {
     console.error(`类别 ${category} 已有 active 视频，请使用 replace 命令替换`)
@@ -153,12 +168,15 @@ async function handleUpload(cloud, db, opts) {
     process.exit(1)
   }
 
-  // 获取当前最大 version
-  const allVersions = await db.collection('video_library')
-    .where({ category })
-    .orderBy('version', 'desc')
-    .limit(1)
-    .get()
+  // 获取当前最大 version（集合不存在时从 v1 开始）
+  let allVersions = { data: [] }
+  try {
+    allVersions = await db.collection('video_library')
+      .where({ category })
+      .orderBy('version', 'desc')
+      .limit(1)
+      .get()
+  } catch (err) { /* 集合不存在，version 从 1 开始 */ }
 
   const nextVersion = allVersions.data.length > 0 ? (allVersions.data[0].version || 0) + 1 : 1
 
@@ -188,22 +206,71 @@ async function handleUpload(cloud, db, opts) {
     }
   }
 
-  // 写入 video_library
-  const addRes = await db.collection('video_library').add({
-    data: {
-      category,
-      category_label: CATEGORY_LABELS[category],
-      title,
-      file_id: uploadRes.fileID,
-      thumbnail_file_id: thumbnailFileId,
-      description: description || '',
-      duration: duration ? parseInt(duration, 10) : null,
-      status: 'active',
-      version: nextVersion,
-      created_at: db.serverDate(),
-      updated_at: db.serverDate()
+  // 写入 video_library（集合不存在时自动创建）
+  let addRes
+  try {
+    addRes = await db.collection('video_library').add({
+      data: {
+        category,
+        category_label: CATEGORY_LABELS[category],
+        title,
+        file_id: uploadRes.fileID,
+        thumbnail_file_id: thumbnailFileId,
+        description: description || '',
+        duration: duration ? parseInt(duration, 10) : null,
+        status: 'active',
+        version: nextVersion,
+        created_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    })
+  } catch (addErr) {
+    if (addErr && /not exist|-502005|-502003/i.test(addErr.errMsg || addErr.message || '')) {
+      console.log('video_library 集合不存在，正在创建...')
+      // 调用 initDatabase 云函数创建集合
+      try {
+        await cloud.callFunction({
+          name: 'initDatabase',
+          data: { action: 'initCollections' }
+        })
+      } catch (initErr) {
+        console.error('自动创建集合失败:', initErr.message)
+      }
+      // 重试 add（集合创建后可能需要几秒生效）
+      let retries = 3
+      while (retries > 0) {
+        try {
+          await new Promise(r => setTimeout(r, 2000))
+          addRes = await db.collection('video_library').add({
+            data: {
+              category,
+              category_label: CATEGORY_LABELS[category],
+              title,
+              file_id: uploadRes.fileID,
+              thumbnail_file_id: thumbnailFileId,
+              description: description || '',
+              duration: duration ? parseInt(duration, 10) : null,
+              status: 'active',
+              version: nextVersion,
+              created_at: db.serverDate(),
+              updated_at: db.serverDate()
+            }
+          })
+          break
+        } catch (retryErr) {
+          retries--
+          if (retries === 0) {
+            console.error('\n无法自动创建 video_library 集合。')
+            console.error('请在微信云开发控制台手动创建 video_library 集合后重试。')
+            console.error('视频文件已上传到云存储:', uploadRes.fileID)
+            process.exit(1)
+          }
+        }
+      }
+    } else {
+      throw addErr
     }
-  })
+  }
 
   console.log(`\n✓ 视频上传成功!`)
   console.log(`  类别: ${category} (${CATEGORY_LABELS[category]})`)
@@ -226,10 +293,13 @@ async function handleReplace(cloud, db, opts) {
     process.exit(1)
   }
 
-  // 将旧 active 记录标记为 inactive
-  const oldRecords = await db.collection('video_library')
-    .where({ category, status: 'active' })
-    .get()
+  // 将旧 active 记录标记为 inactive（集合不存在时跳过）
+  let oldRecords = { data: [] }
+  try {
+    oldRecords = await db.collection('video_library')
+      .where({ category, status: 'active' })
+      .get()
+  } catch (err) { /* 集合不存在，无旧记录 */ }
 
   for (const old of oldRecords.data) {
     await db.collection('video_library').doc(old._id).update({
@@ -244,10 +314,19 @@ async function handleReplace(cloud, db, opts) {
 }
 
 async function handleList(db) {
-  const res = await db.collection('video_library')
-    .orderBy('category', 'asc')
-    .orderBy('version', 'desc')
-    .get()
+  let res
+  try {
+    res = await db.collection('video_library')
+      .orderBy('category', 'asc')
+      .orderBy('version', 'desc')
+      .get()
+  } catch (err) {
+    if (err && /not exist|-502005|-502003/i.test(err.errMsg || err.message || '')) {
+      console.log('视频库为空（video_library 集合尚未创建，上传第一个视频后将自动创建）')
+      return
+    }
+    throw err
+  }
 
   if (res.data.length === 0) {
     console.log('视频库为空')
@@ -286,9 +365,12 @@ async function handleDeactivate(db, opts) {
     process.exit(1)
   }
 
-  const res = await db.collection('video_library')
-    .where({ category, status: 'active' })
-    .get()
+  let res = { data: [] }
+  try {
+    res = await db.collection('video_library')
+      .where({ category, status: 'active' })
+      .get()
+  } catch (err) { /* 集合不存在，视为无记录 */ }
 
   if (res.data.length === 0) {
     console.log(`类别 ${category} 无 active 视频`)

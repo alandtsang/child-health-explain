@@ -41,6 +41,7 @@
 .video-list-item:last-child { margin-bottom: 0; }
 .video-item-header { margin-bottom: 12rpx; }
 .video-item-title { font-size: 28rpx; font-weight: 600; color: #333; }
+.video-item-desc { font-size: 24rpx; color: #999; margin-bottom: 12rpx; line-height: 1.4; }
 .video-preview { width: 100%; }
 .video-player { width: 100%; border-radius: 12rpx; }
 .disclaimer-card { padding: 32rpx; text-align: center; }

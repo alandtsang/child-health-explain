@@ -28,6 +28,10 @@
       </view>
       <text class="child-item-arrow">›</text>
     </view>
+    <view class="bind-invite-entry card" catchtap="onBindByCode" hover-class="bind-invite-hover">
+      <text class="bind-invite-text">输入邀请码绑定已有档案</text>
+      <text class="child-item-arrow">›</text>
+    </view>
   </view>
 
   <!-- 操作 -->

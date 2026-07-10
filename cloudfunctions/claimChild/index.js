@@ -6,12 +6,12 @@ const _ = db.command
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
-  const { code, action } = event
+  const { code, action, force } = event
 
   // preview action：只查不绑，用于家长扫码后先展示儿童摘要
   if (action === 'preview') return await previewInvite(code, openid)
-  // 默认：执行绑定
-  return await claimChild(code, openid)
+  // 默认：执行绑定（force=true 时跳过相似档案冲突检测）
+  return await claimChild(code, openid, force === true)
 }
 
 // 预览邀请对应的儿童档案（不写入任何数据）
@@ -47,7 +47,8 @@ async function previewInvite(code, openid) {
 }
 
 // 执行绑定：写入 bound_parent_ids + invite 置 used + 补发未推送报告
-async function claimChild(code, openid) {
+// force=true 时跳过相似档案冲突检测（家长二次确认后调用）
+async function claimChild(code, openid, force) {
   if (!code || !code.trim()) return { code: 400, message: '缺少邀请码' }
   const normalizedCode = code.trim().toUpperCase()
 
@@ -78,19 +79,22 @@ async function claimChild(code, openid) {
       return { code: 409, message: '您已绑定该儿童档案', data: { child: sanitizeChild(child) } }
     }
 
-    // 5. 相似档案冲突检测（v1 仅提示，不合并）
-    const conflictRes = await db.collection('children')
-      .where({ name: child.name, birth_date: child.birth_date, _id: _.neq(child._id) })
-      .limit(1)
-      .get()
-    const conflictChild = conflictRes.data[0]
-    if (conflictChild) {
-      const conflictBound = Array.isArray(conflictChild.bound_parent_ids) ? conflictChild.bound_parent_ids : []
-      if (conflictBound.includes(openid)) {
-        return {
-          code: 409,
-          message: '您已有同名同生日的档案，是否仍要绑定此医生档案？',
-          data: { conflict_child: sanitizeChild(conflictChild), target_child: sanitizeChild(child) }
+    // 5. 相似档案冲突检测（force=true 时跳过，家长已二次确认）
+    if (!force) {
+      const conflictRes = await db.collection('children')
+        .where({ name: child.name, birth_date: child.birth_date, _id: _.neq(child._id) })
+        .limit(1)
+        .get()
+      const conflictChild = conflictRes.data[0]
+      if (conflictChild) {
+        const conflictBound = Array.isArray(conflictChild.bound_parent_ids) ? conflictChild.bound_parent_ids : []
+        if (conflictBound.includes(openid)) {
+          return {
+            code: 409,
+            need_force: true,
+            message: '您已有同名同生日的档案，是否仍要绑定此医生档案？',
+            data: { conflict_child: sanitizeChild(conflictChild), target_child: sanitizeChild(child) }
+          }
         }
       }
     }

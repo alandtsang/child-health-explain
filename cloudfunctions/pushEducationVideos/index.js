@@ -122,6 +122,10 @@ exports.main = async (event, context) => {
             thumbnail_file_id: video.thumbnail_file_id || null,
             library_video_id: video._id,
             category: video.category,
+            title: video.title || null,
+            category_label: video.category_label || null,
+            duration: video.duration || null,
+            description: video.description || null,
             pushed_to: pushedTo,
             prompt: null,
             generation_meta: null,
@@ -133,6 +137,7 @@ exports.main = async (event, context) => {
         })
 
         // 向每个家长发送 video_done 通知
+        const videoTitle = video.title || video.category_label || '科普视频'
         for (const parentOpenid of pushedTo) {
           try {
             const res = await cloud.callFunction({
@@ -141,10 +146,10 @@ exports.main = async (event, context) => {
                 target_openid: parentOpenid,
                 type: 'video_done',
                 title: '科普视频已推送',
-                content: `${video.title || '科普视频'}已为您推送，点击查看`,
+                content: `${videoTitle}已为您推送，点击查看`,
                 related_id: mediaRes._id,
                 template_data: {
-                  thing1: { value: video.title || '科普视频已推送' },
+                  thing1: { value: videoTitle },
                   thing2: { value: '点击查看详情' }
                 },
                 sms_allowed: false
@@ -187,6 +192,10 @@ exports.main = async (event, context) => {
 
 // 严格校验调用方是否为已审核通过的医生
 async function validateApprovedDoctor(openid) {
+  // openid 缺失（如控制台直测无登录上下文）时直接拒绝，避免 where 值全 undefined 崩溃
+  if (!openid) {
+    return { isValid: false, code: 403, message: '无法获取调用方身份(openid 为空)，请通过小程序客户端调用' }
+  }
   try {
     const res = await db.collection('users').where({ openid }).limit(1).get()
     const user = res.data[0]
