@@ -72,17 +72,19 @@ node scripts/sync-env.js
 
 #### 支持的异常类别
 
-| category | 说明 |
-|----------|------|
-| growth | 生长发育 |
-| obesity | 超重肥胖 |
-| anemia | 贫血 |
-| vision | 视力 |
-| dental | 口腔(龋齿) |
-| spine | 脊柱 |
-| hearing | 听力 |
-| development | 发育评估 |
-| rickets | 佝偻病 |
+| category | 说明 | 评估器 | 触发条件 |
+|----------|------|--------|---------|
+| growth | 生长发育 | growthEvaluator | 任何年龄，身高/体重 Z-Score 异常 |
+| obesity | 超重肥胖 | obesityEvaluator | **仅 6-17 岁**，BMI 超标 |
+| anemia | 贫血 | anemiaEvaluator | 血红蛋白低于标准 |
+| vision | 视力 | visionEvaluator | 视力筛查异常 |
+| dental | 口腔(龋齿) | dentalEvaluator | 龋齿检测 |
+| spine | 脊柱 | spineEvaluator | 脊柱侧弯筛查 |
+| hearing | 听力 | hearingEvaluator | 听力筛查异常 |
+| development | 发育评估 | developmentEvaluator | 预警征筛查阳性 |
+| rickets | 佝偻病 | ricketsEvaluator | 佝偻病筛查阳性 |
+
+**注意**: 6 岁以下儿童体重偏高（体重别年龄 Z-Score ≥ +2SD）只产出 `growth` 类别异常项，不产出 `obesity`（`obesityEvaluator` 仅对 6-17 岁生效）。这类报告需上传 `growth` 类别的科普视频才能匹配。
 
 #### 上传视频
 
@@ -119,3 +121,19 @@ node scripts/manage-video-library.js deactivate --category anemia
 
 **注意**: 脚本依赖 `wx-server-sdk`，需先在 `cloudfunctions/pushEducationVideos/` 目录运行 `npm install`。
 视频建议压缩到 720p，单个文件控制在 30MB 以内。
+
+#### 补发科普视频
+
+当视频库新增了某类别的视频后，已推送的报告不会自动补发。管理员可通过脚本为指定报告重新匹配并创建科普视频记录。
+
+```bash
+# 试跑（只查不写，确认会匹配到哪些视频、哪些类别缺失）
+node scripts/repull-education-videos.js --report_id <报告ID> --dry-run
+
+# 实际补发
+node scripts/repull-education-videos.js --report_id <报告ID>
+```
+
+`report_id` 是 `reports` 集合中报告文档的 `_id`，可在云开发控制台 `reports` 集合中查找，或从家长端报告详情页 URL 的 `report_id` 参数获取。
+
+脚本会：读取报告关联的体检异常项 → 按类别去重 → 匹配 `video_library` 中 active 视频 → 创建 `media_assets` 记录（幂等，已存在的类别自动跳过）。补发后需确保 `listMediaAssets` 云函数已部署最新版本，家长端报告详情页即可看到视频。

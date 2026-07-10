@@ -192,6 +192,10 @@ exports.main = async (event, context) => {
 
 // 严格校验调用方是否为已审核通过的医生
 async function validateApprovedDoctor(openid) {
+  // openid 缺失（如控制台直测无登录上下文）时直接拒绝，避免 where 值全 undefined 崩溃
+  if (!openid) {
+    return { isValid: false, code: 403, message: '无法获取调用方身份(openid 为空)，请通过小程序客户端调用' }
+  }
   try {
     const res = await db.collection('users').where({ openid }).limit(1).get()
     const user = res.data[0]

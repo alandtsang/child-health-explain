@@ -8,7 +8,7 @@
  * Actions:
  *   listByReport    — 按报告 ID 查询媒体资源（海报/视频）
  *                     医生：校验 report.reviewed_by == openid
- *                     家长：校验 report.pushed_to == openid
+ *                     家长：校验 auth.openid in report.pushed_to（数组成员判断）
  *   listBySelfCheck — 按自查记录 ID 查询媒体资源（海报）
  *                     家长：校验 self_check.parent_openid == openid
  *   previewByExam   — 按体检 ID 预览将匹配的科普视频（医生端推送前预览）
@@ -53,7 +53,8 @@ async function handleListByReport(openid, event) {
   if (!report) return { code: 404, message: '报告不存在' }
 
   const isReviewer = report.reviewed_by === openid
-  const isPushedTo = report.pushed_to === openid
+  // pushed_to 是家长 openid 数组，需用 includes 判断成员关系，不能直接 === 比较
+  const isPushedTo = Array.isArray(report.pushed_to) && report.pushed_to.includes(openid)
   if (!isReviewer && !isPushedTo) {
     return { code: 403, message: '无权查看此报告的媒体资源' }
   }
