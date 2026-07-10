@@ -71,8 +71,8 @@
 </view>
 
 <!-- 驳回原因弹窗 -->
-<view wx:if="{{rejectVisible}}" class="modal-overlay" bindtap="onCancelReject">
-  <view class="modal-content" catchtap="">
+<view wx:if="{{rejectVisible}}" class="modal-overlay" catchtap="onOverlayTap" data-role="overlay">
+  <view class="modal-content" catchtap="noop">
     <view class="modal-header">
       <text class="modal-title">驳回原因</text>
       <text class="modal-close" bindtap="onCancelReject">×</text>

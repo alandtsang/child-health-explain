@@ -124,6 +124,16 @@ Page({
     this.setData({ rejectNote: e.detail.value })
   },
 
+  // 点击遮罩层关闭弹窗（仅点击遮罩本身时触发，避免 textarea 原生组件冒泡问题）
+  onOverlayTap(e) {
+    if (e.target.dataset.role === 'overlay') {
+      this.onCancelReject()
+    }
+  },
+
+  // 空函数，用于 catchtap 阻止冒泡
+  noop() {},
+
   onCancelReject() {
     this.setData({
       rejectVisible: false,
