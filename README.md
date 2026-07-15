@@ -86,6 +86,24 @@ node scripts/sync-env.js
 
 **注意**: 6 岁以下儿童体重偏高（体重 Z-Score ≥ +2SD）只产出 `growth` 类别异常项，不产出 `obesity`（`obesityEvaluator` 仅对 6-17 岁生效）。这类报告需上传 `growth` 类别的科普视频才能匹配。
 
+#### 当前视频库状态
+
+9 个类别均已上传占位视频（从 `test-videos/anemia.mp4` 复制），后续需用专业科普视频替换。占位视频位于 `test-videos/` 目录：
+
+| category | 占位文件 | 标题 | 状态 |
+|----------|----------|------|------|
+| growth | `test-videos/growth.mp4` | 儿童超重肥胖科普 | active v1（待替换） |
+| obesity | `test-videos/obesity.mp4` | 儿童超重肥胖科普 | active v1（待替换） |
+| anemia | `test-videos/anemia.mp4` | 轻度肥胖科普 | active v1（待替换） |
+| vision | `test-videos/vision.mp4` | 儿童视力科普 | active v1（待替换） |
+| dental | `test-videos/dental.mp4` | 儿童龋齿科普 | active v1（待替换） |
+| spine | `test-videos/spine.mp4` | 儿童脊柱侧弯科普 | active v1（待替换） |
+| hearing | `test-videos/hearing.mp4` | 儿童听力科普 | active v1（待替换） |
+| development | `test-videos/development.mp4` | 儿童发育评估科普 | active v1（待替换） |
+| rickets | `test-videos/rickets.mp4` | 儿童佝偻病科普 | active v1（待替换） |
+
+> **重要**: 当前所有视频内容相同（均为 anemia.mp4 的副本），仅用于打通推送链路。请尽快用各类别的专业科普视频替换，替换方法见下方「替换视频」。
+
 #### 上传视频
 
 ```bash
